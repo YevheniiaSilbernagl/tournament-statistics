@@ -1,0 +1,14 @@
+@(players: List[(String, Option[String], Option[String])])
+
+    @main("Validate decks") {
+        <div class="container-fluid">
+           @for(i <- players.indices){
+               <div class="row player border-top" id="player_@i">
+                   <div class="col-sm eternalName"> @{players(i)._1} </div>
+                   <div class="col-6 deckLinkBlock"> <a href="@{players(i)._2}" class="deckLink" target="_blank" style="color: black">@{players(i)._2}</a> </div>
+                   <div class="col-sm discordName"> @{players(i)._3} </div>
+               </div>
+           }
+        </div>
+
+    }

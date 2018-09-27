@@ -1,37 +1,11 @@
-@(tournament: (String, List[String]))
+@(tournament: (String, String))
 
-    @main("Generate a match") {
-        <div class="container">
-            <form>
-                <label>@tournament._1</label>
-                <div class="form-group">
-                    <label for="currentScorePlayer1">Match</label>
-                    <select class="form-control" id="matches">
-                    @for(player <- tournament._2) {
-                        <option>@player</option>
-                    }
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="currentScorePlayer1">Player#1's score</label>
-                    <select class="form-control" id="currentScorePlayer1">
-                        <option>-</option>
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="currentScorePlayer2">Player#2's score</label>
-                    <select class="form-control" id="currentScorePlayer2">
-                        <option>-</option>
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary mb-2" id="generateResources">Generate resources</button>
-            </form>
-        </div>
+@main("Generate a match") {
+    <div class="container">
+        <div>@tournament._2</div>
+        <div><a href="@routes.Application.validateDecks(tournament._1)">Validate decks</a></div>
+        <div><a href="@routes.Application.generateDeckDoc(tournament._1)">Build deck doc</a></div>
+        <div><a href="@routes.Application.streamingResources(tournament._1)">Generate streaming resources</a></div>
+    </div>
 
-    }
+}
