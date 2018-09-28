@@ -9,6 +9,7 @@ import play.api.libs.ws.WSClient
 import play.api.mvc._
 import types.Deck
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -16,6 +17,8 @@ import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
 class Application @Inject()(ws: WSClient) extends Controller {
+
+  val cache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
 
   def all_tournaments: () => String = () => "https://dtmwra1jsgyb0.cloudfront.net/organizations/5a0e00fdc4cd48033c0083b7/tournaments"
 
@@ -37,8 +40,9 @@ class Application @Inject()(ws: WSClient) extends Controller {
 
   def validateDeck(url: String) = Action {
     try {
-      val deck = Await.result(ws.url(url.substring(0, Option(url.indexOf("?")).filterNot(_ < 0).getOrElse(url.length))).get().map(response => Deck.parse(url, response.body)), Duration.apply(30, TimeUnit.SECONDS))
+      val deck = cache.getOrElse(url, Await.result(ws.url(url.substring(0, Option(url.indexOf("?")).filterNot(_ < 0).getOrElse(url.length))).get().map(response => Deck.parse(url, response.body)), Duration.apply(30, TimeUnit.SECONDS)))
       val result = deck.validate
+      if (result.isEmpty) cache.put(url, deck)
       Ok(Json.obj("valid" -> result.isEmpty, "messages" -> result))
     } catch {
       case NonFatal(e) => Ok(Json.obj("valid" -> false, "messages" -> Json.arr(e.getMessage)))
