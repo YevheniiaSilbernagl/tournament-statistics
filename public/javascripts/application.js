@@ -16,7 +16,14 @@ jQuery(window).ready(function () {
                 p2score: $("#currentScorePlayer2").val()
             }),
             contentType: "application/json; charset=utf-8",
-            dataType: "json"
+            dataType: "json",
+            success: function (msg) {
+                $("#generatedResources").remove();
+                $( ".container" ).append('<div id="generatedResources" class="row">' +
+                    '<div class="col-sm-6"><img src="/assets/images/' + msg.left + '" style="width:100%"></div>'+
+                    '<div class="col-sm-6"><img src="/assets/images/' + msg.right + '" style="width:100%"></div>'+
+                    '</div>');
+            }
         });
     }
 

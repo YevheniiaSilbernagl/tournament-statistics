@@ -3,7 +3,6 @@ body {
 }
 
 p {
-    display: block;
     text-indent: 0;
     padding-bottom: 0;
     margin-bottom: 0 !important;
@@ -19,14 +18,6 @@ p {
     text-indent: 0;
     padding-top: 15px;
     font-weight: bold;
-}
-
-.card {
-    padding-bottom: 0;
-    margin-bottom: 0 !important;
-    border: 0 !important;
-    display: block;
-    text-indent: 0;
 }
 
 .tournament-name {
@@ -56,7 +47,6 @@ p {
     .tournament-name {
         padding-top:100mm;
         position: center;
-        font-weight: bold;
     }
 
     .d-header:before {
@@ -65,29 +55,6 @@ p {
         height: 1em;
         display: inline-block;
     }
-
-    .card:before {
-        content: '';
-        width: 100%;
-        height: 1em;
-        display: inline-block;
-    }
-
-    .card {
-        padding-bottom: 0 !important;
-        margin-bottom: 0 !important;
-        border: 0 !important;
-        display: block;
-        text-indent: 0 !important;
-    }
-
-    .d-header {
-        text-indent: 0;
-        padding-top: 15px;
-        font-weight: bold;
-        white-space: pre;
-    }
-
     .p-header {
         page-break-before: always;
         width: 100%;
@@ -95,12 +62,10 @@ p {
         display: inline-block;
         font-weight: bold;
     }
-
     p {
-        display: block;
         text-indent: 0;
         padding-bottom: 0;
-        margin-bottom: 0 !important;
+        margin-bottom: 0;
+        display: block;
     }
-
 }

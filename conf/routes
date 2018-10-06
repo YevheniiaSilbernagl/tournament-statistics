@@ -4,7 +4,7 @@
 
 # Home page
 GET     /                           controllers.Application.index
-GET     /streaming                  controllers.Application.streamingResources(tournamentId: String)
+GET     /streaming                  controllers.Application.streamingResources
 GET     /validate                   controllers.Application.validateDecks(tournamentId: String)
 GET     /validateDeck               controllers.Application.validateDeck(url: String)
 GET     /decdoc                     controllers.Application.generateDeckDoc(tournamentId: String)
