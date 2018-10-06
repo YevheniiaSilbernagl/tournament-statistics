@@ -107,10 +107,13 @@ class Application @Inject()(ws: WSClient) extends Controller {
           def name(node: JsValue): String = node.\("team").\("name").toOption.map(_.as[String]).getOrElse("Undefined name")
 
           val rounds = Json.parse(resp.body).asInstanceOf[JsArray].value.toList
-          val maxRound = rounds.map(r => r.\("roundNumber").as[Int]).max
-          val round = rounds.filter(o => o.\("roundNumber").as[Int] == maxRound)
-          (tournament.\("name").as[String], round.iterator.toList.map(r => name(r.\("top").get) + " - : - " + name(r.\("bottom").get)))
-
+          if(currentStage.get.\("bracket").get.\("type").get.asInstanceOf[JsString].value == "elimination") {
+            (tournament.\("name").as[String], rounds.iterator.toList.map(r => name(r.\("top").get) + " - : - " + name(r.\("bottom").get)))
+          } else {
+            val maxRound = rounds.map(r => r.\("roundNumber").as[Int]).max
+            val round = rounds.filter(o => o.\("roundNumber").as[Int] == maxRound)
+            (tournament.\("name").as[String], round.iterator.toList.map(r => name(r.\("top").get) + " - : - " + name(r.\("bottom").get)))
+          }
         })
       }
     }), Duration.apply(30, TimeUnit.SECONDS))
@@ -154,7 +157,7 @@ class Application @Inject()(ws: WSClient) extends Controller {
                 val image = ImageIO.read(bg)
                 val g = image.getGraphics
                 g.setFont(FONT.deriveFont(48f))
-                val title = s"$playersName - ${deck.name}"
+                val title = s"$playersName - ${if(deck.name.length>30) s"${deck.name.substring(0, 20)}..." else deck.name }"
                 val titleWidth = g.getFontMetrics.stringWidth(title)
 
                 g.drawString(title, (image.getWidth() - titleWidth) / 2, 80)
