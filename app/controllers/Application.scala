@@ -84,8 +84,8 @@ class Application @Inject()(ws: WSClient) extends Controller {
 
   def generateDeckDoc(tournamentId: String) = Action {
     Ok(views.html.deckdoc(tournamentName(tournamentId), currentListOfPlayers(tournamentId).map { le =>
-      val name = le._1.substring(0, Some(le._1.indexOf("+")).filter(_ > 0).getOrElse(le._1.length))
-      (name, le._2.map(getDeck))
+//      val name = le._1.substring(0, Some(le._1.indexOf("+")).filter(_ > 0).getOrElse(le._1.length))
+      (le._1, le._2.map(getDeck))
     }))
   }
 

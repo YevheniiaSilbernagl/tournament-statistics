@@ -7,7 +7,7 @@
     @for(player <- players) {
         <p style="page-break-before: always">
         @for(deck <- player._2) {
-            <p class="p-header">@{player._1} - @{deck.name}</p>
+            <p class="p-header">@{player._1}<br>@{deck.name}</p>
             <p class="d-header"> </p>
             <p class="d-header">Main Deck:</p>
             @for(card <- deck.mainDeck) {
