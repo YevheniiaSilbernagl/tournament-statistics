@@ -240,15 +240,8 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
           case f => "> " + f.getName
         })
 
-        def parent(f: File): File = f match {
-          case file if file.getParentFile != null => parent(file.getParentFile)
-          case file => file
-         }
-
-        val parentFile = parent(env.rootPath)
         Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n"+
-          parentFile.getAbsolutePath+"\n" +
-          print_file(parentFile)))
+          print_file(new File("/app"))))
     }
   }
 
