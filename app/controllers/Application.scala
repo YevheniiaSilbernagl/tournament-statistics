@@ -236,7 +236,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
         def print_file(file: File): String = "-" + (file match {
           case f if f.isDirectory =>
             "["+f.getAbsolutePath + "]\n" +
-              f.listFiles().map(print_file).mkString("\n")
+              f.listFiles().toList.map(print_file).mkString("\n")
           case f => "> " + f.getName
         })
 
