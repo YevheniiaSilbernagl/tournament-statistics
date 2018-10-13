@@ -7,26 +7,32 @@
     @for(player <- players) {
         <p style="page-break-before: always">
         @for(deck <- player._2) {
-            <p class="p-header">@{player._1}<br>@{deck.name}</p>
-            <p class="d-header"> </p>
-            <p class="d-header">Main Deck:</p>
-            @for(card <- deck.mainDeck) {
-                <p class="card">@{card._2} @{card._1.eternalFormat}</p>
-            }
-            @if(deck.market.nonEmpty) {
+            <div class="deck" deck-url="@{deck.link}">
+                <div class="player-name"><p class="p-header">@{player._1}</p>
+                    <a link="@{deck.link}" class="badge badge-secondary generate-left noprint" download>Left</a>
+                    <a link="@{deck.link}" class="badge badge-dark generate-right noprint" download>Righ</a>
+                </div>
+                <div><p class="p-header deck-name">@{deck.name}</p></div>
                 <p class="d-header"> </p>
-                <p class="d-header">--------------MARKET---------------</p>
-                @for(card <- deck.market) {
+                <p class="d-header">Main Deck:</p>
+                @for(card <- deck.mainDeck) {
                     <p class="card">@{card._2} @{card._1.eternalFormat}</p>
                 }
-            }
-            @if(deck.sideBoard.nonEmpty) {
-                <p class="d-header"> </p>
-                <p class="d-header">Side board:</p>
-                @for(card <- deck.sideBoard) {
-                    <p class="card">@{card._2} @{card._1.eternalFormat}</p>
+                @if(deck.market.nonEmpty) {
+                    <p class="d-header"> </p>
+                    <p class="d-header">--------------MARKET---------------</p>
+                    @for(card <- deck.market) {
+                        <p class="card">@{card._2} @{card._1.eternalFormat}</p>
+                    }
                 }
-            }
+                @if(deck.sideBoard.nonEmpty) {
+                    <p class="d-header"> </p>
+                    <p class="d-header">Side board:</p>
+                    @for(card <- deck.sideBoard) {
+                        <p class="card">@{card._2} @{card._1.eternalFormat}</p>
+                    }
+                }
+            </div>
         }
         </p>
         }

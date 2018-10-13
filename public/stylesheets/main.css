@@ -39,22 +39,28 @@ p {
 @media print {
     @page {
         size: A4; /* DIN A4 standard, Europe */
-        margin:0;
+        margin: 0;
     }
+
+    .noprint {
+        display: none !important;
+    }
+
     html, body {
         width: 210mm;
         /* height: 297mm; */
         height: 282mm;
         font-size: 14px !important;
         background: #FFF;
-        overflow:visible;
+        overflow: visible;
     }
+
     body {
-        padding-top:15mm;
+        padding-top: 15mm;
     }
 
     .tournament-name {
-        padding-top:100mm;
+        padding-top: 100mm;
         position: center;
         font-weight: bold;
     }

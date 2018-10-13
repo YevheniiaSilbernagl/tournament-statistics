@@ -1,10 +1,57 @@
 jQuery(window).ready(function () {
     $.ajaxSetup({cache: true});
-
+    refresh_links();
 
     $(document).on('click', "#generateResources", function () {
         generate_resources();
     });
+
+    $(document).click(function (e) {
+        if (e.target.tagName.toLowerCase() !== 'input') {
+            apply_name();
+        }
+    });
+
+    $(document).on('keyup', ".deck-name-edit", function (e) {
+        if (e.keyCode === 13) {
+            apply_name();
+        }
+    });
+
+    $(document).on('dblclick', ".deck-name", function (e) {
+        apply_name();
+        var currentText = $(e.currentTarget).text();
+        var parent = $(e.currentTarget).parent();
+        $(e.currentTarget).remove();
+        $(parent).append('<input class="deck-name-edit" type="text" value="' + currentText + '">');
+        $('.deck-name-edit').focus()
+    });
+
+    function apply_name() {
+        var editField = $('.deck-name-edit');
+        if (editField.length > 0) {
+            var currentText = editField.val();
+            var parent = $(editField).parent();
+            var deckDiv = $(parent).parent();
+            $(editField).remove();
+            $(parent).append('<p class="p-header deck-name">' + currentText + '</p>');
+            refresh_links();
+
+        }
+    }
+
+    function refresh_links(){
+        var decks = $(".deck");
+        decks.each(function () {
+            var deckDiv = this;
+            var currentText = encodeURIComponent($(deckDiv).find('.deck-name').text());
+            var deckLink = encodeURIComponent($(deckDiv).find('.generate-left').attr("link"));
+            var playerName = encodeURIComponent($(deckDiv).find('.player-name').find("p").text());
+            $(deckDiv).find('.generate-left').attr("href", "/download/tourney-left?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
+            $(deckDiv).find('.generate-right').attr("href", "/download/tourney-right?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
+        });
+
+    }
 
     function generate_resources() {
         $.ajax({
@@ -19,9 +66,9 @@ jQuery(window).ready(function () {
             dataType: "json",
             success: function (msg) {
                 $("#generatedResources").remove();
-                $( ".container" ).append('<div id="generatedResources" class="row">' +
-                    '<div class="col-sm-6"><img src="/assets/images/' + msg.left + '" style="width:100%"></div>'+
-                    '<div class="col-sm-6"><img src="/assets/images/' + msg.right + '" style="width:100%"></div>'+
+                $(".container").append('<div id="generatedResources" class="row">' +
+                    '<div class="col-sm-6"><img src="/assets/images/' + msg.left + '" style="width:100%"></div>' +
+                    '<div class="col-sm-6"><img src="/assets/images/' + msg.right + '" style="width:100%"></div>' +
                     '</div>');
             }
         });
