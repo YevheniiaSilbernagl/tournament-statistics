@@ -267,7 +267,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
     val file = env.getFile(s"/public/images/${generateImage((player, None), side, Some(link), Some(name))}")
     if (file.exists())
       Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png")
-    else NotFound
+    else NotFound(file.getAbsolutePath)
   }
 
   def left(link: String, name: String, player: String): Action[AnyContent] = side("left", link, name, player)
