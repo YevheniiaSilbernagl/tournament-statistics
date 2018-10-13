@@ -30,7 +30,8 @@ class Application @Inject()(ws: WSClient) extends Controller {
 
   val decksCache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
 
-  lazy val sourceDir: String = s"${new File("").getAbsolutePath}/public"
+  lazy val sourceDir: String = Option(s"${new File("").getAbsolutePath}/public").filter(path => new File(path).exists())
+    .getOrElse(s"${new File("").getAbsolutePath}/assets")
 
   lazy val FONT: Font = {
     import java.awt.{Font, GraphicsEnvironment}
@@ -232,7 +233,8 @@ class Application @Inject()(ws: WSClient) extends Controller {
               resultFile.getName
             case _ => throw new Exception(s"${player._1}'s deck unidentified")
           }
-        case _ => "none"
+        case _ =>
+          new File("").listFiles().map(_.getName).mkString(",")
       }
   }
 
