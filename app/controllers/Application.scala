@@ -240,7 +240,12 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
           case f => "> " + f.getName
         })
 
-        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n" + print_file(env.rootPath.getParentFile)))
+        def parent(f: File): File = f match {
+          case file if file.getParentFile!= null => parent(file.getParentFile)
+          case file => file
+         }
+
+        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n" + print_file(parent(env.rootPath))))
     }
   }
 
