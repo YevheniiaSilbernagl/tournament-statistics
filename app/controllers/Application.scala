@@ -228,11 +228,9 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
           }
           g.dispose()
 
-          file(s"/images/tourney-$side.png") match {
-            case Some(f) => ImageIO.write(image, "png", f)
-              Right(f)
-            case _ => Left(new Exception(s"/images/tourney-$side.png file not found"))
-          }
+          val resultFile = new File(s"${bg.getParent}/tourney-$side.png")
+          ImageIO.write(image, "png", resultFile)
+          Right(resultFile)
         case _ => Left(new Exception(s"${player._1}'s deck unidentified"))
       }
       case _ =>
