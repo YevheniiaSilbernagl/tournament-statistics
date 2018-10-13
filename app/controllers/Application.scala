@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import javax.inject.Inject
 import org.joda.time.DateTime
+import play.api.Environment
 import play.api.libs.json.{JsValue, _}
 import play.api.libs.ws.WSClient
 import play.api.mvc._
@@ -22,7 +23,7 @@ import scala.concurrent.{Await, Future}
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
-class Application @Inject()(ws: WSClient) extends Controller {
+class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
   type EternalLink = String
   type EternalName = String
@@ -30,17 +31,14 @@ class Application @Inject()(ws: WSClient) extends Controller {
 
   val decksCache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
 
-  lazy val sourceDir: String = Option(s"${new File("").getAbsolutePath}/public").filter(path => new File(path).exists())
-    .getOrElse(s"${new File("").getAbsolutePath}/assets")
-
-  lazy val FONT: Font = {
+  lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
     val ge = GraphicsEnvironment.getLocalGraphicsEnvironment
-    val font = Font.createFont(Font.TRUETYPE_FONT, new File(s"$sourceDir/fonts/Galdeano-Regular.ttf"))
-    ge.registerFont(font)
-    font
+    val font_ = env.getExistingFile( "/public/fonts/Galdeano-Regular.ttf")
+      .map(fontFile => Font.createFont(Font.TRUETYPE_FONT, fontFile))
+    font_.foreach(font => ge.registerFont(font))
+    font_
   }
-
 
   def all_tournaments: () => String = () => "https://dtmwra1jsgyb0.cloudfront.net/organizations/5a0e00fdc4cd48033c0083b7/tournaments"
 
@@ -142,8 +140,8 @@ class Application @Inject()(ws: WSClient) extends Controller {
   }
 
   def scale(image: BufferedImage, width: Int, height: Int): BufferedImage = {
-    val ws = width.doubleValue() /image.getWidth
-    val hs = height.doubleValue()/image.getHeight
+    val ws = width.doubleValue() / image.getWidth
+    val hs = height.doubleValue() / image.getHeight
     val dest = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
     val transform = AffineTransform.getScaleInstance(ws, hs)
     val renderedGraphics = dest.createGraphics()
@@ -155,87 +153,86 @@ class Application @Inject()(ws: WSClient) extends Controller {
     val currentTournament = getCurrentTournament._1
     val currentPlayers = currentListOfPlayers(currentTournament)
     val playersName = Option(player._1).map(s => s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#")))).getOrElse(player._1)
-    val targetFile = new File(s"$sourceDir/images/$currentTournament-$playersName-$side.png")
-    new File(s"$sourceDir/images/background-$side.png") match {
-        case bg if bg.exists() =>
-          currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).map(getDeck).headOption match {
-            case Some(deck) =>
-              val image = ImageIO.read(bg)
-              val g = image.getGraphics
-              g.setFont(FONT.deriveFont(48f))
-              val title = s"$playersName - ${deckName.getOrElse(if (deck.name.length > 30) s"${deck.name.substring(0, 20)}..." else deck.name)}"
-              val titleWidth = g.getFontMetrics.stringWidth(title)
+    env.getFile(s"/public/images/background-$side.png") match {
+      case bg if bg.exists() =>
+        currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).map(getDeck).headOption match {
+          case Some(deck) =>
+            val image = ImageIO.read(bg)
+            val g = image.getGraphics
+            FONT.foreach(f => g.setFont(f.deriveFont(48f)))
+            val title = s"$playersName - ${deckName.getOrElse(if (deck.name.length > 30) s"${deck.name.substring(0, 20)}..." else deck.name)}"
+            val titleWidth = g.getFontMetrics.stringWidth(title)
 
-              g.drawString(title, (image.getWidth() - titleWidth) / 2, 80)
-              g.setFont(FONT.deriveFont(30f))
-              val oneColumnWidth = image.getWidth / 3
-              var column = 0
-              val max_column = 3
-              val max_cards = 15
-              val cardHeight = 50
-              val cardWidth = 250
-              var counter = 0
+            g.drawString(title, (image.getWidth() - titleWidth) / 2, 80)
+            FONT.foreach(f => g.setFont(f.deriveFont(30f)))
+            val oneColumnWidth = image.getWidth / 3
+            var column = 0
+            val max_column = 3
+            val max_cards = 15
+            val cardHeight = 50
+            val cardWidth = 250
+            var counter = 0
 
-              def drawCard(name: String, quantity: Int) = {
-                val cardFile = Option(new File(s"$sourceDir/images/cards/$name.png")).filter(_.exists())
-                  .getOrElse(new File(s"$sourceDir/images/MISSING.png"))
-                val cardImage = scale(ImageIO.read(cardFile), cardWidth, cardHeight)
-                val qImage = ImageIO.read(new File(s"$sourceDir/images/quantity-blank.png"))
-                val quantityScale = cardImage.getHeight().doubleValue() / qImage.getHeight().doubleValue()
-                val quantityImage = scale(qImage, cardHeight, cardHeight)
+            def drawCard(name: String, quantity: Int) = {
+              val cardFile = env.getExistingFile(s"/public/images/cards/$name.png").filter(_.exists())
+                .getOrElse(env.getFile(s"/public/images/MISSING.png"))
+              val cardImage = scale(ImageIO.read(cardFile), cardWidth, cardHeight)
+              val qImage = ImageIO.read(env.getFile(s"/public/images/quantity-blank.png"))
+              val quantityScale = cardImage.getHeight().doubleValue() / qImage.getHeight().doubleValue()
+              val quantityImage = scale(qImage, cardHeight, cardHeight)
 
-                val dest = new BufferedImage(cardImage.getWidth + quantityImage.getWidth, cardImage.getHeight, BufferedImage.TYPE_INT_RGB)
-                val renderedGraphics = dest.createGraphics()
-                renderedGraphics.setFont(FONT.deriveFont(30f))
-                renderedGraphics.drawImage(cardImage, 0, 0, null)
-                renderedGraphics.drawImage(quantityImage, cardImage.getWidth, 0, null)
+              val dest = new BufferedImage(cardImage.getWidth + quantityImage.getWidth, cardImage.getHeight, BufferedImage.TYPE_INT_RGB)
+              val renderedGraphics = dest.createGraphics()
+              FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+              renderedGraphics.drawImage(cardImage, 0, 0, null)
+              renderedGraphics.drawImage(quantityImage, cardImage.getWidth, 0, null)
 
-                val qString = quantity.toString
-                renderedGraphics.drawString(qString,
-                  cardImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
-                  (quantityImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
+              val qString = quantity.toString
+              renderedGraphics.drawString(qString,
+                cardImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
+                (quantityImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
 
-                g.drawImage(dest, column * oneColumnWidth + 20, 160 + dest.getHeight * counter, null)
+              g.drawImage(dest, column * oneColumnWidth + 20, 160 + dest.getHeight * counter, null)
 
-              }
+            }
 
-              if (deck.mainDeck.nonEmpty) {
-                val md = "Main deck:"
-                g.drawString(md, 40, 150)
-                for (card <- deck.mainDeck) {
-                  if (counter >= max_cards) {
-                    counter = 0
-                    column = column + 1
-                  }
-                  drawCard(card._1.name, card._2)
-                  counter = counter + 1
+            if (deck.mainDeck.nonEmpty) {
+              val md = "Main deck:"
+              g.drawString(md, 40, 150)
+              for (card <- deck.mainDeck) {
+                if (counter >= max_cards) {
+                  counter = 0
+                  column = column + 1
                 }
+                drawCard(card._1.name, card._2)
+                counter = counter + 1
               }
-              if (deck.market.nonEmpty) {
-                if (column < max_column - 1) column = column + 1
-                counter = 0
-                val md = "Market:"
-                g.drawString(md, column * oneColumnWidth + 40, 150)
-                for (card <- deck.market) {
-                  if (counter >= max_cards) {
-                    counter = 0
-                    column = column + 1
-                  }
-                  drawCard(card._1.name, card._2)
-                  counter = counter + 1
+            }
+            if (deck.market.nonEmpty) {
+              if (column < max_column - 1) column = column + 1
+              counter = 0
+              val md = "Market:"
+              g.drawString(md, column * oneColumnWidth + 40, 150)
+              for (card <- deck.market) {
+                if (counter >= max_cards) {
+                  counter = 0
+                  column = column + 1
                 }
+                drawCard(card._1.name, card._2)
+                counter = counter + 1
               }
-              g.dispose()
+            }
+            g.dispose()
 
-              val resultFile = new File(s"$sourceDir/images/$currentTournament-$playersName-$side.png")
+            val resultFile = new File(s"${env.getFile("/public/images").getAbsolutePath}/$currentTournament-$playersName-$side.png")
 
-              ImageIO.write(image, "png", resultFile)
-              resultFile.getName
-            case _ => throw new Exception(s"${player._1}'s deck unidentified")
-          }
-        case _ =>
-          new File("").listFiles().map(_.getName).mkString(",")
-      }
+            ImageIO.write(image, "png", resultFile)
+            resultFile.getName
+          case _ => throw new Exception(s"${player._1}'s deck unidentified")
+        }
+      case _ =>
+        "none"
+    }
   }
 
   def generateImages(player1: (String, Option[String]), player2: (String, Option[String])): (String, String) = {
@@ -262,7 +259,7 @@ class Application @Inject()(ws: WSClient) extends Controller {
   }
 
   def side(side: String, link: String, name: String, player: String) = Action {
-    val file = new File(sourceDir + "/images/" + generateImage((player, None), side, Some(name)))
+    val file = env.getFile(generateImage((player, None), side, Some(name)))
     if (file.exists())
       Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png")
     else NotFound
