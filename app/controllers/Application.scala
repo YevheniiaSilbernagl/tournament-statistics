@@ -149,13 +149,16 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
     dest
   }
 
-  def generateImage(player: (String, Option[String]), side: String, deckName: Option[String] = None): String = {
-    val currentTournament = getCurrentTournament._1
-    val currentPlayers = currentListOfPlayers(currentTournament)
+  def generateImage(player: (String, Option[String]),
+                    side: String,
+                    deckLink: Option[String],
+                    deckName: Option[String] = None
+                   ): String = {
+
     val playersName = Option(player._1).map(s => s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#")))).getOrElse(player._1)
     env.getFile(s"/public/images/background-$side.png") match {
       case bg if bg.exists() =>
-        currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).map(getDeck).headOption match {
+        deckLink.map(getDeck) match {
           case Some(deck) =>
             val image = ImageIO.read(bg)
             val g = image.getGraphics
@@ -224,7 +227,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
             }
             g.dispose()
 
-            val resultFile = new File(s"${env.getFile("/public/images").getAbsolutePath}/$currentTournament-$playersName-$side.png")
+            val resultFile = new File(s"${env.getFile("/public/images").getAbsolutePath}/tourney-$side.png")
 
             ImageIO.write(image, "png", resultFile)
             resultFile.getName
@@ -236,10 +239,12 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
   }
 
   def generateImages(player1: (String, Option[String]), player2: (String, Option[String])): (String, String) = {
+    val currentTournament = getCurrentTournament._1
+    val currentPlayers = currentListOfPlayers(currentTournament)
 
-    def generateLeft(player: (String, Option[String])): String = generateImage(player, "left")
+    def generateLeft(player: (String, Option[String])): String = generateImage(player, "left", currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).headOption)
 
-    def generateRight(player: (String, Option[String])): String = generateImage(player, "right")
+    def generateRight(player: (String, Option[String])): String = generateImage(player, "right", currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).headOption)
 
     (generateLeft(player1), generateRight(player2))
   }
@@ -259,7 +264,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
   }
 
   def side(side: String, link: String, name: String, player: String) = Action {
-    val file = env.getFile(generateImage((player, None), side, Some(name)))
+    val file = env.getFile(generateImage((player, None), side, Some(name), Some(link)))
     if (file.exists())
       Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png")
     else NotFound
