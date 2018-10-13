@@ -232,7 +232,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
             Right(resultFile)
           case _ => Left(new Exception(s"${player._1}'s deck unidentified"))
         }
-      case _ => Left(new Exception(s"Background image $side not found"))
+      case _ => Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}"))
     }
   }
 
