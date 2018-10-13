@@ -248,7 +248,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
         val parentFile = parent(env.rootPath)
         Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n"+
           parentFile.getAbsolutePath+"\n" +
-          print_file(parent(env.rootPath))))
+          print_file(parentFile)))
     }
   }
 
