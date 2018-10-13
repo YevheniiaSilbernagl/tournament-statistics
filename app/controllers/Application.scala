@@ -158,81 +158,82 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
     val playersName = Option(player._1).map(s => s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#")))).getOrElse(player._1)
     env.getExistingFile(s"/public/images/background-$side.png") match {
       case Some(bg) => deckLink.map(getDeck) match {
-          case Some(deck) =>
-            val image = ImageIO.read(bg)
-            val g = image.getGraphics
-            FONT.foreach(f => g.setFont(f.deriveFont(48f)))
-            val title = s"$playersName - ${deckName.getOrElse(if (deck.name.length > 30) s"${deck.name.substring(0, 20)}..." else deck.name)}"
-            val titleWidth = g.getFontMetrics.stringWidth(title)
+        case Some(deck) =>
+          val image = ImageIO.read(bg)
+          val g = image.getGraphics
+          FONT.foreach(f => g.setFont(f.deriveFont(48f)))
+          val title = s"$playersName - ${deckName.getOrElse(if (deck.name.length > 30) s"${deck.name.substring(0, 20)}..." else deck.name)}"
+          val titleWidth = g.getFontMetrics.stringWidth(title)
 
-            g.drawString(title, (image.getWidth() - titleWidth) / 2, 80)
-            FONT.foreach(f => g.setFont(f.deriveFont(30f)))
-            val oneColumnWidth = image.getWidth / 3
-            var column = 0
-            val max_column = 3
-            val max_cards = 15
-            val cardHeight = 50
-            val cardWidth = 250
-            var counter = 0
+          g.drawString(title, (image.getWidth() - titleWidth) / 2, 80)
+          FONT.foreach(f => g.setFont(f.deriveFont(30f)))
+          val oneColumnWidth = image.getWidth / 3
+          var column = 0
+          val max_column = 3
+          val max_cards = 15
+          val cardHeight = 50
+          val cardWidth = 250
+          var counter = 0
 
-            def drawCard(name: String, quantity: Int) = {
-              val cardFile = env.getExistingFile(s"/public/images/cards/$name.png").filter(_.exists())
-                .getOrElse(env.getFile(s"/public/images/MISSING.png"))
-              val cardImage = scale(ImageIO.read(cardFile), cardWidth, cardHeight)
-              val qImage = ImageIO.read(env.getFile(s"/public/images/quantity-blank.png"))
-              val quantityScale = cardImage.getHeight().doubleValue() / qImage.getHeight().doubleValue()
-              val quantityImage = scale(qImage, cardHeight, cardHeight)
+          def drawCard(name: String, quantity: Int) = {
+            val cardFile = env.getExistingFile(s"/public/images/cards/$name.png").filter(_.exists())
+              .getOrElse(env.getFile(s"/public/images/MISSING.png"))
+            val cardImage = scale(ImageIO.read(cardFile), cardWidth, cardHeight)
+            val qImage = ImageIO.read(env.getFile(s"/public/images/quantity-blank.png"))
+            val quantityScale = cardImage.getHeight().doubleValue() / qImage.getHeight().doubleValue()
+            val quantityImage = scale(qImage, cardHeight, cardHeight)
 
-              val dest = new BufferedImage(cardImage.getWidth + quantityImage.getWidth, cardImage.getHeight, BufferedImage.TYPE_INT_RGB)
-              val renderedGraphics = dest.createGraphics()
-              FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
-              renderedGraphics.drawImage(cardImage, 0, 0, null)
-              renderedGraphics.drawImage(quantityImage, cardImage.getWidth, 0, null)
+            val dest = new BufferedImage(cardImage.getWidth + quantityImage.getWidth, cardImage.getHeight, BufferedImage.TYPE_INT_RGB)
+            val renderedGraphics = dest.createGraphics()
+            FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+            renderedGraphics.drawImage(cardImage, 0, 0, null)
+            renderedGraphics.drawImage(quantityImage, cardImage.getWidth, 0, null)
 
-              val qString = quantity.toString
-              renderedGraphics.drawString(qString,
-                cardImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
-                (quantityImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
+            val qString = quantity.toString
+            renderedGraphics.drawString(qString,
+              cardImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
+              (quantityImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
 
-              g.drawImage(dest, column * oneColumnWidth + 20, 160 + dest.getHeight * counter, null)
+            g.drawImage(dest, column * oneColumnWidth + 20, 160 + dest.getHeight * counter, null)
 
-            }
+          }
 
-            if (deck.mainDeck.nonEmpty) {
-              val md = "Main deck:"
-              g.drawString(md, 40, 150)
-              for (card <- deck.mainDeck) {
-                if (counter >= max_cards) {
-                  counter = 0
-                  column = column + 1
-                }
-                drawCard(card._1.name, card._2)
-                counter = counter + 1
+          if (deck.mainDeck.nonEmpty) {
+            val md = "Main deck:"
+            g.drawString(md, 40, 150)
+            for (card <- deck.mainDeck) {
+              if (counter >= max_cards) {
+                counter = 0
+                column = column + 1
               }
+              drawCard(card._1.name, card._2)
+              counter = counter + 1
             }
-            if (deck.market.nonEmpty) {
-              if (column < max_column - 1) column = column + 1
-              counter = 0
-              val md = "Market:"
-              g.drawString(md, column * oneColumnWidth + 40, 150)
-              for (card <- deck.market) {
-                if (counter >= max_cards) {
-                  counter = 0
-                  column = column + 1
-                }
-                drawCard(card._1.name, card._2)
-                counter = counter + 1
+          }
+          if (deck.market.nonEmpty) {
+            if (column < max_column - 1) column = column + 1
+            counter = 0
+            val md = "Market:"
+            g.drawString(md, column * oneColumnWidth + 40, 150)
+            for (card <- deck.market) {
+              if (counter >= max_cards) {
+                counter = 0
+                column = column + 1
               }
+              drawCard(card._1.name, card._2)
+              counter = counter + 1
             }
-            g.dispose()
+          }
+          g.dispose()
 
-            val resultFile = new File(s"${env.getFile("/public/images").getAbsolutePath}/tourney-$side.png")
+          val resultFile = new File(s"${env.getFile("/public/images").getAbsolutePath}/tourney-$side.png")
 
-            ImageIO.write(image, "png", resultFile)
-            Right(resultFile)
-          case _ => Left(new Exception(s"${player._1}'s deck unidentified"))
-        }
-      case _ => Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}"))
+          ImageIO.write(image, "png", resultFile)
+          Right(resultFile)
+        case _ => Left(new Exception(s"${player._1}'s deck unidentified"))
+      }
+      case _ =>
+        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n" + env.rootPath.list().mkString("\n")))
     }
   }
 
