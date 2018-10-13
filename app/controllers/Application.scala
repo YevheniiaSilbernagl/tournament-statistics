@@ -31,11 +31,13 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
   val decksCache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
 
+  def file(path: String): Option[File] = Option(env.getExistingFile("/public" + path)
+    .getOrElse(new File("/app/public" + path))).filter(_.exists())
+
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
     val ge = GraphicsEnvironment.getLocalGraphicsEnvironment
-    val font_ = env.getExistingFile("/public/fonts/Galdeano-Regular.ttf")
-      .map(fontFile => Font.createFont(Font.TRUETYPE_FONT, fontFile))
+    val font_ = file("/fonts/Galdeano-Regular.ttf").map(fontFile => Font.createFont(Font.TRUETYPE_FONT, fontFile))
     font_.foreach(font => ge.registerFont(font))
     font_
   }
@@ -156,7 +158,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
                    ): Either[Exception, File] = {
 
     val playersName = Option(player._1).map(s => s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#")))).getOrElse(player._1)
-    env.getExistingFile(s"/public/images/background-$side.png") match {
+    file(s"/images/background-$side.png") match {
       case Some(bg) => deckLink.map(getDeck) match {
         case Some(deck) =>
           val image = ImageIO.read(bg)
@@ -176,10 +178,10 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
           var counter = 0
 
           def drawCard(name: String, quantity: Int) = {
-            val cardFile = env.getExistingFile(s"/public/images/cards/$name.png").filter(_.exists())
-              .getOrElse(env.getFile(s"/public/images/MISSING.png"))
+            val cardFile = file(s"/images/cards/$name.png").filter(_.exists())
+              .getOrElse(file(s"/images/MISSING.png").get)
             val cardImage = scale(ImageIO.read(cardFile), cardWidth, cardHeight)
-            val qImage = ImageIO.read(env.getFile(s"/public/images/quantity-blank.png"))
+            val qImage = ImageIO.read(file(s"/images/quantity-blank.png").get)
             val quantityScale = cardImage.getHeight().doubleValue() / qImage.getHeight().doubleValue()
             val quantityImage = scale(qImage, cardHeight, cardHeight)
 
@@ -226,21 +228,22 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
           }
           g.dispose()
 
-          val resultFile = new File(s"${env.getFile("/public/images").getAbsolutePath}/tourney-$side.png")
-
-          ImageIO.write(image, "png", resultFile)
-          Right(resultFile)
+          file(s"/images/tourney-$side.png") match {
+            case Some(f) => ImageIO.write(image, "png", f)
+              Right(f)
+            case _ => Left(new Exception(s"/images/tourney-$side.png file not found"))
+          }
         case _ => Left(new Exception(s"${player._1}'s deck unidentified"))
       }
       case _ =>
         def print_file(file: File): String = "-" + (file match {
           case f if f.isDirectory =>
-            "["+f.getAbsolutePath + "]\n" +
+            "[" + f.getAbsolutePath + "]\n" +
               f.listFiles().toList.map(print_file).mkString("\n")
           case f => "> " + f.getName
         })
 
-        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n"+
+        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n" +
           print_file(new File("/app"))))
     }
   }
