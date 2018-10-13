@@ -34,7 +34,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
     val ge = GraphicsEnvironment.getLocalGraphicsEnvironment
-    val font_ = env.getExistingFile( "/public/fonts/Galdeano-Regular.ttf")
+    val font_ = env.getExistingFile("/public/fonts/Galdeano-Regular.ttf")
       .map(fontFile => Font.createFont(Font.TRUETYPE_FONT, fontFile))
     font_.foreach(font => ge.registerFont(font))
     font_
@@ -264,7 +264,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
   }
 
   def side(side: String, link: String, name: String, player: String) = Action {
-    val file = env.getFile(generateImage((player, None), side, Some(name), Some(link)))
+    val file = env.getFile(s"/public/images/${generateImage((player, None), side, Some(link), Some(name))}")
     if (file.exists())
       Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png")
     else NotFound
