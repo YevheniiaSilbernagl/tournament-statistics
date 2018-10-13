@@ -234,12 +234,13 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
       }
       case _ =>
         def print_file(file: File): String = "-" + (file match {
-          case f if f.isDirectory => f.getName + "\n" + f.listFiles().map(print_file).mkString("\n")
-          case f => "> " + f.getAbsolutePath
+          case f if f.isDirectory =>
+            "["+f.getAbsolutePath + "]\n" +
+              f.listFiles().map(print_file).mkString("\n")
+          case f => "> " + f.getName
         })
 
-        val tree = env.rootPath.listFiles().map(print_file).mkString("\n")
-        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n" + tree))
+        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n" + print_file(env.rootPath.getParentFile)))
     }
   }
 
