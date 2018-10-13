@@ -153,12 +153,11 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
                     side: String,
                     deckLink: Option[String],
                     deckName: Option[String] = None
-                   ): String = {
+                   ): Either[Exception, File] = {
 
     val playersName = Option(player._1).map(s => s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#")))).getOrElse(player._1)
-    env.getFile(s"/public/images/background-$side.png") match {
-      case bg if bg.exists() =>
-        deckLink.map(getDeck) match {
+    env.getExistingFile(s"/public/images/background-$side.png") match {
+      case Some(bg) => deckLink.map(getDeck) match {
           case Some(deck) =>
             val image = ImageIO.read(bg)
             val g = image.getGraphics
@@ -230,21 +229,20 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
             val resultFile = new File(s"${env.getFile("/public/images").getAbsolutePath}/tourney-$side.png")
 
             ImageIO.write(image, "png", resultFile)
-            resultFile.getName
-          case _ => throw new Exception(s"${player._1}'s deck unidentified")
+            Right(resultFile)
+          case _ => Left(new Exception(s"${player._1}'s deck unidentified"))
         }
-      case _ =>
-        "none"
+      case _ => Left(new Exception(s"Background image $side not found"))
     }
   }
 
-  def generateImages(player1: (String, Option[String]), player2: (String, Option[String])): (String, String) = {
+  def generateImages(player1: (String, Option[String]), player2: (String, Option[String])): (Either[Exception, File], Either[Exception, File]) = {
     val currentTournament = getCurrentTournament._1
     val currentPlayers = currentListOfPlayers(currentTournament)
 
-    def generateLeft(player: (String, Option[String])): String = generateImage(player, "left", currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).headOption)
+    def generateLeft(player: (String, Option[String])): Either[Exception, File] = generateImage(player, "left", currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).headOption)
 
-    def generateRight(player: (String, Option[String])): String = generateImage(player, "right", currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).headOption)
+    def generateRight(player: (String, Option[String])): Either[Exception, File] = generateImage(player, "right", currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).headOption)
 
     (generateLeft(player1), generateRight(player2))
   }
@@ -256,18 +254,22 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
         (params \ "players").toOption.map(_.as[String]).map(_.split("[\\s-:]+")).map(players => {
           val scoreP1 = (params \ "p1score").toOption.map(_.as[String]).filterNot(_.equals("-"))
           val scoreP2 = (params \ "p2score").toOption.map(_.as[String]).filterNot(_.equals("-"))
-          val images = generateImages((players(0), scoreP1), (players(1), scoreP2))
-          Ok(Json.obj("left" -> images._1, "right" -> images._2))
+          generateImages((players(0), scoreP1), (players(1), scoreP2))
         })
-      }).getOrElse(Ok("{}"))
+      })
+        .filter(images => images._1.isRight && images._2.isRight)
+        .map(images => Ok(Json.obj(
+          "left" -> images._1.right.get.getName,
+          "right" -> images._2.right.get.getName
+        ))).getOrElse(Ok("{}"))
 
   }
 
   def side(side: String, link: String, name: String, player: String) = Action {
-    val file = env.getFile(s"/public/images/${generateImage((player, None), side, Some(link), Some(name))}")
-    if (file.exists())
-      Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png")
-    else NotFound(file.getAbsolutePath)
+    generateImage((player, None), side, Some(link), Some(name)) match {
+      case Right(file) => Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png")
+      case Left(error) => NotFound(error.getMessage)
+    }
   }
 
   def left(link: String, name: String, player: String): Action[AnyContent] = side("left", link, name, player)
