@@ -39,6 +39,8 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
   def file(path: String): Option[File] = Option(env.getExistingFile("/public" + path)
     .getOrElse(new File("/app/public" + path))).filter(_.exists())
 
+  val parent: String = file(s"/images/background-left.png").map(_.getParent).get
+
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
     val ge = GraphicsEnvironment.getLocalGraphicsEnvironment
@@ -231,7 +233,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
           }
           g.dispose()
 
-          val resultFile = new File(s"${bg.getParent}/tourney-$side.png")
+          val resultFile = new File(s"$parent/tourney-$side.png")
           val iter = ImageIO.getImageWritersByFormatName("png")
           val writer = iter.next()
           val iwp = writer.getDefaultWriteParam
@@ -281,7 +283,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
   def doc(tournament_id: String): Action[AnyContent] = Action {
     val tName = tournamentName(tournament_id)
-    val exportFile = file(s"/$tName.docx").get
+    val exportFile = new File(s"$parent/$tName.docx")
     val wordPackage = WordprocessingMLPackage.createPackage
     val mainDocumentPart = wordPackage.getMainDocumentPart
     val factory = Context.getWmlObjectFactory
