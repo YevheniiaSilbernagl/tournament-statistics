@@ -334,7 +334,8 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
   def side(side: String, link: String, name: String, player: String) = Action {
     generateImage((player, None), side, Some(link), Some(name)) match {
-      case Right(file) => Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png")
+      case Right(file) => Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+        "content-disposition" -> s"""attachment; filename="${file.getName}"""")
       case Left(error) => NotFound(error.getMessage)
     }
   }
