@@ -1,7 +1,7 @@
 package controllers
 
 import java.awt.image.BufferedImage
-import java.awt.{Dimension, Font}
+import java.awt.{Dimension, Font, RenderingHints}
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
@@ -166,7 +166,11 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
       case Some(bg) => deckLink.map(getDeck) match {
         case Some(deck) =>
           val image = ImageIO.read(bg)
-          val g = image.getGraphics
+          val g = image.createGraphics()
+          g.addRenderingHints(new RenderingHints(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE))
+          g.addRenderingHints(new RenderingHints(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON))
+          g.addRenderingHints(new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY))
+          g.addRenderingHints(new RenderingHints(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY))
           FONT.foreach(f => g.setFont(f.deriveFont(48f)))
           val title = s"$playersName - ${deckName.getOrElse(if (deck.name.length > 30) s"${deck.name.substring(0, 20)}..." else deck.name)}"
           val titleWidth = g.getFontMetrics.stringWidth(title)
