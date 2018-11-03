@@ -11,6 +11,9 @@ import javax.imageio.{IIOImage, ImageIO, ImageWriteParam}
 import javax.inject.Inject
 import net.coobird.thumbnailator.makers.FixedSizeThumbnailMaker
 import net.coobird.thumbnailator.resizers.{DefaultResizerFactory, Resizer}
+import org.docx4j.jaxb.Context
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage
+import org.docx4j.wml._
 import org.joda.time.DateTime
 import play.api.Environment
 import play.api.libs.json.{JsValue, _}
@@ -82,10 +85,10 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
       .get().map(response => Deck.parse(url, response.body)), Duration.apply(30, TimeUnit.SECONDS)))
 
   def validateDecks(tournamentId: String) = Action {
-    Ok(views.html.validation(currentListOfPlayers(tournamentId)))
+    Ok(views.html.validation(listOfPlayers(tournamentId)))
   }
 
-  def currentListOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName])] =
+  def listOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName])] =
     Await.result(ws.url(players(tournamentId)).get().map(response => {
       val list = Json.parse(response.body).asInstanceOf[JsArray].value.toList
       list
@@ -98,8 +101,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
     }), Duration.apply(30, TimeUnit.SECONDS))
 
   def generateDeckDoc(tournamentId: String) = Action {
-    Ok(views.html.deckdoc(tournamentName(tournamentId), currentListOfPlayers(tournamentId).map { le =>
-      val name = le._1.substring(0, Some(le._1.indexOf("+")).filter(_ > 0).getOrElse(le._1.length))
+    Ok(views.html.deckdoc(tournamentId, tournamentName(tournamentId), listOfPlayers(tournamentId).map { le =>
       (le._1, le._2.map(getDeck))
     }))
   }
@@ -250,7 +252,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
   def generateImages(player1: (String, Option[String]), player2: (String, Option[String])): (Either[Exception, File], Either[Exception, File]) = {
     val currentTournament = getCurrentTournament._1
-    val currentPlayers = currentListOfPlayers(currentTournament)
+    val currentPlayers = listOfPlayers(currentTournament)
 
     def generateLeft(player: (String, Option[String])): Either[Exception, File] = generateImage(player, "left", currentPlayers.filter(p => p._1 == player._1).flatMap(_._2).headOption)
 
@@ -275,6 +277,74 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
           "right" -> images._2.right.get.getName
         ))).getOrElse(Ok("{}"))
 
+  }
+
+  def doc(tournament_id: String): Action[AnyContent] = Action {
+    val tName = tournamentName(tournament_id)
+    val exportFile = new File(s"$tName.docx")
+    val wordPackage = WordprocessingMLPackage.createPackage
+    val mainDocumentPart = wordPackage.getMainDocumentPart
+    val factory = Context.getWmlObjectFactory
+    val b = new BooleanDefaultTrue
+
+    def pageBreak: Br = {
+      val breakObj = new Br
+      breakObj.setType(STBrType.PAGE)
+      breakObj
+    }
+
+    def textLine(text: String): R = {
+      val r = factory.createR
+      val t = factory.createText
+      t.setValue(text)
+      r.getContent.add(t)
+      r.getContent.add(factory.createBr())
+      r
+    }
+
+    def title(text: String) = {
+      val paragraphProperties = factory.createPPr
+      val justification = factory.createJc
+      justification.setVal(JcEnumeration.CENTER)
+      paragraphProperties.setJc(justification)
+
+      val p = factory.createP
+      val rpr = factory.createRPr
+      rpr.setB(b)
+      rpr.setI(b)
+      val r = factory.createR
+      val t = factory.createText
+      t.setValue(text)
+      r.getContent.add(t)
+      r.setRPr(rpr)
+      p.getContent.add(r)
+      p.getContent.add(pageBreak)
+      p.setPPr(paragraphProperties)
+      mainDocumentPart.getContent.add(p)
+    }
+
+    def deck(playerName: String, deck: Deck): Unit = {
+      val p = factory.createP
+      p.getContent.add(textLine(playerName))
+      p.getContent.add(textLine(deck.name))
+      p.getContent.add(textLine(""))
+      for (line <- deck.eternalFormat) {
+        p.getContent.add(textLine(line))
+      }
+      p.getContent.add(pageBreak)
+
+      mainDocumentPart.getContent.add(p)
+    }
+
+    title(tName)
+    for ((eternalName, link, _) <- listOfPlayers(tournament_id)) {
+      deck(eternalName, getDeck(link.get))
+    }
+
+    wordPackage.save(exportFile)
+    Ok(Files.readAllBytes(exportFile.toPath))
+      .withHeaders("Content-Type" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "content-disposition" -> s"""attachment; filename="${exportFile.getName}"""")
   }
 
   def side(side: String, link: String, name: String, player: String) = Action {
