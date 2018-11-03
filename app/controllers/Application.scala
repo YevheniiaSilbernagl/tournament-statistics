@@ -281,7 +281,7 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
   def doc(tournament_id: String): Action[AnyContent] = Action {
     val tName = tournamentName(tournament_id)
-    val exportFile = file(s"$tName.docx")
+    val exportFile = file(s"/$tName.docx").get
     val wordPackage = WordprocessingMLPackage.createPackage
     val mainDocumentPart = wordPackage.getMainDocumentPart
     val factory = Context.getWmlObjectFactory
