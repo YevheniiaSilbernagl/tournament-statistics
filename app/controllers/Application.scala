@@ -1,14 +1,16 @@
 package controllers
 
-import java.awt.Font
-import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
+import java.awt.{Dimension, Font}
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
-import javax.imageio.ImageIO
+import javax.imageio.stream.FileImageOutputStream
+import javax.imageio.{IIOImage, ImageIO, ImageWriteParam}
 import javax.inject.Inject
+import net.coobird.thumbnailator.makers.FixedSizeThumbnailMaker
+import net.coobird.thumbnailator.resizers.{DefaultResizerFactory, Resizer}
 import org.joda.time.DateTime
 import play.api.Environment
 import play.api.libs.json.{JsValue, _}
@@ -142,13 +144,11 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
   }
 
   def scale(image: BufferedImage, width: Int, height: Int): BufferedImage = {
-    val ws = width.doubleValue() / image.getWidth
-    val hs = height.doubleValue() / image.getHeight
-    val dest = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
-    val transform = AffineTransform.getScaleInstance(ws, hs)
-    val renderedGraphics = dest.createGraphics()
-    renderedGraphics.drawRenderedImage(image, transform)
-    dest
+    val resizer: Resizer = DefaultResizerFactory.getInstance().getResizer(
+      new Dimension(image.getWidth(), image.getHeight()),
+      new Dimension(width, height))
+    new FixedSizeThumbnailMaker(
+      width, height, false, true).resizer(resizer).make(image)
   }
 
   def generateImage(player: (String, Option[String]),
@@ -169,20 +169,21 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
           g.drawString(title, (image.getWidth() - titleWidth) / 2, 80)
           FONT.foreach(f => g.setFont(f.deriveFont(30f)))
-          val oneColumnWidth = image.getWidth / 3
           var column = 0
           val max_column = 3
           val max_cards = 15
-          val cardHeight = 50
-          val cardWidth = 250
+          val cardHeight = 48
+          val cardWidth = image.getWidth / 3 - 20
           var counter = 0
 
-          def drawCard(name: String, quantity: Int) = {
+          def block(i: Int) = i * 20 + column * cardWidth
+
+          def drawCard(blockN: Int, name: String, quantity: Int) = {
+            //cardWidth = cardImage+quantityImage
             val cardFile = file(s"/images/cards/$name.png").filter(_.exists())
               .getOrElse(file(s"/images/MISSING.png").get)
-            val cardImage = scale(ImageIO.read(cardFile), cardWidth, cardHeight)
+            val cardImage = scale(ImageIO.read(cardFile), cardWidth - cardHeight, cardHeight)
             val qImage = ImageIO.read(file(s"/images/quantity-blank.png").get)
-            val quantityScale = cardImage.getHeight().doubleValue() / qImage.getHeight().doubleValue()
             val quantityImage = scale(qImage, cardHeight, cardHeight)
 
             val dest = new BufferedImage(cardImage.getWidth + quantityImage.getWidth, cardImage.getHeight, BufferedImage.TYPE_INT_RGB)
@@ -196,19 +197,19 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
               cardImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
               (quantityImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
 
-            g.drawImage(dest, column * oneColumnWidth + 20, 160 + dest.getHeight * counter, null)
+            g.drawImage(dest, block(blockN), 160 + dest.getHeight * counter, null)
 
           }
 
           if (deck.mainDeck.nonEmpty) {
             val md = "Main deck:"
-            g.drawString(md, 40, 150)
+            g.drawString(md, block(1), 150)
             for (card <- deck.mainDeck) {
               if (counter >= max_cards) {
                 counter = 0
                 column = column + 1
               }
-              drawCard(card._1.name, card._2)
+              drawCard(1, card._1.name, card._2)
               counter = counter + 1
             }
           }
@@ -216,33 +217,34 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
             if (column < max_column - 1) column = column + 1
             counter = 0
             val md = "Market:"
-            g.drawString(md, column * oneColumnWidth + 40, 150)
+            g.drawString(md, block(2), 150)
             for (card <- deck.market) {
               if (counter >= max_cards) {
                 counter = 0
                 column = column + 1
               }
-              drawCard(card._1.name, card._2)
+              drawCard(2, card._1.name, card._2)
               counter = counter + 1
             }
           }
           g.dispose()
 
           val resultFile = new File(s"${bg.getParent}/tourney-$side.png")
-          ImageIO.write(image, "png", resultFile)
+          val iter = ImageIO.getImageWritersByFormatName("png")
+          val writer = iter.next()
+          val iwp = writer.getDefaultWriteParam
+          if (iwp.canWriteCompressed) {
+            iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
+            iwp.setCompressionQuality(1.0f)
+          }
+          writer.setOutput(new FileImageOutputStream(resultFile))
+          writer.write(null, new IIOImage(image, null, null), iwp)
+          writer.dispose()
           Right(resultFile)
         case _ => Left(new Exception(s"${player._1}'s deck unidentified"))
       }
       case _ =>
-        def print_file(file: File): String = "-" + (file match {
-          case f if f.isDirectory =>
-            "[" + f.getAbsolutePath + "]\n" +
-              f.listFiles().toList.map(print_file).mkString("\n")
-          case f => "> " + f.getName
-        })
-
-        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}\n" +
-          print_file(new File("/app"))))
+        Left(new Exception(s"${side.capitalize} background image not found on ${env.mode}"))
     }
   }
 

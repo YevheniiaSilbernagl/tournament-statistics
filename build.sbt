@@ -9,7 +9,8 @@ scalaVersion := "2.11.7"
 routesGenerator := InjectedRoutesGenerator
 
 libraryDependencies ++= Seq( jdbc , cache , ws   , specs2 % Test,
-  "net.sourceforge.htmlcleaner" % "htmlcleaner" % "2.22"
+  "net.sourceforge.htmlcleaner" % "htmlcleaner" % "2.22",
+  "net.coobird" % "thumbnailator" % "0.4.8"
 )
 
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
