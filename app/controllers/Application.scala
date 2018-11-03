@@ -13,7 +13,7 @@ import net.coobird.thumbnailator.makers.FixedSizeThumbnailMaker
 import net.coobird.thumbnailator.resizers.{DefaultResizerFactory, Resizer}
 import org.docx4j.jaxb.Context
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage
-import org.docx4j.wml._
+import org.docx4j.wml.{Br, STBrType}
 import org.joda.time.DateTime
 import play.api.Environment
 import play.api.libs.json.{JsValue, _}
@@ -287,62 +287,41 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
     val wordPackage = WordprocessingMLPackage.createPackage
     val mainDocumentPart = wordPackage.getMainDocumentPart
     val factory = Context.getWmlObjectFactory
-    val b = new BooleanDefaultTrue
+    val paragraph = factory.createP()
 
-    def pageBreak: Br = {
-      val breakObj = new Br
-      breakObj.setType(STBrType.PAGE)
-      breakObj
+    val run = factory.createR
+
+    def line(t: String) = {
+      val lineElementText = factory.createText()
+      lineElementText.setValue(t)
+      run.getContent.add(lineElementText)
+      val br = new Br
+      br.setType(STBrType.TEXT_WRAPPING)
+      run.getContent.add(br)
     }
 
-    def textLine(text: String): R = {
-      val r = factory.createR
-      val t = factory.createText
-      t.setValue(text)
-      r.getContent.add(t)
-      r.getContent.add(factory.createBr())
-      r
+    def pageBreak = {
+      val br = new Br
+      br.setType(STBrType.PAGE)
+      run.getContent.add(br)
     }
 
-    def title(text: String) = {
-      val paragraphProperties = factory.createPPr
-      val justification = factory.createJc
-      justification.setVal(JcEnumeration.CENTER)
-      paragraphProperties.setJc(justification)
-
-      val p = factory.createP
-      val rpr = factory.createRPr
-      rpr.setB(b)
-      rpr.setI(b)
-      val r = factory.createR
-      val t = factory.createText
-      t.setValue(text)
-      r.getContent.add(t)
-      r.setRPr(rpr)
-      p.getContent.add(r)
-      p.getContent.add(pageBreak)
-      p.setPPr(paragraphProperties)
-      mainDocumentPart.getContent.add(p)
-    }
-
-    def deck(playerName: String, deck: Deck): Unit = {
-      val p = factory.createP
-      p.getContent.add(textLine(playerName))
-      p.getContent.add(textLine(deck.name))
-      p.getContent.add(textLine(""))
-      for (line <- deck.eternalFormat) {
-        p.getContent.add(textLine(line))
-      }
-      p.getContent.add(pageBreak)
-
-      mainDocumentPart.getContent.add(p)
-    }
-
-    title(tName)
+    line(tName)
+    pageBreak
     for ((eternalName, link, _) <- listOfPlayers(tournament_id)) {
-      deck(eternalName, getDeck(link.get))
+      val deck = getDeck(link.get)
+      line(eternalName)
+      line(deck.name)
+      line(" ")
+      for (card <- deck.eternalFormat) {
+        line(card)
+      }
+      pageBreak
     }
+    paragraph.getContent.add(run)
 
+
+    mainDocumentPart.getContent.add(paragraph)
     wordPackage.save(exportFile)
     Ok(Files.readAllBytes(exportFile.toPath))
       .withHeaders("Content-Type" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
