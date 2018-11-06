@@ -1,8 +1,5 @@
 package types
 
-import java.util.Optional
-import java.util.stream.{Collectors, IntStream}
-
 import org.htmlcleaner.TagNode
 
 case class Card(
@@ -15,6 +12,7 @@ case class Card(
                ) {
   def eternalFormat: String = s"$name (Set$set #$eternalId)"
 
+  def influences: Set[Faction.Value] = influence.filter(_._2 != 0).keySet
 }
 
 object Card {
