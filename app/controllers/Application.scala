@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage
 import java.awt.{Dimension, Font, RenderingHints}
 import java.io.File
 import java.nio.file.Files
+import java.sql.Connection
 import java.util.concurrent.TimeUnit
 
 import javax.imageio.stream.FileImageOutputStream
@@ -16,10 +17,11 @@ import org.docx4j.openpackaging.packages.WordprocessingMLPackage
 import org.docx4j.wml.{Br, STBrType}
 import org.joda.time.DateTime
 import play.api.Environment
+import play.api.db.Database
 import play.api.libs.json.{JsValue, _}
 import play.api.libs.ws.WSClient
 import play.api.mvc._
-import types.Deck
+import types.{Deck, Score, Tournament}
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -28,13 +30,25 @@ import scala.concurrent.{Await, Future}
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
-class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
+class Application @Inject()(ws: WSClient, env: Environment, db: Database) extends Controller {
 
   type EternalLink = String
   type EternalName = String
   type DiscordName = String
 
   val decksCache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
+  val eliminationRoundsCache: mutable.HashMap[String, Int] = scala.collection.mutable.HashMap()
+  lazy val current_season: Int = {//if app is always online than wee need an update here
+    val conn: Connection = db.getConnection()
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery("SELECT Max(season) as season FROM tournament t")
+      rs.next()
+      rs.getInt("season")
+    } finally {
+      conn.close()
+    }
+  }
 
   def file(path: String): Option[File] = Option(env.getExistingFile("/public" + path)
     .getOrElse(new File("/app/public" + path))).filter(_.exists())
@@ -60,10 +74,6 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
 
   def index = Action {
     Ok(views.html.index(getCurrentTournament))
-  }
-
-  def streamingResources = Action {
-    Ok(views.html.streaming(getCurrentPlayersList))
   }
 
   def validateDeck(url: String) = Action {
@@ -343,4 +353,168 @@ class Application @Inject()(ws: WSClient, env: Environment) extends Controller {
   def left(link: String, name: String, player: String): Action[AnyContent] = side("left", link, name, player)
 
   def right(link: String, name: String, player: String): Action[AnyContent] = side("right", link, name, player)
+
+  def playersStats = Action {
+    val mutableListOfPlayers: mutable.HashMap[Int, String] = new mutable.HashMap[Int, String]()
+    val conn: Connection = db.getConnection()
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery("SELECT * FROM player WHERE eternal_name != 'BYE+0000'")
+      while (rs.next()) {
+        mutableListOfPlayers.put(rs.getInt("id"), rs.getString("eternal_name"))
+      }
+    } finally {
+      conn.close()
+    }
+    Ok(views.html.stats(mutableListOfPlayers.toMap))
+  }
+
+
+  def playerStats(playerId: Int) = Action {
+    val tournaments: mutable.MutableList[(Tournament, Score, String)] = new mutable.MutableList[(Tournament, Score, String)]()
+    val conn: Connection = db.getConnection()
+    var name: String = ""
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery(
+        s"""SELECT
+           |  p.id                 AS player_id,
+           |  p.eternal_name       AS player_name,
+           |  part.id              AS participant_id,
+           |  t.name               AS tournament_name,
+           |  t.date               AS tournament_date,
+           |  t.id                 AS tournament_id,
+           |  t.season             AS tournament_season,
+           |  d.id                 AS deck_id,
+           |  d.eternalwarcry_link AS deck_link,
+           |  m.participant_a_id,
+           |  m.participant_b_id,
+           |  m.participant_a_score,
+           |  m.participant_b_score,
+           |  m.round,
+           |  m.bracket_name
+           |FROM player p
+           |  JOIN participant part ON p.id = part.player_id
+           |  JOIN tournament t ON part.tournament_id = t.id
+           |  JOIN deck d ON part.deck_id = d.id
+           |  JOIN match m ON (part.id = m.participant_a_id OR part.id = m.participant_b_id)
+           |WHERE p.id = $playerId
+           |ORDER BY tournament_date""".stripMargin)
+      while (rs.next()) {
+        name = rs.getString("player_name")
+        tournaments.+=((
+          Tournament(rs.getInt("tournament_id"), rs.getString("tournament_name"), DateTime.parse(rs.getString("tournament_date")), rs.getInt("tournament_season")),
+          Score(
+            rs.getInt("participant_id"),
+            rs.getInt("participant_a_id"),
+            rs.getInt("participant_b_id"),
+            rs.getInt("participant_a_score"),
+            rs.getInt("participant_b_score"),
+            rs.getInt("round"),
+            rs.getString("bracket_name")
+          ),
+          rs.getString("deck_link")))
+      }
+    } finally {
+      conn.close()
+    }
+
+    val tournaments_info = tournaments.toList.groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+    val this_season_tournaments_info = tournaments_info.filter(_._1._1.season == current_season)
+    val info: mutable.ListBuffer[(String, String, String)] = new mutable.ListBuffer[(String, String, String)]()
+
+    def winrate(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
+      val win = if (score.current_player_id == score.participant_a_id) score.participant_a_score else score.participant_b_score
+      val loss = if (score.current_player_id == score.participant_a_id) score.participant_b_score else score.participant_a_score
+      (win, loss)
+    })
+
+    def winrate_rounds(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
+      if (score.current_player_id == score.participant_a_id) score.participant_a_score > score.participant_b_score else score.participant_a_score < score.participant_b_score
+    }).toList
+
+    def times(number: Int): String = number match {
+      case 0 => "-"
+      case 1 => "once: "
+      case _ => s"$number times: "
+    }
+
+    def max_elimination_round(tournament: String): Int = {
+      eliminationRoundsCache.get(tournament) match {
+        case Some(v) => v
+        case None => val conn: Connection = db.getConnection()
+          var name: String = ""
+          try {
+            val stmt = conn.createStatement
+            val rs = stmt.executeQuery(
+              s"""
+                 |SELECT Max(m.round) as max_round
+                 |FROM tournament t
+                 |  JOIN participant p ON t.id = p.tournament_id
+                 |  JOIN match m ON (p.id = m.participant_a_id OR p.id = m.participant_b_id)
+                 |WHERE t.name = '$tournament' AND m.bracket_name = 'elimination'
+               """.stripMargin)
+            rs.next()
+            val v = rs.getInt("max_round")
+            eliminationRoundsCache.put(tournament, v)
+            v
+          } finally {
+            conn.close()
+          }
+      }
+    }
+
+    def top8(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 2))).filter(_._2.nonEmpty)
+
+    def top4(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 1))).filter(_._2.nonEmpty)
+
+    def top2(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == max_elimination_round(p._1._1.name))).filter(_._2.nonEmpty)
+
+    def winner(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2
+      .filter { s =>
+        s.bracket_name == "elimination" && s.round == max_elimination_round(p._1._1.name) &&
+          (if (s.participant_a_id == s.current_player_id) s.participant_a_score > s.participant_b_score
+          else s.participant_b_score > s.participant_a_score)
+      })
+      .filter(_._2.nonEmpty)
+
+    val allGamesWon = winrate(tournaments_info).map(_._1).sum
+    val allGamesLost = winrate(tournaments_info).map(_._2).sum
+    val allGamesPlayed = allGamesWon + allGamesLost
+    val allRoundsWon = winrate_rounds(tournaments_info).count(_ == true)
+    val allRoundsLost = winrate_rounds(tournaments_info).count(_ == false)
+    val allRoundsPlayed = allRoundsWon + allRoundsLost
+
+    val tsGamesWon = winrate(this_season_tournaments_info).map(_._1).sum
+    val tsGamesLost = winrate(this_season_tournaments_info).map(_._2).sum
+    val tsGamesPlayed = tsGamesWon + tsGamesLost
+    val tsRoundsWon = winrate_rounds(this_season_tournaments_info).count(_ == true)
+    val tsRoundsLost = winrate_rounds(this_season_tournaments_info).count(_ == false)
+    val tsRoundsPlayed = tsRoundsWon + tsRoundsLost
+
+
+    val all_top8 = top8(tournaments_info)
+    val all_top4 = top4(tournaments_info)
+    val all_top2 = top2(tournaments_info)
+    val all_winner = winner(tournaments_info)
+
+    val ts_top8 = top8(this_season_tournaments_info)
+    val ts_top4 = top4(this_season_tournaments_info)
+    val ts_top2 = top2(this_season_tournaments_info)
+    val ts_winner = winner(this_season_tournaments_info)
+
+
+    info.+=(("Tournaments played", this_season_tournaments_info.keySet.size.toString, tournaments_info.keySet.size.toString))
+
+    info.+=(("Games: Win-Loss", s"$tsGamesWon - $tsGamesLost", s"$allGamesWon - $allGamesLost"))
+    info.+=(("Games: Win-Loss %", s"${tsGamesWon * 100.0 / tsGamesPlayed}% - ${tsGamesLost * 100.0 / tsGamesPlayed}%", s"${allGamesWon * 100.0 / allGamesPlayed}% - ${allGamesLost * 100.0 / allGamesPlayed}%"))
+    info.+=(("Rounds: Win-Loss", s"$tsRoundsWon - $tsRoundsLost", s"$allRoundsWon - $allRoundsLost"))
+    info.+=(("Rounds: Win-Loss %", s"${tsRoundsWon * 100.0 / tsRoundsPlayed}% - ${tsRoundsLost * 100.0 / tsRoundsPlayed}%", s"${allRoundsWon * 100.0 / allRoundsPlayed}% - ${allRoundsLost * 100.0 / allRoundsPlayed}%"))
+    info.+=(("Top 8", s"${times(ts_top8.size)}\n ${ts_top8.map(_._1._1.name).mkString("\n")}", s"${times(all_top8.size)}\n ${all_top8.map(_._1._1.name).mkString("\n")}"))
+    info.+=(("Top 4", s"${times(ts_top4.size)}\n ${ts_top4.map(_._1._1.name).mkString("\n")}", s"${times(all_top4.size)}\n ${all_top4.map(_._1._1.name).mkString("\n")}"))
+    info.+=(("Top 2", s"${times(ts_top2.size)}\n ${ts_top2.map(_._1._1.name).mkString("\n")}", s"${times(all_top2.size)}\n ${all_top2.map(_._1._1.name).mkString("\n")}"))
+    info.+=(("Winner", s"${times(ts_winner.size)}\n ${ts_winner.map(_._1._1.name).mkString("\n")}", s"${times(all_winner.size)}\n ${all_winner.map(_._1._1.name).mkString("\n")}"))
+
+    Ok(views.html.player(name, info.toList))
+  }
 }

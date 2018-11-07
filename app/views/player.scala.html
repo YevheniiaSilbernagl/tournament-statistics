@@ -1,0 +1,29 @@
+@(name: String, info: List[(String, String, String)])
+
+    @main("Stats") {
+        <div class="container">
+            <h1>@name</h1>
+            <table class="table-bordered">
+                <tr>
+                    <th>-</th>
+                    <th>This season</th>
+                    <th>All seasons</th>
+                </tr>
+                @for(i <- info) {
+                    <tr>
+                        <td class="active font-weight-bold p-1 m-1">@i._1</td>
+                        <td class="p-1 m-1">
+                        @for(s <- i._2.split("\\n")) {
+                            <div>@s</div>
+                        }
+                        </td>
+                        <td class="p-1 m-1">
+                        @for(s <- i._3.split("\\n")) {
+                            <div>@s</div>
+                        }
+                        </td>
+                    </tr>
+                }
+            </table>
+        </div>
+    }

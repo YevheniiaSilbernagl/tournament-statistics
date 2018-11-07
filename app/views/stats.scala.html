@@ -1,0 +1,11 @@
+@(players: Map[Int, String])
+
+    @main("Stats") {
+        <div class="container">
+            @for(player <- players) {
+            <div class="row" id="@{player._1}">
+                <div class="col-sm"><a href="@routes.Application.playerStats(player._1)">@{player._2}</a></div>
+            </div>
+        }
+        </div>
+    }
