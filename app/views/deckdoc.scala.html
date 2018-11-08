@@ -1,9 +1,9 @@
-@import types.Deck
-@(tournament_id: String, tournament:String, players: List[(String, Option[Deck])])
+@import types.{Deck, Tournament}
+@(tournament:Tournament, players: List[(String, Option[Deck])])
 
 @main(s"DeckDoc:$tournament") {
     <div class="container">
-        <h1 class="tournament-name"><a href="@routes.Application.doc(tournament_id)">DOC: </a> @tournament</h1>
+        <h1 class="tournament-name"><a href="@routes.Application.doc(tournament.battlefy_id)">DOC: </a> @{tournament.name}</h1>
     @for(player <- players) {
         <p style="page-break-before: always">
         @for(deck <- player._2) {
