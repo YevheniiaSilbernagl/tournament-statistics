@@ -4,7 +4,7 @@
     <div class="container">
         <h1>@name
             @if(isRookie) {
-                    <div class="badge badge-warning">Rookie</div>
+                <div class="badge badge-warning">Rookie</div>
             }
         </h1>
         <table class="table-bordered">
@@ -18,12 +18,20 @@
                     <td class="active font-weight-bold p-1 m-1">@i._1</td>
                     <td class="p-1 m-1">
                     @for(s <- i._2.split("\\n")) {
-                        <div>@s</div>
+                        <div>@if(i._1 != "Decks played:") {
+                            @s
+                        } else {
+                            <a href="@s">@s</a>
+                        }</div>
                     }
                     </td>
                     <td class="p-1 m-1">
                     @for(s <- i._3.split("\\n")) {
-                        <div>@s</div>
+                        <div>@if(i._1 != "Decks played:") {
+                            @s
+                        } else {
+                            <a href="@s">@s</a>
+                        }</div>
                     }
                     </td>
                 </tr>

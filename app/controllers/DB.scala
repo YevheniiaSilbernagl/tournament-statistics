@@ -191,7 +191,9 @@ class DB @Inject()(database: Database) extends Controller {
     info.+=(("Top 4", s"${times(ts_top4.size)}\n ${ts_top4.map(_._1._1.name).mkString("\n")}", s"${times(all_top4.size)}\n ${all_top4.map(_._1._1.name).mkString("\n")}"))
     info.+=(("Top 2", s"${times(ts_top2.size)}\n ${ts_top2.map(_._1._1.name).mkString("\n")}", s"${times(all_top2.size)}\n ${all_top2.map(_._1._1.name).mkString("\n")}"))
     info.+=(("Winner", s"${times(ts_winner.size)}\n ${ts_winner.map(_._1._1.name).mkString("\n")}", s"${times(all_winner.size)}\n ${all_winner.map(_._1._1.name).mkString("\n")}"))
-
+    info.+=(("Decks played:",
+      s"${this_season_tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}",
+      s"${tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}"))
     (name, info.toList, tournaments_info.size <= 3)
   }
 }
