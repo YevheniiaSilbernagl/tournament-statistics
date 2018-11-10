@@ -1,10 +1,12 @@
-@(tournament: (String, String))
+@import types.Tournament
+@(tournament: Tournament)
 
 @main("Generate a match") {
     <div class="container">
-        <div>@tournament._2</div>
-        <div><a href="@routes.Application.validateDecks(tournament._1)">Validate decks</a></div>
-        <div><a href="@routes.Application.generateDeckDoc(tournament._1)">Build deck doc</a></div>
+        <div>@{tournament.name}</div>
+        <div><a href="@routes.Application.validateDecks(tournament.battlefy_id)">Validate decks</a></div>
+        <div><a href="@routes.Application.generateDeckDoc(tournament.battlefy_id)">Build deck doc</a></div>
+        <div><a href="@routes.Application.playersStats">Statistics</a></div>
     </div>
 
 }
