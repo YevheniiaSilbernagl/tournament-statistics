@@ -11,6 +11,48 @@ import types.{Score, Tournament}
 import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
+  def opponentPreviousInteraction(playerName: String, opponent: String): List[(String, String, String)] = {
+    val query =
+      s"""
+         |WITH games AS (SELECT *
+         |               FROM match m
+         |                 JOIN participant p ON (m.participant_a_id = p.id OR m.participant_b_id = p.id)
+         |                 JOIN player p2 ON p.player_id = p2.id
+         |               WHERE p2.eternal_name = '$playerName'),
+         |    opponent_id AS (SELECT p4.id AS opponent_id
+         |                    FROM participant p4
+         |                      JOIN player p3 ON p4.player_id = p3.id
+         |                    WHERE p3.eternal_name = '$opponent'),
+         |    tournaments AS (SELECT *
+         |                    FROM tournament)
+         |SELECT
+         |  g.*,
+         |  opponent_id,
+         |  t.name
+         |FROM games g, opponent_id, tournaments t
+         |WHERE (g.participant_a_id = opponent_id OR g.participant_b_id = opponent_id) AND t.id = g.tournament_id
+       """.stripMargin
+    val info: mutable.ListBuffer[(String, String, String)] = new mutable.ListBuffer[(String, String, String)]()
+    val conn: Connection = database.getConnection()
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery(query)
+      while (rs.next()) {
+        val participant_a_score = rs.getInt("participant_a_score")
+        val participant_b_score = rs.getInt("participant_b_score")
+        val participant_a_id = rs.getInt("participant_a_id")
+        val opponent_id = rs.getInt("opponent_id")
+        val tournament_name = rs.getString("name")
+        val round = rs.getInt("round")
+        val bracket = rs.getString("bracket_name")
+        info.+=((s"[$round $bracket] $tournament_name", s"$playerName - ${if (opponent_id == participant_a_id) participant_b_score else participant_a_score}", s"${if (opponent_id == participant_a_id) participant_a_score else participant_b_score} - $opponent"))
+      }
+    } finally {
+      conn.close()
+    }
+    info.toList
+  }
+
 
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 

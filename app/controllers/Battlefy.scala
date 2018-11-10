@@ -14,6 +14,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 class Battlefy @Inject()(ws: WSClient) extends Controller {
+  def currentOpponent(name: String): Option[String] = {
+    val info = stageInfo(currentStage).value.sortBy(_.asInstanceOf[JsObject].value("roundNumber").as[Int]).reverse
+    info.map(o => o.as[JsObject].value("top").as[JsObject] -> o.as[JsObject].value("bottom").as[JsObject])
+      .map(o => (if (o._1.keys.contains("team")) Some(o._1) else None) -> (if (o._2.keys.contains("team")) Some(o._2) else None))
+      .map(o => o._1.map(_.value("team").as[JsObject].value("name").as[String]) -> o._2.map(_.value("team").as[JsObject].value("name").as[String]))
+      .filter(o => o._1.contains(name) || o._2.contains(name)).flatMap(o => if (o._1.contains(name)) o._2 else o._1).headOption
+  }
+
   type EternalLink = String
   type EternalName = String
   type DiscordName = String
@@ -37,14 +45,25 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
     }), Duration.apply(30, TimeUnit.SECONDS))
 
   def getTournament(battlefy_uuid: String): Tournament = {
+    val t = getTournamentInfo(battlefy_uuid)
+    Tournament(t.value("_id").as[String], t.value("name").as[String], DateTime.parse(t.value("startTime").as[String]), None)
+  }
+
+  def getTournamentInfo(battlefy_uuid: String): JsObject = {
     Await.result(ws.url(all_tournaments()).get().map(response => {
       Json.parse(response.body).asInstanceOf[JsArray].value.toList
         .map(_.as[JsObject]).find(t => t.value("_id").as[String] == battlefy_uuid)
-        .map(t =>
-          Tournament(t.value("_id").as[String], t.value("name").as[String], DateTime.parse(t.value("startTime").as[String]), None)
-        ).get
+        .get
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
+
+  def currentStage:String = getTournamentInfo(getCurrentTournament.battlefy_id).value("stages").asInstanceOf[JsArray]
+    .value.toList.minBy(o => o.asInstanceOf[JsObject].value("startTime").as[String]).asInstanceOf[JsObject].value("_id").as[String]
+
+  def stageInfo(stage: String): JsArray = Await.result(ws.url(stage_info(stage)).get().map(response => {
+    Json.parse(response.body).asInstanceOf[JsArray]
+  }), Duration.apply(30, TimeUnit.SECONDS))
+
   def getCurrentTournament: Tournament = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 

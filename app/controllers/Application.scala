@@ -3,7 +3,6 @@ package controllers
 import java.nio.file.Files
 
 import javax.inject.Inject
-import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.mvc._
 
@@ -67,6 +66,8 @@ class Application @Inject()(
 
   def playerStats(playerId: Int) = Action {
     val (name, stats, isRookie) = db.playerStats(playerId)
-    Ok(views.html.player(name, stats, isRookie))
+    val opponentName = battlefy.currentOpponent(name)
+    val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
+    Ok(views.html.player(name, opponentName, previousGames, stats, isRookie))
   }
 }

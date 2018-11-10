@@ -1,4 +1,4 @@
-@(name: String, info: List[(String, String, String)], isRookie: Boolean)
+@(name: String, opponent: Option[String], previousGames: List[(String, String, String)], info: List[(String, String, String)], isRookie: Boolean)
 
 @main("Stats") {
     <div class="container">
@@ -7,6 +7,27 @@
                 <div class="badge badge-warning">Rookie</div>
             }
         </h1>
+        <table class="table-bordered">
+            @if(previousGames.isEmpty && opponent.isDefined){
+                <div>No games played with <b>@{opponent.get}</b></div>
+            } else {
+                @for(i <- previousGames) {
+                    <tr>
+                        <td class="active font-weight-bold p-1 m-1">@i._1</td>
+                        <td class="p-1 m-1">
+                        @for(s <- i._2.split("\\n")) {
+                                @s
+                        }
+                        </td>
+                        <td class="p-1 m-1">
+                        @for(s <- i._3.split("\\n")) {
+                                @s
+                        }
+                        </td>
+                    </tr>
+                }
+            }
+        </table>
         <table class="table-bordered">
             <tr>
                 <th>-</th>
