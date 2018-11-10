@@ -61,7 +61,7 @@ class Application @Inject()(
   def right(link: String, name: String, player: String): Action[AnyContent] = side("right", link, name, player)
 
   def playersStats = Action {
-    Ok(views.html.stats(db.getPlayers))
+    Ok(views.html.stats(db.getPlayers.toList.sortBy(_._2)))
   }
 
   def playerStats(playerId: Int) = Action {
