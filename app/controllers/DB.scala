@@ -155,6 +155,7 @@ class DB @Inject()(database: Database) extends Controller {
     def times(number: Int): String = number match {
       case 0 => "-"
       case 1 => "once: "
+      case 2 => "twice: "
       case _ => s"$number times: "
     }
 
