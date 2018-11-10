@@ -100,7 +100,13 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry) extends C
           if (!card.isPower) {
             val cString = card.cost.toString
             renderedGraphics.drawString(cString,
-              renderedGraphics.getFontMetrics.stringWidth(cString),
+              if (cString.length == 1) {
+                FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+                14
+              } else {
+                FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(25f)))
+                9
+              },
               (cardBGImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
           }
 
