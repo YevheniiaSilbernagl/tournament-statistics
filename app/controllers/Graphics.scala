@@ -1,7 +1,7 @@
 package controllers
 
+import java.awt._
 import java.awt.image.BufferedImage
-import java.awt.{Dimension, Font, RenderingHints}
 import java.io.File
 
 import javax.imageio.stream.FileImageOutputStream
@@ -10,9 +10,9 @@ import javax.inject.Inject
 import net.coobird.thumbnailator.makers.FixedSizeThumbnailMaker
 import net.coobird.thumbnailator.resizers.{DefaultResizerFactory, Resizer}
 import play.api.mvc.Controller
-import types.Deck
+import types.{Card, Deck}
 
-class Graphics @Inject()(fs: FileSystem) extends Controller {
+class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry) extends Controller {
 
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
@@ -30,6 +30,17 @@ class Graphics @Inject()(fs: FileSystem) extends Controller {
       width, height, false, true).resizer(resizer).make(image)
   }
 
+  def graphicsSettings(g: Graphics2D): Graphics2D = {
+    g.setComposite(AlphaComposite.SrcOver)
+    g.addRenderingHints(new RenderingHints(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY))
+    g.addRenderingHints(new RenderingHints(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY))
+    g.addRenderingHints(new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY))
+    g.addRenderingHints(new RenderingHints(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE))
+    g.addRenderingHints(new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT))
+    g.addRenderingHints(new RenderingHints(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON))
+    g
+  }
+
   def generateImage(player: (String, Option[String]),
                     side: String,
                     deck: Deck,
@@ -40,11 +51,8 @@ class Graphics @Inject()(fs: FileSystem) extends Controller {
     fs.file(s"/images/background-$side.png") match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
-        val g = image.createGraphics()
-        g.addRenderingHints(new RenderingHints(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE))
-        g.addRenderingHints(new RenderingHints(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON))
-        g.addRenderingHints(new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY))
-        g.addRenderingHints(new RenderingHints(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY))
+        val g = graphicsSettings(image.createGraphics())
+
         FONT.foreach(f => g.setFont(f.deriveFont(48f)))
         val title = s"$playersName - ${deckName.getOrElse(if (deck.name.length > 30) s"${deck.name.substring(0, 20)}..." else deck.name)}"
         val titleWidth = g.getFontMetrics.stringWidth(title)
@@ -60,38 +68,75 @@ class Graphics @Inject()(fs: FileSystem) extends Controller {
 
         def block(i: Int) = i * 20 + column * cardWidth
 
-        def drawCard(blockN: Int, name: String, quantity: Int) = {
-          //cardWidth = cardImage+quantityImage
-          val cardFile = fs.file(s"/images/cards/$name.png").filter(_.exists())
-            .getOrElse(fs.file(s"/images/MISSING.png").get)
-          val cardImage = scale(ImageIO.read(cardFile), cardWidth - cardHeight, cardHeight)
+        def drawCard(blockN: Int, cq: (Card, Int)) = {
+          val (card, quantity) = cq
+          val cardBGFile = (card match {
+            case c if card.influences.isEmpty => fs.file(s"/images/cards/nofaction${if (c.isPower) "-power" else ""}.png")
+            case c if card.influences.size == 1 => fs.file(s"/images/cards/${card.influences.head.toString.toLowerCase}${if (c.isPower) "-power" else ""}.png")
+            case c => fs.file(s"/images/cards/multifaction${if (c.isPower) "-power" else ""}.png")
+          }).getOrElse(fs.file(s"/images/cards/MISSING.png").get)
+          val cardBGImage = scale(ImageIO.read(cardBGFile), cardWidth - cardHeight, cardHeight)
           val qImage = ImageIO.read(fs.file(s"/images/quantity-blank.png").get)
           val quantityImage = scale(qImage, cardHeight, cardHeight)
 
-          val dest = new BufferedImage(cardImage.getWidth + quantityImage.getWidth, cardImage.getHeight, BufferedImage.TYPE_INT_RGB)
-          val renderedGraphics = dest.createGraphics()
-          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
-          renderedGraphics.drawImage(cardImage, 0, 0, null)
-          renderedGraphics.drawImage(quantityImage, cardImage.getWidth, 0, null)
+          val dest = new BufferedImage(cardBGImage.getWidth + quantityImage.getWidth, cardBGImage.getHeight, BufferedImage.TYPE_INT_ARGB)
+          val renderedGraphics = graphicsSettings(dest.createGraphics())
 
+          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+          renderedGraphics.drawImage(cardBGImage, 0, 0, null)
+          renderedGraphics.drawImage(quantityImage, cardBGImage.getWidth, 0, null)
+
+          val icon = scale(eternalWarcry.cardIcon(card.name), 38, 38)
+          renderedGraphics.drawImage(icon, 47, 7, null)
+
+
+          //QUANTITY
           val qString = quantity.toString
           renderedGraphics.drawString(qString,
-            cardImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
+            cardBGImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
             (quantityImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
 
+          //COST
+          if (!card.isPower) {
+            val cString = card.cost.toString
+            renderedGraphics.drawString(cString,
+              renderedGraphics.getFontMetrics.stringWidth(cString),
+              (cardBGImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
+          }
+
+
+          def font(str: String): Float = {
+            val defaultFontSize = 14f
+            FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(defaultFontSize)))
+            val maxLength = 150
+
+            val preferredFontSize = (for (s <- 20 to 1 by -1) yield (s, {
+              FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(s.toFloat)))
+              renderedGraphics.getFontMetrics.stringWidth(str)
+            })).find(_._2 <= maxLength).map(_._1.toFloat).getOrElse(defaultFontSize)
+
+            preferredFontSize
+          }
+          //NAME
+          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(font(card.name))))
+          val nString = card.name.toString
+          renderedGraphics.setColor(new Color(244, 206, 109))
+          renderedGraphics.drawString(nString,
+            95,
+            (cardBGImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 3)
           g.drawImage(dest, block(blockN), 160 + dest.getHeight * counter, null)
 
         }
 
         if (deck.mainDeck.nonEmpty) {
           val md = "Main deck:"
-          g.drawString(md, block(1), 150)
+          g.drawString(md, block(1) + 15, 150)
           for (card <- deck.mainDeck) {
             if (counter >= max_cards) {
               counter = 0
               column = column + 1
             }
-            drawCard(1, card._1.name, card._2)
+            drawCard(1, card)
             counter = counter + 1
           }
         }
@@ -99,13 +144,13 @@ class Graphics @Inject()(fs: FileSystem) extends Controller {
           if (column < max_column - 1) column = column + 1
           counter = 0
           val md = "Market:"
-          g.drawString(md, block(2), 150)
+          g.drawString(md, block(2) + 15, 150)
           for (card <- deck.market) {
             if (counter >= max_cards) {
               counter = 0
               column = column + 1
             }
-            drawCard(2, card._1.name, card._2)
+            drawCard(2, card)
             counter = counter + 1
           }
         }

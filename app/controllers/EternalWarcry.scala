@@ -1,7 +1,10 @@
 package controllers
 
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
 import java.util.concurrent.TimeUnit
 
+import javax.imageio.ImageIO
 import javax.inject.Inject
 import play.api.libs.ws.WSClient
 import play.api.mvc.Controller
@@ -15,6 +18,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class EternalWarcry @Inject()(ws: WSClient) extends Controller {
   val decksCache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
 
+  def card_icon: String => String = (name: String) => s"https://cards.eternalwarcry.com/cards/icon/${name.replaceAll("\\s", "_")}.jpg"
+
   def getDeck(url: String): Deck = decksCache.getOrElse(url,
     {
       val deck = Await.result(ws.url(url.substring(0, Option(url.indexOf("?")).filterNot(_ < 0).getOrElse(url.length)))
@@ -22,4 +27,9 @@ class EternalWarcry @Inject()(ws: WSClient) extends Controller {
       decksCache.put(url, deck)
       deck
     })
+
+  def cardIcon(name: String): BufferedImage = {
+    val response = Await.result(ws.url(card_icon(name)).get(), Duration.apply(30, TimeUnit.SECONDS))
+    ImageIO.read(new ByteArrayInputStream(response.bodyAsBytes))
+  }
 }
