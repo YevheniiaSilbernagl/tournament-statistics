@@ -1,7 +1,7 @@
 @import types.Tournament
 @(tournament: Tournament)
 
-@main("Generate a match") {
+@main("ETS Tools") {
     <div class="container">
         <div>@{tournament.name}</div>
         <div><a href="@routes.Application.validateDecks(tournament.battlefy_id)">Validate decks</a></div>
