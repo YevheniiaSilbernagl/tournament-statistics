@@ -223,13 +223,13 @@ class DB @Inject()(database: Database) extends Controller {
     val ts_top2 = top2(this_season_tournaments_info)
     val ts_winner = winner(this_season_tournaments_info)
 
-
+    def round(d: Double): Double = BigDecimal(d).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
     info.+=(("Tournaments played", this_season_tournaments_info.keySet.size.toString, tournaments_info.keySet.size.toString))
 
     info.+=(("Games: Win-Loss", s"$tsGamesWon - $tsGamesLost", s"$allGamesWon - $allGamesLost"))
-    info.+=(("Games: Win-Loss %", s"${tsGamesWon * 100.0 / tsGamesPlayed}% - ${tsGamesLost * 100.0 / tsGamesPlayed}%", s"${allGamesWon * 100.0 / allGamesPlayed}% - ${allGamesLost * 100.0 / allGamesPlayed}%"))
+    info.+=(("Games: Win-Loss %", s"${round(tsGamesWon * 100.0 / tsGamesPlayed)}% - ${round(tsGamesLost * 100.0 / tsGamesPlayed)}%", s"${round(allGamesWon * 100.0 / allGamesPlayed)}% - ${round(allGamesLost * 100.0 / allGamesPlayed)}%"))
     info.+=(("Rounds: Win-Loss", s"$tsRoundsWon - $tsRoundsLost", s"$allRoundsWon - $allRoundsLost"))
-    info.+=(("Rounds: Win-Loss %", s"${tsRoundsWon * 100.0 / tsRoundsPlayed}% - ${tsRoundsLost * 100.0 / tsRoundsPlayed}%", s"${allRoundsWon * 100.0 / allRoundsPlayed}% - ${allRoundsLost * 100.0 / allRoundsPlayed}%"))
+    info.+=(("Rounds: Win-Loss %", s"${round(tsRoundsWon * 100.0 / tsRoundsPlayed)}% - ${round(tsRoundsLost * 100.0 / tsRoundsPlayed)}%", s"${round(allRoundsWon * 100.0 / allRoundsPlayed)}% - ${round(allRoundsLost * 100.0 / allRoundsPlayed)}%"))
     info.+=(("Top 8", s"${times(ts_top8.size)}\n ${ts_top8.map(_._1._1.name).mkString("\n")}", s"${times(all_top8.size)}\n ${all_top8.map(_._1._1.name).mkString("\n")}"))
     info.+=(("Top 4", s"${times(ts_top4.size)}\n ${ts_top4.map(_._1._1.name).mkString("\n")}", s"${times(all_top4.size)}\n ${all_top4.map(_._1._1.name).mkString("\n")}"))
     info.+=(("Top 2", s"${times(ts_top2.size)}\n ${ts_top2.map(_._1._1.name).mkString("\n")}", s"${times(all_top2.size)}\n ${all_top2.map(_._1._1.name).mkString("\n")}"))
