@@ -9,8 +9,8 @@
         @for(deck <- player._2) {
             <div class="deck" deck-url="@{deck.link}">
                 <div class="player-name"><p class="p-header">@{player._1}</p>
-                    <a link="@{deck.link}" class="badge badge-secondary generate-left noprint" download>Left</a>
-                    <a link="@{deck.link}" class="badge badge-dark generate-right noprint" download>Right</a>
+                    <a link="@{deck.link}" class="badge badge-secondary generate-left noprint" download>Main(left)</a>
+                    <a link="@{deck.link}" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>
                 </div>
                 <div><p class="p-header deck-name">@{deck.name}</p></div>
                 <p class="d-header"> </p>
