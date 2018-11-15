@@ -6,7 +6,7 @@ import javax.inject.Inject
 import org.joda.time.DateTime
 import play.api.db.Database
 import play.api.mvc.Controller
-import types.{Score, Tournament}
+import types.{Deck, Score, Tournament}
 
 import scala.collection.mutable
 
@@ -274,9 +274,9 @@ class DB @Inject()(database: Database) extends Controller {
       s"${times(ty_winner.size)}\n ${ty_winner.map(_._1._1.name).mkString("\n")}",
       s"${times(all_winner.size)}\n ${all_winner.map(_._1._1.name).mkString("\n")}"))
     info.+=(("Decks played:",
-      s"${this_season_tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}",
-      s"${this_year_tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}",
-      s"${tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}"))
+      s"${this_season_tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}",
+      s"${this_year_tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}",
+      s"${tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}"))
     (name, info.toList, tournaments_info.size <= 3)
   }
 }
