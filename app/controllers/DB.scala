@@ -58,12 +58,14 @@ class DB @Inject()(database: Database) extends Controller {
 
   val eliminationRoundsCache: mutable.HashMap[String, Int] = scala.collection.mutable.HashMap()
 
+  lazy val current_year = new DateTime().yearOfCentury()
+
   lazy val current_season: Int = {
     //if app is always online than wee need an update here
     val conn: Connection = database.getConnection()
     try {
       val stmt = conn.createStatement
-      val rs = stmt.executeQuery("SELECT Max(season) as season FROM tournament t")
+      val rs = stmt.executeQuery("SELECT Max(season) as season FROM tournament t WHERE date_part('year', date) = date_part('year', CURRENT_DATE)")
       rs.next()
       rs.getInt("season")
     } finally {
@@ -88,7 +90,7 @@ class DB @Inject()(database: Database) extends Controller {
   }
 
 
-  def playerStats(playerId: Int): (String, List[(String, String, String)], Boolean) = {
+  def playerStats(playerId: Int): (String, List[(String, String, String, String)], Boolean) = {
     val tournaments: mutable.MutableList[(Tournament, Score, String)] = new mutable.MutableList[(Tournament, Score, String)]()
     val conn: Connection = database.getConnection()
     var name: String = ""
@@ -139,8 +141,9 @@ class DB @Inject()(database: Database) extends Controller {
     }
 
     val tournaments_info = tournaments.toList.groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
-    val this_season_tournaments_info = tournaments_info.filter(_._1._1.season.contains(current_season))
-    val info: mutable.ListBuffer[(String, String, String)] = new mutable.ListBuffer[(String, String, String)]()
+    val this_year_tournaments_info = tournaments_info.filter(_._1._1.date.yearOfCentury() == current_year)
+    val this_season_tournaments_info = tournaments_info.filter(t => t._1._1.season.contains(current_season) && t._1._1.date.yearOfCentury() == current_year)
+    val info: mutable.ListBuffer[(String, String, String, String)] = new mutable.ListBuffer[(String, String, String, String)]()
 
     def winRate(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
       val win = if (score.current_player_id == score.participant_a_id) score.participant_a_score else score.participant_b_score
@@ -212,6 +215,13 @@ class DB @Inject()(database: Database) extends Controller {
     val tsRoundsLost = winrate_rounds(this_season_tournaments_info).count(_ == false)
     val tsRoundsPlayed = tsRoundsWon + tsRoundsLost
 
+    val tyGamesWon = winRate(this_year_tournaments_info).map(_._1).sum
+    val tyGamesLost = winRate(this_year_tournaments_info).map(_._2).sum
+    val tyGamesPlayed = tyGamesWon + tyGamesLost
+    val tyRoundsWon = winrate_rounds(this_year_tournaments_info).count(_ == true)
+    val tyRoundsLost = winrate_rounds(this_year_tournaments_info).count(_ == false)
+    val tyRoundsPlayed = tyRoundsWon + tyRoundsLost
+
 
     val all_top8 = top8(tournaments_info)
     val all_top4 = top4(tournaments_info)
@@ -223,19 +233,49 @@ class DB @Inject()(database: Database) extends Controller {
     val ts_top2 = top2(this_season_tournaments_info)
     val ts_winner = winner(this_season_tournaments_info)
 
-    def round(d: Double): Double = BigDecimal(d).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
-    info.+=(("Tournaments played", this_season_tournaments_info.keySet.size.toString, tournaments_info.keySet.size.toString))
+    val ty_top8 = top8(this_year_tournaments_info)
+    val ty_top4 = top4(this_year_tournaments_info)
+    val ty_top2 = top2(this_year_tournaments_info)
+    val ty_winner = winner(this_year_tournaments_info)
 
-    info.+=(("Games: Win-Loss", s"$tsGamesWon - $tsGamesLost", s"$allGamesWon - $allGamesLost"))
-    info.+=(("Games: Win-Loss %", s"${round(tsGamesWon * 100.0 / tsGamesPlayed)}% - ${round(tsGamesLost * 100.0 / tsGamesPlayed)}%", s"${round(allGamesWon * 100.0 / allGamesPlayed)}% - ${round(allGamesLost * 100.0 / allGamesPlayed)}%"))
-    info.+=(("Rounds: Win-Loss", s"$tsRoundsWon - $tsRoundsLost", s"$allRoundsWon - $allRoundsLost"))
-    info.+=(("Rounds: Win-Loss %", s"${round(tsRoundsWon * 100.0 / tsRoundsPlayed)}% - ${round(tsRoundsLost * 100.0 / tsRoundsPlayed)}%", s"${round(allRoundsWon * 100.0 / allRoundsPlayed)}% - ${round(allRoundsLost * 100.0 / allRoundsPlayed)}%"))
-    info.+=(("Top 8", s"${times(ts_top8.size)}\n ${ts_top8.map(_._1._1.name).mkString("\n")}", s"${times(all_top8.size)}\n ${all_top8.map(_._1._1.name).mkString("\n")}"))
-    info.+=(("Top 4", s"${times(ts_top4.size)}\n ${ts_top4.map(_._1._1.name).mkString("\n")}", s"${times(all_top4.size)}\n ${all_top4.map(_._1._1.name).mkString("\n")}"))
-    info.+=(("Top 2", s"${times(ts_top2.size)}\n ${ts_top2.map(_._1._1.name).mkString("\n")}", s"${times(all_top2.size)}\n ${all_top2.map(_._1._1.name).mkString("\n")}"))
-    info.+=(("Winner", s"${times(ts_winner.size)}\n ${ts_winner.map(_._1._1.name).mkString("\n")}", s"${times(all_winner.size)}\n ${all_winner.map(_._1._1.name).mkString("\n")}"))
+    def round(d: Double): Double = if (d.isNaN) 0.0 else BigDecimal(d).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+
+    info.+=(("Tournaments played", this_season_tournaments_info.keySet.size.toString, this_year_tournaments_info.keySet.size.toString, tournaments_info.keySet.size.toString))
+
+    info.+=(("Games: Win-Loss",
+      if (tsGamesPlayed == 0) s"-" else s"$tsGamesWon - $tsGamesLost",
+      if (tyGamesPlayed == 0) s"-" else s"$tyGamesWon - $tyGamesLost", s"$allGamesWon - $allGamesLost"))
+    info.+=(("Games: Win-Loss %",
+      if (tsGamesPlayed == 0) s"-" else s"${round(tsGamesWon * 100.0 / tsGamesPlayed)}% - ${round(tsGamesLost * 100.0 / tsGamesPlayed)}%",
+      if (tyGamesPlayed == 0) s"-" else s"${round(tyGamesWon * 100.0 / tyGamesPlayed)}% - ${round(tyGamesLost * 100.0 / tyGamesPlayed)}%",
+      if (allGamesPlayed == 0) s"-" else s"${round(allGamesWon * 100.0 / allGamesPlayed)}% - ${round(allGamesLost * 100.0 / allGamesPlayed)}%"))
+    info.+=(("Rounds: Win-Loss",
+      if (tsGamesPlayed == 0) s"-" else s"$tsRoundsWon - $tsRoundsLost",
+      if (tyGamesPlayed == 0) s"-" else s"$tyRoundsWon - $tyRoundsLost",
+      s"$allRoundsWon - $allRoundsLost"))
+    info.+=(("Rounds: Win-Loss %",
+      if (tsRoundsPlayed == 0) s"-" else s"${round(tsRoundsWon * 100.0 / tsRoundsPlayed)}% - ${round(tsRoundsLost * 100.0 / tsRoundsPlayed)}%",
+      if (tyRoundsPlayed == 0) s"-" else s"${round(tyRoundsWon * 100.0 / tyRoundsPlayed)}% - ${round(tyRoundsLost * 100.0 / tyRoundsPlayed)}%",
+      if (allRoundsPlayed == 0) s"-" else s"${round(allRoundsWon * 100.0 / allRoundsPlayed)}% - ${round(allRoundsLost * 100.0 / allRoundsPlayed)}%"))
+    info.+=(("Top 8",
+      s"${times(ts_top8.size)}\n ${ts_top8.map(_._1._1.name).mkString("\n")}",
+      s"${times(ty_top8.size)}\n ${ty_top8.map(_._1._1.name).mkString("\n")}",
+      s"${times(all_top8.size)}\n ${all_top8.map(_._1._1.name).mkString("\n")}"))
+    info.+=(("Top 4",
+      s"${times(ts_top4.size)}\n ${ts_top4.map(_._1._1.name).mkString("\n")}",
+      s"${times(ty_top4.size)}\n ${ty_top4.map(_._1._1.name).mkString("\n")}",
+      s"${times(all_top4.size)}\n ${all_top4.map(_._1._1.name).mkString("\n")}"))
+    info.+=(("Top 2",
+      s"${times(ts_top2.size)}\n ${ts_top2.map(_._1._1.name).mkString("\n")}",
+      s"${times(ty_top2.size)}\n ${ty_top2.map(_._1._1.name).mkString("\n")}",
+      s"${times(all_top2.size)}\n ${all_top2.map(_._1._1.name).mkString("\n")}"))
+    info.+=(("Winner",
+      s"${times(ts_winner.size)}\n ${ts_winner.map(_._1._1.name).mkString("\n")}",
+      s"${times(ty_winner.size)}\n ${ty_winner.map(_._1._1.name).mkString("\n")}",
+      s"${times(all_winner.size)}\n ${all_winner.map(_._1._1.name).mkString("\n")}"))
     info.+=(("Decks played:",
       s"${this_season_tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}",
+      s"${this_year_tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}",
       s"${tournaments_info.keySet.map(_._2).toList.sorted.mkString("\n")}"))
     (name, info.toList, tournaments_info.size <= 3)
   }

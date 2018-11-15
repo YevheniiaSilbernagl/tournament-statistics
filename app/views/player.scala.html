@@ -1,4 +1,4 @@
-@(name: String, opponent: Option[String], previousGames: List[(String, String, String)], info: List[(String, String, String)], isRookie: Boolean)
+@(name: String, opponent: Option[String], previousGames: List[(String, String, String)], info: List[(String, String, String, String)], isRookie: Boolean)
 
 @main("Stats") {
     <div class="container">
@@ -32,6 +32,7 @@
             <tr>
                 <th>-</th>
                 <th>This season</th>
+                <th>This year</th>
                 <th>All seasons</th>
             </tr>
             @for(i <- info) {
@@ -48,6 +49,14 @@
                     </td>
                     <td class="p-1 m-1">
                     @for(s <- i._3.split("\\n")) {
+                        <div>@if(i._1 != "Decks played:") {
+                            @s
+                        } else {
+                            <a href="@s">@s</a>
+                        }</div>
+                    }
+                    <td class="p-1 m-1">
+                    @for(s <- i._4.split("\\n")) {
                         <div>@if(i._1 != "Decks played:") {
                             @s
                         } else {
