@@ -7,12 +7,15 @@ import scala.concurrent.Future
 
 class BasicAuthAction(db: DB, battlefy: Battlefy) extends ActionBuilder[Request] with ActionFilter[Request] {
 
-  private val unauthorized = Results.Ok(views.html.index(battlefy.getCurrentTournament))
+  private val unauthorized = Results.Unauthorized.withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized")
 
   def filter[A](request: Request[A]): Future[Option[Result]] = {
     val result = request.headers.get("Authorization") map { authHeader =>
       val (user, pass) = decodeBasicAuth(authHeader)
-      db.pass(user).filter(_ != DigestUtils.sha1Hex(pass)).map(_ => unauthorized)
+      db.pass(user) match {
+        case Some(password) if password == DigestUtils.sha1Hex(pass)=> None
+        case _ => Some(unauthorized)
+      }
     } getOrElse Some(unauthorized)
     Future.successful(result)
   }
