@@ -73,7 +73,8 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
       val id = tournament.\("_id").as[String]
       val name = tournament.\("name").as[String]
       val date = DateTime.parse(tournament.\("startTime").as[String])
-      Tournament(id, name, date, None)
+      val checkInStarted = tournament.\("checkInStartTime").toOption.map(v => DateTime.parse(v.as[String])).exists(_.isBeforeNow)
+      Tournament(id, name, date, None, checkInStarted = checkInStarted)
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
 }

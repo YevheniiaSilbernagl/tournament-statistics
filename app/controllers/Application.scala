@@ -31,13 +31,21 @@ class Application @Inject()(
   }
 
   def validateDecks(tournamentId: String) = Action {
-    Ok(views.html.validation(battlefy.listOfPlayers(tournamentId)))
+    if (battlefy.getCurrentTournament.checkInStarted) {
+      Ok(views.html.validation(battlefy.listOfPlayers(tournamentId)))
+    } else {
+      Ok(views.html.index(battlefy.getCurrentTournament))
+    }
   }
 
   def generateDeckDoc(tournamentId: String) = Action {
-    Ok(views.html.deckdoc(battlefy.getTournament(tournamentId), battlefy.listOfPlayers(tournamentId).map { le =>
-      (le._1, le._2.map(eternalWarcry.getDeck))
-    }))
+    if (battlefy.getCurrentTournament.checkInStarted) {
+      Ok(views.html.deckdoc(battlefy.getTournament(tournamentId), battlefy.listOfPlayers(tournamentId).map { le =>
+        (le._1, le._2.map(eternalWarcry.getDeck))
+      }))
+    } else {
+      Ok(views.html.index(battlefy.getCurrentTournament))
+    }
   }
 
   def doc(tournament_id: String): Action[AnyContent] = Action {
