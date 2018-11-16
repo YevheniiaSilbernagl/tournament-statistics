@@ -6,11 +6,23 @@ import javax.inject.Inject
 import org.joda.time.DateTime
 import play.api.db.Database
 import play.api.mvc.Controller
-import types.{Deck, Score, Tournament}
+import types.{Score, Tournament}
 
 import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
+  def pass(user: String): Option[String] = {
+    val conn: Connection = database.getConnection()
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery(s"SELECT password_hash FROM user_ WHERE username='$user'")
+      if (rs.next())
+        Some(rs.getString("password_hash")) else None
+    } finally {
+      conn.close()
+    }
+  }
+
   def opponentPreviousInteraction(playerName: String, opponent: String): List[(String, String, String)] = {
     val query =
       s"""

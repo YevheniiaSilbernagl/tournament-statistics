@@ -16,6 +16,7 @@ class Application @Inject()(
                              db: DB, graphics:
                              Graphics,
                              docs: Docs) extends Controller {
+  private val WithBasicAuth = new BasicAuthAction(db, battlefy)
 
   def index = Action {
     Ok(views.html.index(battlefy.getCurrentTournament))
@@ -30,22 +31,14 @@ class Application @Inject()(
     }
   }
 
-  def validateDecks(tournamentId: String) = Action {
-    if (battlefy.getCurrentTournament.checkInStarted) {
+  def validateDecks(tournamentId: String) = WithBasicAuth {
       Ok(views.html.validation(battlefy.listOfPlayers(tournamentId)))
-    } else {
-      Ok(views.html.index(battlefy.getCurrentTournament))
-    }
   }
 
-  def generateDeckDoc(tournamentId: String) = Action {
-    if (battlefy.getCurrentTournament.checkInStarted) {
+  def generateDeckDoc(tournamentId: String) = WithBasicAuth {
       Ok(views.html.deckdoc(battlefy.getTournament(tournamentId), battlefy.listOfPlayers(tournamentId).map { le =>
         (le._1, le._2.map(eternalWarcry.getDeck))
       }))
-    } else {
-      Ok(views.html.index(battlefy.getCurrentTournament))
-    }
   }
 
   def doc(tournament_id: String): Action[AnyContent] = Action {
