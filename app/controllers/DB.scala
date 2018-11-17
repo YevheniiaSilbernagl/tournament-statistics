@@ -11,6 +11,18 @@ import types.{Score, Tournament}
 import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
+  def playerId(name: String): Option[Int] = {
+    val conn: Connection = database.getConnection()
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery(s"SELECT id FROM player WHERE eternal_name='$name'")
+      if (rs.next())
+        Some(rs.getInt("id")) else None
+    } finally {
+      conn.close()
+    }
+  }
+
   def pass(user: String): Option[String] = {
     val conn: Connection = database.getConnection()
     try {
@@ -40,12 +52,16 @@ class DB @Inject()(database: Database) extends Controller {
          |SELECT
          |  g.*,
          |  opponent_id,
-         |  t.name
+         |  t.name,
+         |  t.date
          |FROM games g, opponent_id, tournaments t
          |WHERE (g.participant_a_id = opponent_id OR g.participant_b_id = opponent_id) AND t.id = g.tournament_id
        """.stripMargin
     val info: mutable.ListBuffer[(String, String, String)] = new mutable.ListBuffer[(String, String, String)]()
+    val score: mutable.ListBuffer[(Int, Int)] = new mutable.ListBuffer[(Int, Int)]()
     val conn: Connection = database.getConnection()
+    val playerShortName = if (playerName.contains("+")) playerName.substring(0, playerName.indexOf("+")) else playerName
+    val opponentShortName = if (opponent.contains("+")) opponent.substring(0, opponent.indexOf("+")) else opponent
     try {
       val stmt = conn.createStatement
       val rs = stmt.executeQuery(query)
@@ -55,14 +71,21 @@ class DB @Inject()(database: Database) extends Controller {
         val participant_a_id = rs.getInt("participant_a_id")
         val opponent_id = rs.getInt("opponent_id")
         val tournament_name = rs.getString("name")
+        val tournament_date = rs.getString("date")
         val round = rs.getInt("round")
         val bracket = rs.getString("bracket_name")
-        info.+=((s"[$round $bracket] $tournament_name", s"$playerName - ${if (opponent_id == participant_a_id) participant_b_score else participant_a_score}", s"${if (opponent_id == participant_a_id) participant_a_score else participant_b_score} - $opponent"))
+        info.+=((s"[$tournament_date] $tournament_name - $bracket round $round", s"$playerShortName - ${if (opponent_id == participant_a_id) participant_b_score else participant_a_score}", s"${if (opponent_id == participant_a_id) participant_a_score else participant_b_score} - $opponentShortName"))
+        if (opponent_id == participant_a_id) {
+          if (participant_a_score > participant_b_score) score.+=((0, 1)) else score.+=((1, 0))
+        } else {
+          if (participant_b_score > participant_a_score) score.+=((0, 1)) else score.+=((1, 0))
+        }
       }
     } finally {
       conn.close()
     }
-    info.toList
+
+    List((s"$playerShortName - ${score.toList.map(_._1).sum} : ${score.toList.map(_._2).sum} - $opponentShortName", "", ""), ("History: ", "", "")) ++ info.toList
   }
 
 

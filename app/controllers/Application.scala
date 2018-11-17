@@ -69,7 +69,8 @@ class Application @Inject()(
   def playerStats(playerId: Int) = Action {
     val (name, stats, isRookie) = db.playerStats(playerId)
     val opponentName = battlefy.currentOpponent(name)
+    val opponentId = opponentName.flatMap(db.playerId)
     val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
-    Ok(views.html.player(name, opponentName, previousGames, stats, isRookie))
+    Ok(views.html.player(name, opponentName.map(n => (opponentId, n)), previousGames, stats, isRookie))
   }
 }
