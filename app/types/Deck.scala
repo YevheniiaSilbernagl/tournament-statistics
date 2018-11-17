@@ -70,4 +70,7 @@ object Deck {
   }
 
   private def cardsList(nodes: List[TagNode]) = nodes.map(tag => (Card.parse(tag), tag.getAttributeByName("data-count").toInt))
+
+  val empty:Deck = Deck("empty", "empty", "empty", List(), List(), List(), notTournamentDeck = false)
+
 }

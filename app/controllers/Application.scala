@@ -5,6 +5,7 @@ import java.nio.file.Files
 import javax.inject.Inject
 import play.api.libs.json._
 import play.api.mvc._
+import types.Deck
 
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
@@ -43,7 +44,7 @@ class Application @Inject()(
 
   def doc(tournament_id: String): Action[AnyContent] = Action {
     val tournament = battlefy.getTournament(tournament_id)
-    val exportFile = docs.doc(tournament, battlefy.listOfPlayers(tournament.battlefy_id).map(i => (i._1, eternalWarcry.getDeck(i._2.get))))
+    val exportFile = docs.doc(tournament, battlefy.listOfPlayers(tournament.battlefy_id).map(i => (i._1, i._2.map(eternalWarcry.getDeck).getOrElse(Deck.empty))))
     Ok(Files.readAllBytes(exportFile.toPath))
       .withHeaders("Content-Type" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "content-disposition" -> s"""attachment; filename="${exportFile.getName}"""")
