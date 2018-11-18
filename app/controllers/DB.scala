@@ -85,7 +85,8 @@ class DB @Inject()(database: Database) extends Controller {
       conn.close()
     }
 
-    List((s"$playerShortName - ${score.toList.map(_._1).sum} : ${score.toList.map(_._2).sum} - $opponentShortName", "", ""), ("History: ", "", "")) ++ info.toList
+    if (info.isEmpty) List() else
+      List((s"$playerShortName - ${score.toList.map(_._1).sum} : ${score.toList.map(_._2).sum} - $opponentShortName", "", ""), ("History: ", "", "")) ++ info.toList
   }
 
 
