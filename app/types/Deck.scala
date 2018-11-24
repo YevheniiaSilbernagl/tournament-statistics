@@ -34,6 +34,8 @@ case class Deck(
     if (sideBoardSize > 0) messages = messages :+  s"Size of the sideboard is $sideBoardSize"
     messages
   }
+
+  def eternalWarCryId: String = "details\\/(.+)\\/".r.findAllIn(link).matchData.toList.head.group(1)
 }
 
 object Deck {

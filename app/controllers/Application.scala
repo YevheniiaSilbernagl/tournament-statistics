@@ -69,10 +69,12 @@ class Application @Inject()(
   def playerStats(playerId: Option[Int], playerName: Option[String] = None) = Action {
     def stat(id: Int) = {
       val (name, stats, isRookie) = db.playerStats(id)
+      val list_of_players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
+      val deck = list_of_players.filter(_._1 == name).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption
       val opponentName = battlefy.currentOpponent(name)
       val opponentId = opponentName.flatMap(db.playerId)
       val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
-      Ok(views.html.player(name, opponentName.map(n => (opponentId, n)), previousGames, stats, isRookie))
+      Ok(views.html.player(name, deck, opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption)), previousGames, stats, isRookie))
     }
 
     playerId match {

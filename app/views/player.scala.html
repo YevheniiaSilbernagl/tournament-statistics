@@ -1,4 +1,12 @@
-@(name: String, opponent: Option[(Option[Int], String)], previousGames: List[(String, String, String)], info: List[(String, String, String, String)], isRookie: Boolean)
+@import types.Deck
+@(
+        name: String,
+        deck: Option[Deck],
+        opponent: Option[(Option[Int], String, Option[Deck])],
+        previousGames: List[(String, String, String)],
+        info: List[(String, String, String, String)],
+        isRookie: Boolean
+)
 
 @main(s"Stats for $name") {
     <div class="container">
@@ -7,6 +15,33 @@
                 <div class="badge badge-warning">Rookie</div>
             }
         </h1>
+        @if(opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
+            <table>
+                <tr><td>
+                    <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                    <a target="_blank" href="https://eternalwarcry.com/decks/compare?decks=@{deck.get.eternalWarCryId}&decks=@{opponent.get._3.get.eternalWarCryId}">Compare decks</a>
+                </td></tr>
+                <tr><td>
+                    <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                    <a target="_blank" href="@{deck.get.link}">@name's deck</a>
+                </td></tr>
+                <tr><td>
+                    <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                    <a target="_blank" href="@{opponent.get._3.get.link}">@{opponent.get._2}'s deck</a>
+                </td></tr>
+            </table>
+        } else {
+            @if(deck.isDefined){
+                <table>
+                    <tr>
+                        <td>
+                            <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                            <a target="_blank" href="@{deck.get.link}"> Current deck</a>
+                        </td>
+                    </tr>
+                </table>
+            }
+        }
         <table class="table table-success">
         @if(previousGames.isEmpty && opponent.isDefined) {
             <div>No games played with <b>@{opponent.get._2}</b></div>
