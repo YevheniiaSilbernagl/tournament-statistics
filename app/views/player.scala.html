@@ -44,7 +44,7 @@
         }
         <table class="table table-success">
         @if(previousGames.isEmpty && opponent.isDefined) {
-            <div>No games played with <b>@{opponent.get._2}</b></div>
+            <a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{opponent.get._2}</a>
         } else {
             @if(previousGames.isEmpty && opponent.isDefined && opponent.get._1.isDefined) {
                 <div>No games played with <b>
