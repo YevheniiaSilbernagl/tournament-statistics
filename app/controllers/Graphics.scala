@@ -182,7 +182,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
             })
             stats._2.find(_._1 == "Rounds: Win-Loss %").foreach(record => {
               g.drawString("Win Rate", block(2) + margin_name, start + 2 * spacing)
-              g.drawString(record._3.substring(0, record._4.indexOf("-")).trim, block(2) + margin_value, start + 2 * spacing)
+              g.drawString(record._3.substring(0, record._3.indexOf("-")).trim, block(2) + margin_value, start + 2 * spacing)
               g.drawString("Win Rate", block(2) + margin_name, start + 6 * spacing)
               g.drawString(record._4.substring(0, record._4.indexOf("-")).trim, block(2) + margin_value, start + 6 * spacing)
             })
