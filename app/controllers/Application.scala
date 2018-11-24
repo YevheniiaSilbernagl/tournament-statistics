@@ -33,13 +33,13 @@ class Application @Inject()(
   }
 
   def validateDecks(tournamentId: String) = WithBasicAuth {
-      Ok(views.html.validation(battlefy.listOfPlayers(tournamentId)))
+    Ok(views.html.validation(battlefy.listOfPlayers(tournamentId)))
   }
 
   def generateDeckDoc(tournamentId: String) = WithBasicAuth {
-      Ok(views.html.deckdoc(battlefy.getTournament(tournamentId), battlefy.listOfPlayers(tournamentId).map { le =>
-        (le._1, le._2.map(eternalWarcry.getDeck))
-      }))
+    Ok(views.html.deckdoc(battlefy.getTournament(tournamentId), battlefy.listOfPlayers(tournamentId).map { le =>
+      (le._1, le._2.map(eternalWarcry.getDeck))
+    }))
   }
 
   def doc(tournament_id: String): Action[AnyContent] = Action {
@@ -62,15 +62,23 @@ class Application @Inject()(
 
   def right(link: String, name: String, player: String): Action[AnyContent] = side("right", link, name, player)
 
-  def playersStats = Action {
-    Ok(views.html.stats(db.getPlayers.toList.sortBy(_._2.toLowerCase)))
-  }
+  def playersStats = Action(statsPage)
 
-  def playerStats(playerId: Int) = Action {
-    val (name, stats, isRookie) = db.playerStats(playerId)
-    val opponentName = battlefy.currentOpponent(name)
-    val opponentId = opponentName.flatMap(db.playerId)
-    val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
-    Ok(views.html.player(name, opponentName.map(n => (opponentId, n)), previousGames, stats, isRookie))
+  def statsPage = Ok(views.html.stats(db.getPlayers.toList.sortBy(_._2.toLowerCase)))
+
+  def playerStats(playerId: Option[Int], playerName: Option[String] = None) = Action {
+    def stat(id: Int) = {
+      val (name, stats, isRookie) = db.playerStats(id)
+      val opponentName = battlefy.currentOpponent(name)
+      val opponentId = opponentName.flatMap(db.playerId)
+      val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
+      Ok(views.html.player(name, opponentName.map(n => (opponentId, n)), previousGames, stats, isRookie))
+    }
+
+    playerId match {
+      case Some(id) => stat(id)
+      case _ if playerName.isDefined => db.playerId(playerName.get).map(stat).getOrElse(statsPage)
+      case _ => statsPage
+    }
   }
 }

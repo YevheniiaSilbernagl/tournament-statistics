@@ -13,11 +13,11 @@
         } else {
             @if(previousGames.isEmpty && opponent.isDefined && opponent.get._1.isDefined) {
                 <div>No games played with <b>
-                    <a target="_blank" href="@routes.Application.playerStats(opponent.get._1.get)">@{opponent.get._2}</a>
+                    <a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{opponent.get._2}</a>
                 </b></div>
             } else {
                 @if(opponent.isDefined && opponent.get._1.isDefined) {
-                    <div>Games played with <b><a target="_blank" href="@routes.Application.playerStats(opponent.get._1.get)">@{opponent.get._2}</a></b>:</div>
+                    <div>Games played with <b><a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{opponent.get._2}</a></b>:</div>
                 }
                 @for(i <- previousGames) {
                     <tr>

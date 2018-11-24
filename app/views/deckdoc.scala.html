@@ -8,7 +8,7 @@
         <p style="page-break-before: always">
         @for(deck <- player._2) {
             <div class="deck border-top" deck-url="@{deck.link}">
-                <div class="player-name"><p class="p-header">@{player._1}</p>
+                <div class="player-name"><p class="p-header"><a target="_blank" href="@routes.Application.playerStats(None, Option(player._1))">@{player._1}</a></p>
                     <a link="@{deck.link}" class="badge badge-secondary generate-left noprint" download>Main(left)</a>
                     <a link="@{deck.link}" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>
                 </div>

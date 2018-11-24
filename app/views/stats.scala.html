@@ -4,7 +4,7 @@
         <div class="container">
             @for(player <- players) {
             <div class="row" id="@{player._1}">
-                <div class="col-sm"><a href="@routes.Application.playerStats(player._1)">@{player._2}</a></div>
+                <div class="col-sm"><a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{player._2}</a></div>
             </div>
         }
         </div>
