@@ -9,10 +9,11 @@ import javax.imageio.{IIOImage, ImageIO, ImageWriteParam}
 import javax.inject.Inject
 import net.coobird.thumbnailator.makers.FixedSizeThumbnailMaker
 import net.coobird.thumbnailator.resizers.{DefaultResizerFactory, Resizer}
+import org.joda.time.DateTime
 import play.api.mvc.Controller
 import types.{Card, Deck}
 
-class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry) extends Controller {
+class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database: DB) extends Controller {
 
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
@@ -47,7 +48,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry) extends C
                     deckName: Option[String] = None
                    ): Either[Exception, File] = {
 
-    val playersName = Option(player._1).map(s => if(s.contains("+")) s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#"))) else s).getOrElse(player._1)
+    val playersName = Option(player._1).map(s => if (s.contains("+")) s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#"))) else s).getOrElse(player._1)
     fs.file(s"/images/background-$side.png") match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
@@ -160,6 +161,40 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry) extends C
             counter = counter + 1
           }
         }
+
+        //stats block
+        val margin_value = 200
+        val margin_name = 40
+        val margin_block_name1 = 100
+        val margin_block_name2 = 90
+        val spacing = 30
+        val start = 670
+        val underline_spacing = 3
+        FONT.foreach(f => g.setFont(f.deriveFont(24f)))
+
+        database.playerId(playersName).map(id => database.playerStats(id)).foreach {
+          stats =>
+            stats._2.find(_._1 == "Rounds: Win-Loss").foreach(record => {
+              g.drawString("Win - Loss", block(2) + margin_name, start + spacing)
+              g.drawString(record._3, block(2) + margin_value, start + spacing)
+              g.drawString("Win - Loss", block(2) + margin_name, start + 5 * spacing)
+              g.drawString(record._4, block(2) + margin_value, start + 5 * spacing)
+            })
+            stats._2.find(_._1 == "Rounds: Win-Loss %").foreach(record => {
+              g.drawString("Win Rate", block(2) + margin_name, start + 2 * spacing)
+              g.drawString(record._3.substring(0, record._4.indexOf("-")).trim, block(2) + margin_value, start + 2 * spacing)
+              g.drawString("Win Rate", block(2) + margin_name, start + 6 * spacing)
+              g.drawString(record._4.substring(0, record._4.indexOf("-")).trim, block(2) + margin_value, start + 6 * spacing)
+            })
+            val yr_str = s"${new DateTime().getYear} Record"
+            g.drawString(yr_str, block(2) + margin_block_name1, start)
+            g.drawLine(block(2) + margin_block_name1, start + underline_spacing, block(2) + margin_block_name1 + g.getFontMetrics.stringWidth(yr_str), start + underline_spacing)
+
+            val cr_str = "ETS Career Stats"
+            g.drawString(cr_str, block(2) + margin_block_name2, start + 4 * spacing)
+            g.drawLine(block(2) + margin_block_name2, start + 4 * spacing + underline_spacing, block(2) + margin_block_name2 + g.getFontMetrics.stringWidth(cr_str), start + 4 * spacing + underline_spacing)
+        }
+
         g.dispose()
 
         val resultFile = new File(s"${fs.parent}/tourney-$side.png")

@@ -15,7 +15,7 @@ class DB @Inject()(database: Database) extends Controller {
     val conn: Connection = database.getConnection()
     try {
       val stmt = conn.createStatement
-      val rs = stmt.executeQuery(s"SELECT id FROM player WHERE eternal_name='$name'")
+      val rs = stmt.executeQuery(s"SELECT id FROM player WHERE eternal_name LIKE '$name%'")
       if (rs.next())
         Some(rs.getInt("id")) else None
     } finally {
