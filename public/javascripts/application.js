@@ -56,7 +56,7 @@ jQuery(window).ready(function () {
                 '                <tr>\n' + generated +
                 '                </tr>\n' +
                 '            </table>\n' +
-                '            <a id="generate-panel" class="btn btn-primary" href="#">Generate side panel</a>\n' +
+                '            <a id="generate-panel" class="btn btn-primary" href="#" download>Generate side panel</a>\n' +
                 '        </div>');
             refresh_generate_side_panel_link();
         });
