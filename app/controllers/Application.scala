@@ -51,6 +51,7 @@ class Application @Inject()(
   }
 
   def side(side: String, link: String, name: String, player: String) = Action {
+    eternalWarcry.changeDeckName(link, name)
     graphics.generateImage((player, None), side, eternalWarcry.getDeck(link), Some(name)) match {
       case Right(file) => Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
         "content-disposition" -> s"""attachment; filename="${file.getName}"""")
@@ -84,11 +85,34 @@ class Application @Inject()(
     }
   }
 
-  def sidePanel(tournamentName: String, round: String, player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, casters: List[String]) = Action {
-   graphics.sidePanel(tournamentName, round, (player1Name, player1Score, player1DeckName), (player2Name, player2Score, player2DeckName), casters) match {
-      case Right(file) => Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
-        "content-disposition" -> s"""attachment; filename="${file.getName}"""")
-      case Left(error) => NotFound(error.getMessage)
-    }
+  def sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String) = Action {
+    val file = graphics.sidePanel(
+      battlefy.getCurrentTournament.name,
+      battlefy.currentRound.getOrElse(""),
+      (if (player1Name.contains("+")) player1Name.split("\\+")(0) else player1Name, player1Score, player1DeckName),
+      (if (player2Name.contains("+")) player2Name.split("\\+")(0) else player2Name, player2Score, player2DeckName)
+    )
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def streaming = Action(Ok(views.html.streaming(battlefy.currentOpponents)))
+
+  def getOpponentsInfo(opponents: String) = Action {
+    val tournamentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
+    val players = opponents.split("-:-").toList.map(_.trim.split("\\s")(0)).map(n => if (n.contains("+")) n.split("\\+")(0) else n)
+    val info = players.map(player => tournamentPlayers.find(p => p._1.startsWith(player)).map(p => (p._1, p._2.map(eternalWarcry.getDeck))))
+    Ok(Json.obj("opponents" -> info.flatten.map(
+      player =>
+        if (player._2.isDefined)
+          Json.obj("name" -> player._1, "deck" -> player._2.map(deck => Json.obj("name" -> deck.archetype, "url" -> deck.link, "list" -> deck.eternalFormat.mkString("\n"))).get)
+        else Json.obj("name" -> player._1)
+    )))
+  }
+
+  def generateCastersList(list: String) = Action {
+    val file = graphics.casters(list)
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 }

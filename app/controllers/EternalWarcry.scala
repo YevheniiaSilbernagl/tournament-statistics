@@ -12,10 +12,14 @@ import types.Deck
 
 import scala.collection.mutable
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
 class EternalWarcry @Inject()(ws: WSClient) extends Controller {
+  def changeDeckName(url: String, customName: String): Unit = {
+    decksCache.put(url, getDeck(url).copy(name = customName))
+  }
+
   val decksCache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
 
   def card_icon: String => String = (name: String) => s"https://cards.eternalwarcry.com/cards/icon/${name.replaceAll("\\s", "_")}.jpg"

@@ -12,7 +12,10 @@ GET     /decdoc                     controllers.Application.generateDeckDoc(tour
 GET     /download/doc               controllers.Application.doc(tournamentId: String)
 GET     /download/tourney-left      controllers.Application.left(link: String, name: String, player: String)
 GET     /download/tourney-right     controllers.Application.right(link: String, name: String, player: String)
-GET     /download/streaming/panel   controllers.Application.sidePanel(tournamentName: String, round: String, player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, casters: List[String])
+GET     /download/streaming/panel   controllers.Application.sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String)
+GET     /streaming                  controllers.Application.streaming
+GET     /opponents/info             controllers.Application.getOpponentsInfo(opponents: String)
+GET     /casters                    controllers.Application.generateCastersList(list: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

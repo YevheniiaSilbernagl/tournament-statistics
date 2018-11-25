@@ -18,6 +18,50 @@ jQuery(window).ready(function () {
         }
     });
 
+    $(document).on('keyup', "input", function (e) {
+        apply_score();
+    });
+
+    $(document).on('keyup', "#casters-list", function (e) {
+        $('#generate-casters-list').attr("href", "/casters?list=" + encodeURIComponent($("#casters-list").val()));
+    });
+
+    $(document).on('click', ".opponent-link", function (e) {
+        var currentText = $(e.currentTarget).text();
+        $("#opponents").each(function (opponent) {
+            opponent.remove();
+        });
+        $.get("/opponents/info?opponents=" + currentText, function (response) {
+            var generated = "";
+            response.opponents.forEach(function (opponent) {
+                if (opponent.deck != null) {
+                    generated += '                    <td>\n' +
+                        '                        <div class="deck">\n' +
+                        '                           <div class="player-name">\n' +
+                        '                               <p class="p-header">\n' +
+                        '                                   <a target="_blank" href="/player?playerName=' + opponent.name + '">' + opponent.name + '</a>\n' +
+                        '                               </p>\n' +
+                        '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
+                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-secondary generate-left noprint" download>Main(left)</a>\n' +
+                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>\n' +
+                        '                           </div>\n' +
+                        '                           <div><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
+                        '                           <textarea rows="20" cols="50">' + opponent.deck.list + '</textarea>\n' +
+                        '                        </div>\n' +
+                        '                    </td>\n';
+                }
+            });
+            $(".container").append('<div id="opponents">\n' +
+                '            <table class="table-bordered">\n' +
+                '                <tr>\n' + generated +
+                '                </tr>\n' +
+                '            </table>\n' +
+                '            <a id="generate-panel" class="btn btn-primary" href="#">Generate side panel</a>\n' +
+                '        </div>');
+            refresh_generate_side_panel_link();
+        });
+    });
+
     $(document).on('dblclick', ".deck-name", function (e) {
         apply_name();
         var currentText = $(e.currentTarget).text();
@@ -40,7 +84,26 @@ jQuery(window).ready(function () {
         }
     }
 
-    function refresh_links(){
+    function apply_score() {
+        refresh_generate_side_panel_link()
+    }
+
+    function refresh_generate_side_panel_link() {
+        var players = $(".deck");
+        var generatedUrl = "/download/streaming/panel?";
+        var opponentId = 1;
+        players.each(function () {
+            var playerDiv = this;
+            if (opponentId > 1) generatedUrl += "&";
+            generatedUrl += "player" + opponentId + "Name=" + encodeURIComponent($(playerDiv).find(".p-header a").text())
+                + "&player" + opponentId + "Score=" + encodeURIComponent($(playerDiv).find("input").val()) +
+                "&player" + opponentId + "DeckName=" + encodeURIComponent($(playerDiv).find(".deck-name").text());
+            opponentId += 1;
+        });
+        $('#generate-panel').attr("href", generatedUrl);
+    }
+
+    function refresh_links() {
         var decks = $(".deck");
         decks.each(function () {
             var deckDiv = this;
@@ -50,7 +113,7 @@ jQuery(window).ready(function () {
             $(deckDiv).find('.generate-left').attr("href", "/download/tourney-left?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
             $(deckDiv).find('.generate-right').attr("href", "/download/tourney-right?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
         });
-
+        refresh_generate_side_panel_link();
     }
 
     function generate_resources() {
