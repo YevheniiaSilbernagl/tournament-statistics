@@ -312,10 +312,10 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     g.drawString(vs, center(g, vs), vsYPosition)
 
     //player2
-    FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player1._1, maxTextWidth, 14f, 48f))))
+    FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player2._1, maxTextWidth, 14f, 48f))))
     g.drawString(player2._1, center(g, player2._1), vsYPosition + 60)
     val p2nHeights = g.getFontMetrics.getHeight
-    FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player1._3, maxTextWidth, 14f, 48f))))
+    FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player2._3, maxTextWidth, 14f, 48f))))
     g.drawString(player2._3, center(g, player2._3), vsYPosition + p2nHeights + 65)
     val lineY = vsYPosition + p2nHeights + 85
 
