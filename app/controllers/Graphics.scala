@@ -42,6 +42,16 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     g
   }
 
+  def adjustFontSize(g: Graphics2D, str: String, maxLength: Int, defaultFontSize: Float, maximumFontSize: Float): Float = {
+    FONT.foreach(f => g.setFont(f.deriveFont(defaultFontSize)))
+    val preferredFontSize = (for (s <- maximumFontSize to 1 by -1) yield (s, {
+      FONT.foreach(f => g.setFont(f.deriveFont(s.toFloat)))
+      g.getFontMetrics.stringWidth(str)
+    })).find(_._2 <= maxLength).map(_._1.toFloat).getOrElse(defaultFontSize)
+
+    preferredFontSize
+  }
+
   def generateImage(player: (String, Option[String]),
                     side: String,
                     deck: Deck,
@@ -111,21 +121,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
               (cardBGImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
           }
 
-
-          def font(str: String): Float = {
-            val defaultFontSize = 14f
-            FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(defaultFontSize)))
-            val maxLength = 150
-
-            val preferredFontSize = (for (s <- 20 to 1 by -1) yield (s, {
-              FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(s.toFloat)))
-              renderedGraphics.getFontMetrics.stringWidth(str)
-            })).find(_._2 <= maxLength).map(_._1.toFloat).getOrElse(defaultFontSize)
-
-            preferredFontSize
-          }
           //NAME
-          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(font(card.name))))
+          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(adjustFontSize(renderedGraphics, card.name, 150, 14f, 20f))))
           val nString = card.name.toString
           renderedGraphics.setColor(new Color(244, 206, 109))
           renderedGraphics.drawString(nString,
@@ -214,5 +211,109 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     }
   }
 
+  def sidePanel(
+                 tournamentName: String,
+                 round: String,
+                 player1: (String, Int, String),
+                 player2: (String, Int, String),
+                 casters: scala.List[String]
+               ): Either[Exception, File] = {
+    fs.file(s"/images/2018HandcamOverlaytake3.png") match {
+      case Some(bg) =>
+        val imageWidth = 278
+        val image = new BufferedImage(imageWidth, 1080, BufferedImage.TYPE_INT_ARGB)
+        val maxTextWidth = 270
+        val darkerColour = new Color(15, 26, 56)
+        val defaultColor = new Color(255, 255, 255)
+
+        def center(graphics: Graphics2D, str: String) = (imageWidth - graphics.getFontMetrics.stringWidth(str)) / 2
+
+        val g = graphicsSettings(image.createGraphics())
+        g.setColor(defaultColor)
+        val matchScore = ImageIO.read(fs.file(s"/images/matchscore.png").get)
+        g.setColor(darkerColour)
+        g.drawRect(0, 98, imageWidth - 2, 77)
+        g.fillRect(0, 98, imageWidth - 2, 77)
+        g.setColor(defaultColor)
+        //tournament name
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, tournamentName, maxTextWidth, 14f, 32f))))
+        g.drawString(tournamentName, 10, 130)
+        //round
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, round, 230, 14f, 32f))))
+        g.drawString(round, center(g, round), 160)
+        //logo
+
+        //score summary
+        val summary = (player1._2, player2._2) match {
+          case (0, 0) => "First game"
+          case (s1, s2) if s1 == s2 => "Players tied"
+          case (s1, s2) if s1 > s2 => s"${player1._1} leads"
+          case (s1, s2) if s1 < s2 => s"${player2._1} leads"
+        }
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, summary, maxTextWidth, 14f, 42f))))
+        g.drawString(summary, center(g, summary), 330)
+
+        //match score
+        FONT.foreach(f => g.setFont(f.deriveFont(64f)))
+        val matchScoreY = 290
+        g.drawImage(scale(matchScore, imageWidth, 207), 0, matchScoreY, null)
+
+        //score points
+        g.drawString(player1._2.toString, 53, matchScoreY + 162)
+        g.drawString(player2._2.toString, 192, matchScoreY + 162)
+
+
+        val startY = 550
+        //player1
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player1._1, maxTextWidth, 14f, 48f))))
+        g.drawString(player1._1, center(g, player1._1), startY)
+        val p1nHeights = g.getFontMetrics.getHeight
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player1._3, maxTextWidth, 14f, 48f))))
+        g.drawString(player1._3, center(g, player1._3), startY + p1nHeights + 5)
+        val p1dnHeights = g.getFontMetrics.getHeight
+
+        //VS
+        FONT.foreach(f => g.setFont(f.deriveFont(128f)))
+        val vsYPosition = startY + p1nHeights + p1dnHeights + 60
+        val vs = "VS"
+        g.drawString(vs, center(g, vs), vsYPosition)
+
+        //player2
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player1._1, maxTextWidth, 14f, 48f))))
+        g.drawString(player2._1, center(g, player2._1), vsYPosition + 60)
+        val p2nHeights = g.getFontMetrics.getHeight
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, player1._3, maxTextWidth, 14f, 48f))))
+        g.drawString(player2._3, center(g, player2._3), vsYPosition + p2nHeights + 65)
+        val lineY = vsYPosition + p2nHeights + 85
+        //casters
+        g.setColor(darkerColour)
+        g.drawRect(0, lineY, imageWidth - 2, 50)
+        g.fillRect(0, lineY, imageWidth - 2, 50)
+        g.setColor(defaultColor)
+        FONT.foreach(f => g.setFont(f.deriveFont(32f)))
+        val castersStr = "Casters:"
+        g.drawString(castersStr, center(g, castersStr), lineY + 35)
+        for (i <- casters.indices) {
+          g.drawString(casters(i), center(g, casters(i)), lineY + 50 + 40 * (i + 1))
+        }
+        //casters
+        g.dispose()
+
+        val resultFile = new File(s"${fs.parent}/left-side-panel.png")
+        val iter = ImageIO.getImageWritersByFormatName("png")
+        val writer = iter.next()
+        val iwp = writer.getDefaultWriteParam
+        if (iwp.canWriteCompressed) {
+          iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
+          iwp.setCompressionQuality(1.0f)
+        }
+        writer.setOutput(new FileImageOutputStream(resultFile))
+        writer.write(null, new IIOImage(image, null, null), iwp)
+        writer.dispose()
+        Right(resultFile)
+      case _ =>
+        Left(new Exception(s"2018HandcamOverlaytake3.png background image not found"))
+    }
+  }
 
 }

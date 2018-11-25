@@ -83,4 +83,12 @@ class Application @Inject()(
       case _ => statsPage
     }
   }
+
+  def sidePanel(tournamentName: String, round: String, player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, casters: List[String]) = Action {
+   graphics.sidePanel(tournamentName, round, (player1Name, player1Score, player1DeckName), (player2Name, player2Score, player2DeckName), casters) match {
+      case Right(file) => Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+        "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+      case Left(error) => NotFound(error.getMessage)
+    }
+  }
 }
