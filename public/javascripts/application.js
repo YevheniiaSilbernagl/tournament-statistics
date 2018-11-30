@@ -28,8 +28,8 @@ jQuery(window).ready(function () {
 
     $(document).on('click', ".opponent-link", function (e) {
         var currentText = $(e.currentTarget).text();
-        $("#opponents").each(function (opponent) {
-            opponent.remove();
+        $("#opponents").each(function () {
+            this.remove();
         });
         $.get("/opponents/info?opponents=" + currentText, function (response) {
             var generated = "";
