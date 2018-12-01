@@ -53,7 +53,7 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
 
   def getTournament(battlefy_uuid: String): Tournament = {
     val t = getTournamentInfo(battlefy_uuid)
-    Tournament(t.value("_id").as[String], t.value("name").as[String], DateTime.parse(t.value("startTime").as[String]), None)
+    Tournament(t.value("_id").as[String], t.value("name").as[String], DateTime.parse(t.value("startTime").as[String]), None, None)
   }
 
   def getTournamentInfo(battlefy_uuid: String): JsObject = {
@@ -82,7 +82,7 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
       val name = tournament.\("name").as[String]
       val date = DateTime.parse(tournament.\("startTime").as[String])
       val checkInStarted = tournament.\("checkInStartTime").toOption.map(v => DateTime.parse(v.as[String])).exists(_.isBeforeNow)
-      Tournament(id, name, date, None, checkInStarted = checkInStarted)
+      Tournament(id, name, date, None, checkInStarted = checkInStarted, event_type = None)
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
 }

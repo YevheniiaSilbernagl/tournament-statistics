@@ -23,6 +23,19 @@ class DB @Inject()(database: Database) extends Controller {
     }
   }
 
+  def worldsStats(player: String): Map[String, Map[String, String]] = {
+    val allStats = playerId(player).map(playerStats(_)._2).getOrElse(List())
+    List(
+      allStats.find(_._1 == "Tournaments played"),
+      allStats.find(_._1 == "Rounds: Win-Loss"),
+      allStats.find(_._1 == "Number of premiere tournaments")
+    ).flatMap(tuple =>
+      tuple.map(t => List(
+        "this_year " -> (t._1 -> t._3),
+        "career " -> (t._1 -> t._4)
+      ))).flatten.groupBy(_._1).map(p => p._1 -> p._2.map(_._2).toMap)
+  }
+
   def pass(user: String): Option[String] = {
     val conn: Connection = database.getConnection()
     try {
@@ -140,6 +153,7 @@ class DB @Inject()(database: Database) extends Controller {
            |  t.name               AS tournament_name,
            |  t.date               AS tournament_date,
            |  t.id                 AS tournament_id,
+           |  t.tournament_type    AS tournament_type,
            |  t.battlefy_uuid      AS battlefy_uuid,
            |  t.season             AS tournament_season,
            |  d.id                 AS deck_id,
@@ -160,7 +174,7 @@ class DB @Inject()(database: Database) extends Controller {
       while (rs.next()) {
         name = rs.getString("player_name")
         tournaments.+=((
-          Tournament(rs.getString("battlefy_uuid"), rs.getString("tournament_name"), DateTime.parse(rs.getString("tournament_date")), Option(rs.getInt("tournament_season")), Some(rs.getInt("tournament_id"))),
+          Tournament(rs.getString("battlefy_uuid"), rs.getString("tournament_name"), DateTime.parse(rs.getString("tournament_date")), Option(rs.getInt("tournament_season")), Option(rs.getString("tournament_type")), Some(rs.getInt("tournament_id"))),
           Score(
             rs.getInt("participant_id"),
             rs.getInt("participant_a_id"),
@@ -237,6 +251,8 @@ class DB @Inject()(database: Database) extends Controller {
       })
       .filter(_._2.nonEmpty)
 
+    def premiere(inf: Map[(Tournament, String), List[Score]]) = inf.count(_._1._1.isPremiereEvent)
+
     val allGamesWon = winRate(tournaments_info).map(_._1).sum
     val allGamesLost = winRate(tournaments_info).map(_._2).sum
     val allGamesPlayed = allGamesWon + allGamesLost
@@ -293,6 +309,10 @@ class DB @Inject()(database: Database) extends Controller {
       if (tsRoundsPlayed == 0) s"-" else s"${round(tsRoundsWon * 100.0 / tsRoundsPlayed)}% - ${round(tsRoundsLost * 100.0 / tsRoundsPlayed)}%",
       if (tyRoundsPlayed == 0) s"-" else s"${round(tyRoundsWon * 100.0 / tyRoundsPlayed)}% - ${round(tyRoundsLost * 100.0 / tyRoundsPlayed)}%",
       if (allRoundsPlayed == 0) s"-" else s"${round(allRoundsWon * 100.0 / allRoundsPlayed)}% - ${round(allRoundsLost * 100.0 / allRoundsPlayed)}%"))
+    info.+=(("Number of premiere tournaments",
+      if (tsRoundsPlayed == 0) s"-" else s"${premiere(this_season_tournaments_info)}",
+      if (tyRoundsPlayed == 0) s"-" else s"${premiere(this_year_tournaments_info)}",
+      if (allRoundsPlayed == 0) s"-" else s"${premiere(tournaments_info)}"))
     info.+=(("Top 8",
       s"${times(ts_top8.size)}\n ${ts_top8.map(_._1._1.name).mkString("\n")}",
       s"${times(ty_top8.size)}\n ${ty_top8.map(_._1._1.name).mkString("\n")}",

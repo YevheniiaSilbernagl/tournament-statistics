@@ -26,6 +26,34 @@ jQuery(window).ready(function () {
         $('#generate-casters-list').attr("href", "/casters?list=" + encodeURIComponent($("#casters-list").val()));
     });
 
+
+    $(document).on('click', "#generate-stats", function (e) {
+        $("#info").each(function () {
+            this.remove();
+        });
+        var players = encodeURIComponent($("#players").val());
+
+        $.get("/players/stats?players=" + players, function (response) {
+            var block = "<table id='info' class=\"table table-striped\">" +
+                "<tr><th>Player</th><th>This Year</th><th>Career</th></tr>";
+            $.each(response.players, function (player) {
+                block += "<tr>";
+                block += "<td>" + player + "</td>";
+
+                $.each(this, function (tournament_type, stats) {
+                    block += "<td><table class=\"table-bordered\">";
+                    $.each(stats, function (name, value) {
+                        block += "<tr><td>" + name + "</td><td>" + value + "</td></tr>";
+                    });
+                    block += "</table></td>";
+                });
+                block += "</tr>";
+            });
+            block += "</table>";
+            $(".container").append(block);
+        });
+    });
+
     $(document).on('click', ".opponent-link", function (e) {
         var currentText = $(e.currentTarget).text();
         $("#opponents").each(function () {

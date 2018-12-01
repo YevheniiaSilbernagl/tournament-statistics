@@ -65,6 +65,13 @@ class Application @Inject()(
 
   def playersStats = Action(statsPage)
 
+  def generateStats = Action(Ok(views.html.mass_stats()))
+
+  def generateStatsForPlayers(players: String) = Action {
+    val stats = players.split("\\n").map(_.trim).filterNot(_.isEmpty).distinct.map(p => p -> db.worldsStats(p)).toMap
+    Ok(Json.obj("players" -> stats))
+  }
+
   def statsPage = Ok(views.html.stats(db.getPlayers.toList.sortBy(_._2.toLowerCase)))
 
   def playerStats(playerId: Option[Int], playerName: Option[String] = None) = Action {
