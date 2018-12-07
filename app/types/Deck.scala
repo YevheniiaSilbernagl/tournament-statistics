@@ -42,22 +42,29 @@ case class Deck(
 
   def faction: Option[String] = cards.flatMap(_._1.influences.toList).distinct.sortBy(f => f.toString.charAt(0)) match {
     case inf if inf.length == 1 => Some(inf.head.toString.toLowerCase.capitalize)
-    case List(Faction.SHADOW, Faction.TIME) | List(Faction.TIME, Faction.SHADOW) => Some("Xenan")
-    case List(Faction.SHADOW, Faction.PRIMAL) | List(Faction.PRIMAL, Faction.SHADOW) => Some("Feln")
-    case List(Faction.SHADOW, Faction.JUSTICE) | List(Faction.JUSTICE, Faction.SHADOW) => Some("Argenport")
-    case List(Faction.SHADOW, Faction.FIRE) | List(Faction.FIRE, Faction.SHADOW) => Some("Stonescar")
+    case l if l.length == 2 && l.contains(Faction.SHADOW) && l.contains(Faction.TIME) => Some("Xenan")
+    case l if l.length == 2 && l.contains(Faction.SHADOW) && l.contains(Faction.PRIMAL) => Some("Feln")
+    case l if l.length == 2 && l.contains(Faction.SHADOW) && l.contains(Faction.JUSTICE) => Some("Argenport")
+    case l if l.length == 2 && l.contains(Faction.SHADOW) && l.contains(Faction.FIRE) => Some("Stonescar")
 
-    case List(Faction.JUSTICE, Faction.FIRE) | List(Faction.FIRE, Faction.JUSTICE) => Some("Rakano")
-    case List(Faction.JUSTICE, Faction.TIME) | List(Faction.TIME, Faction.JUSTICE) => Some("Combrei")
-    case List(Faction.JUSTICE, Faction.PRIMAL) | List(Faction.PRIMAL, Faction.JUSTICE) => Some("Hooru")
+    case l if l.length == 2 && l.contains(Faction.JUSTICE) && l.contains(Faction.FIRE) => Some("Rakano")
+    case l if l.length == 2 && l.contains(Faction.TIME) && l.contains(Faction.JUSTICE) => Some("Combrei")
+    case l if l.length == 2 && l.contains(Faction.PRIMAL) && l.contains(Faction.JUSTICE) => Some("Hooru")
 
-    case List(Faction.FIRE, Faction.TIME) | List(Faction.TIME, Faction.FIRE) => Some("Praxis")
-    case List(Faction.FIRE, Faction.PRIMAL) | List(Faction.PRIMAL, Faction.FIRE) => Some("Skycrag")
+    case l if l.length == 2 && l.contains(Faction.FIRE) && l.contains(Faction.TIME) => Some("Praxis")
+    case l if l.length == 2 && l.contains(Faction.FIRE) && l.contains(Faction.PRIMAL) => Some("Skycrag")
 
-    case List(Faction.PRIMAL, Faction.TIME) | List(Faction.TIME, Faction.PRIMAL) => Some("Elysian")
-    case List(Faction.JUSTICE, Faction.PRIMAL, Faction.TIME) => Some("TJP")
+    case l if l.length == 2 && l.contains(Faction.TIME) && l.contains(Faction.PRIMAL) => Some("Elysian")
 
-    case inf if inf.length == 3 => Some(inf.map(f => f.toString.charAt(0).toUpper).mkString)
+    case l if l.length == 3 && l.contains(Faction.JUSTICE) && l.contains(Faction.TIME) && l.contains(Faction.PRIMAL) => Some("TJP")
+
+    case l if l.length == 3 && l.contains(Faction.FIRE) && l.contains(Faction.JUSTICE) && l.contains(Faction.PRIMAL) => Some("Ixtun(FJP)")
+    case l if l.length == 3 && l.contains(Faction.FIRE) && l.contains(Faction.TIME) && l.contains(Faction.PRIMAL) => Some("Jennev(FTP)")
+    case l if l.length == 3 && l.contains(Faction.TIME) && l.contains(Faction.JUSTICE) && l.contains(Faction.SHADOW) => Some("Winchest(TJS)")
+    case l if l.length == 3 && l.contains(Faction.FIRE) && l.contains(Faction.JUSTICE) && l.contains(Faction.SHADOW) => Some("Kerendon(FJS)")
+    case l if l.length == 3 && l.contains(Faction.TIME) && l.contains(Faction.PRIMAL) && l.contains(Faction.SHADOW) => Some("Auralian(TPS)")
+
+    case inf if inf.length > 1 => Some(inf.map(f => f.toString.charAt(0).toUpper).mkString)
     case _ => None
   }
 
