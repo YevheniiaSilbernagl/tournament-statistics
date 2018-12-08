@@ -230,7 +230,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     g.drawString(castersStr, center(g, castersStr), 35)
     val casters = list.split("\n")
     for (i <- casters.indices) {
-      g.drawString(casters(i), center(g, casters(i)), 50 + 40 * (i + 1))
+      g.drawString(casters(i), 0, 50 + 40 * (i + 1))
     }
     g.dispose()
 
