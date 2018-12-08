@@ -255,7 +255,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
                  player2: (String, Int, String)
                ): File = {
     val imageWidth = 278
-    val image = new BufferedImage(imageWidth, 860, BufferedImage.TYPE_INT_ARGB)
+    val image = new BufferedImage(imageWidth, 910, BufferedImage.TYPE_INT_ARGB)
     val maxTextWidth = 270
     val darkerColour = new Color(15, 26, 56)
     val defaultColor = new Color(255, 255, 255)
@@ -277,6 +277,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     g.drawString(round, center(g, round), 160)
     //logo
 
+    val additionalDistanceFromInfoBox = 50
     //score summary
     val summary = (player1._2, player2._2) match {
       case (s1, s2) if s1 == s2 => "Players tied"
@@ -284,16 +285,16 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       case (s1, s2) if s1 < s2 => s"${player2._1} leads"
     }
     FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, summary, maxTextWidth, 14f, 42f))))
-    g.drawString(summary, center(g, summary), 330)
+    g.drawString(summary, center(g, summary), 330 + additionalDistanceFromInfoBox)
 
     //match score
     FONT.foreach(f => g.setFont(f.deriveFont(64f)))
     val matchScoreY = 290
-    g.drawImage(scale(matchScore, imageWidth, 207), 0, matchScoreY, null)
+    g.drawImage(scale(matchScore, imageWidth, 207), 0, matchScoreY + additionalDistanceFromInfoBox, null)
 
     //score points
-    g.drawString(player1._2.toString, 53, matchScoreY + 162)
-    g.drawString(player2._2.toString, 192, matchScoreY + 162)
+    g.drawString(player1._2.toString, 53, matchScoreY + 162 + additionalDistanceFromInfoBox)
+    g.drawString(player2._2.toString, 192, matchScoreY + 162 + additionalDistanceFromInfoBox)
 
 
     val startY = 550
@@ -301,24 +302,24 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     val deckNameFont = scala.List(adjustFontSize(g, player1._3, maxTextWidth, 14f, 48f), adjustFontSize(g, player2._3, maxTextWidth, 14f, 48f)).min
     //player1
     FONT.foreach(f => g.setFont(f.deriveFont(nameFont)))
-    g.drawString(player1._1, center(g, player1._1), startY)
+    g.drawString(player1._1, center(g, player1._1), startY + additionalDistanceFromInfoBox)
     val p1nHeights = g.getFontMetrics.getHeight
     FONT.foreach(f => g.setFont(f.deriveFont(deckNameFont)))
-    g.drawString(player1._3, center(g, player1._3), startY + p1nHeights + 5)
+    g.drawString(player1._3, center(g, player1._3), startY + p1nHeights + 5 + additionalDistanceFromInfoBox)
     val p1dnHeights = g.getFontMetrics.getHeight
 
     //VS
     FONT.foreach(f => g.setFont(f.deriveFont(128f)))
     val vsYPosition = startY + p1nHeights + p1dnHeights + 70
     val vs = "VS"
-    g.drawString(vs, center(g, vs), vsYPosition)
+    g.drawString(vs, center(g, vs), vsYPosition + additionalDistanceFromInfoBox)
 
     //player2
     FONT.foreach(f => g.setFont(f.deriveFont(nameFont)))
-    g.drawString(player2._1, center(g, player2._1), vsYPosition + 60)
+    g.drawString(player2._1, center(g, player2._1), vsYPosition + 60 + additionalDistanceFromInfoBox)
     val p2nHeights = g.getFontMetrics.getHeight
     FONT.foreach(f => g.setFont(f.deriveFont(deckNameFont)))
-    g.drawString(player2._3, center(g, player2._3), vsYPosition + p2nHeights + 65)
+    g.drawString(player2._3, center(g, player2._3), vsYPosition + p2nHeights + 65 + additionalDistanceFromInfoBox)
     val lineY = vsYPosition + p2nHeights + 85
 
     g.dispose()
