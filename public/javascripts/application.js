@@ -71,7 +71,7 @@ jQuery(window).ready(function () {
                         '                               </p>\n' +
                         '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-secondary generate-left noprint" download>Main(left)</a>\n' +
-                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>\n' +
+                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-right?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>\n' +
                         '                           </div>\n' +
                         '                           <div><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
                         '                           <textarea rows="20" cols="50">' + opponent.deck.list + '</textarea>\n' +
