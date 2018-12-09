@@ -8,13 +8,17 @@ scalaVersion := "2.11.7"
 
 routesGenerator := InjectedRoutesGenerator
 
-libraryDependencies ++= Seq( jdbc , cache , ws   , specs2 % Test,
+libraryDependencies ++= Seq(jdbc, cache, ws, specs2 % Test,
   "net.sourceforge.htmlcleaner" % "htmlcleaner" % "2.22",
   "net.coobird" % "thumbnailator" % "0.4.8",
   "org.docx4j" % "docx4j" % "6.0.1",
-  "org.postgresql" % "postgresql" % "9.4-1200-jdbc41"
+  "org.postgresql" % "postgresql" % "9.4-1200-jdbc41",
+  "com.discord4j" % "Discord4J" % "2.10.1"
 )
 
-unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )  
+unmanagedResourceDirectories in Test <+= baseDirectory(_ / "target/web/public/test")
 
-resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"  
+resolvers ++= Seq(
+  "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
+  "jcenter" at "http://jcenter.bintray.com"
+)

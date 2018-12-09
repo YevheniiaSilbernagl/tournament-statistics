@@ -188,7 +188,12 @@ jQuery(window).ready(function () {
                                 'Your Decklist for this weekends ETS is not marked as Tournament Deck<br>' +
                                 'Please update your decklist in Eternal Warcry.<br>' +
                                 'If you have any issues please let me know<br>' +
-                                'Quick link to your list: <code><</code>' + url + '<code>></code></div>';
+                                'Quick link to your list: <code><</code>' + url + '<code>></code></div>' +
+                                '<a href="/message?player=??&message="' + encodeURIComponent('Hello\n' +
+                                    'Your Decklist for this weekends ETS is not marked as Tournament Deck\n' +
+                                    'Please update your decklist in Eternal Warcry.\n' +
+                                    'If you have any issues please let me know\n' +
+                                    'Quick link to your list: <' + url + '>') + '</a>';
                             $(deck).append(errorMessage);
                         });
                     }

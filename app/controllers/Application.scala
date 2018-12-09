@@ -3,10 +3,13 @@ package controllers
 import java.nio.file.Files
 
 import javax.inject.Inject
+import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
+import sx.blah.discord.api.{ClientBuilder, IDiscordClient}
 import types.Deck
 
+import scala.collection.JavaConversions._
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
@@ -14,10 +17,21 @@ class Application @Inject()(
                              battlefy: Battlefy,
                              eternalWarcry: EternalWarcry,
                              fs: FileSystem,
-                             db: DB, graphics:
-                             Graphics,
-                             docs: Docs) extends Controller {
+                             db: DB,
+                             graphics: Graphics,
+                             docs: Docs,
+                             config: Configuration) extends Controller {
   private val WithBasicAuth = new BasicAuthAction(db, battlefy)
+
+  val discordBot: Option[IDiscordClient] = config.getString("discord.bot.token").map { token =>
+    val client = new ClientBuilder()
+      .withToken(token)
+      .withRecommendedShardCount()
+      .build()
+    client.getDispatcher.registerListener(new CheckInCommandHandler())
+    client.login()
+    client
+  }
 
   def index = Action {
     Ok(views.html.index(battlefy.getCurrentTournament))
@@ -53,8 +67,15 @@ class Application @Inject()(
   def side(side: String, link: String, name: String, player: String) = Action {
     eternalWarcry.changeDeckName(link, name)
     graphics.generateImage((player, None), side, eternalWarcry.getDeck(link), Some(name)) match {
-      case Right(file) => Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
-        "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+      case Right(file) =>
+        discordBot.foreach { client =>
+          client.getChannels.find(_.getName == "bot-testing").foreach { channel =>
+            channel.sendFile(file)
+            channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${player.split("\\s")(0)}>")
+          }
+        }
+        Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+          "content-disposition" -> s"""attachment; filename="${file.getName}"""")
       case Left(error) => NotFound(error.getMessage)
     }
   }
@@ -115,6 +136,15 @@ class Application @Inject()(
           Json.obj("name" -> player._1, "deck" -> player._2.map(deck => Json.obj("name" -> deck.archetype, "url" -> deck.link, "list" -> deck.eternalFormat.mkString("\n"))).get)
         else Json.obj("name" -> player._1)
     )))
+  }
+
+  def sendMessage(user: String, message: String) = Action {
+    discordBot.map { channel =>
+      channel.getUsers.find(_.getName == user).map(u => u.getOrCreatePMChannel().sendMessage(message)) match {
+        case Some(_) => Ok("")
+        case _ => NotAcceptable("User not found")
+      }
+    }.getOrElse(NotAcceptable("Other error"))
   }
 
   def generateCastersList(list: String) = Action {
