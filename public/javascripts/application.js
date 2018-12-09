@@ -54,6 +54,10 @@ jQuery(window).ready(function () {
         });
     });
 
+    $(document).on('click', 'input[name=maincam]', function (e) {
+        refresh_generate_side_panel_link();
+    });
+
     $(document).on('click', ".opponent-link", function (e) {
         var currentText = $(e.currentTarget).text();
         $("#opponents").each(function () {
@@ -72,6 +76,7 @@ jQuery(window).ready(function () {
                         '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-secondary generate-left noprint" download>Main(left)</a>\n' +
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-right?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>\n' +
+                        '                               <input type="radio" name="maincam"> Main cam' +
                         '                           </div>\n' +
                         '                           <div><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
                         '                           <textarea rows="20" cols="50">' + opponent.deck.list + '</textarea>\n' +
@@ -123,9 +128,11 @@ jQuery(window).ready(function () {
         players.each(function () {
             var playerDiv = this;
             if (opponentId > 1) generatedUrl += "&";
+            var mainCamPlayer = $('input[name=maincam]:checked').parent().find('p').find('a').text();
             generatedUrl += "player" + opponentId + "Name=" + encodeURIComponent($(playerDiv).find(".p-header a").text())
                 + "&player" + opponentId + "Score=" + encodeURIComponent($(playerDiv).find("input").val()) +
                 "&player" + opponentId + "DeckName=" + encodeURIComponent($(playerDiv).find(".deck-name").text());
+            if (mainCamPlayer !== "") generatedUrl += "&mainCam=" + mainCamPlayer;
             opponentId += 1;
         });
         $('#generate-panel').attr("href", generatedUrl);
