@@ -12,6 +12,12 @@ case class Deck(
                  notTournamentDeck: Boolean,
                  userDefinedArchetype: Option[String]
                ) {
+  def hasBlackMarket: Boolean = {
+    val mainCards = mainDeck.map(_._1)
+    val marketCards = market.map(_._1)
+    !marketCards.exists(card => mainCards.contains(card))
+  }
+
   def eternalFormat: List[String] = {
     List("Main Deck:") ++ this.mainDeck.map(p => s"${p._2} ${p._1.eternalFormat}") ++
       List(" ", "--------------MARKET---------------") ++ this.market.map(p => s"${p._2} ${p._1.eternalFormat}")
@@ -60,8 +66,8 @@ case class Deck(
 
     case l if l.length == 3 && l.contains(Faction.FIRE) && l.contains(Faction.JUSTICE) && l.contains(Faction.PRIMAL) => Some("Ixtun(FJP)")
     case l if l.length == 3 && l.contains(Faction.FIRE) && l.contains(Faction.TIME) && l.contains(Faction.PRIMAL) => Some("Jennev(FTP)")
-    case l if l.length == 3 && l.contains(Faction.TIME) && l.contains(Faction.JUSTICE) && l.contains(Faction.SHADOW) => Some("Winchest(TJS)")
-    case l if l.length == 3 && l.contains(Faction.FIRE) && l.contains(Faction.JUSTICE) && l.contains(Faction.SHADOW) => Some("Kerendon(FJS)")
+    case l if l.length == 3 && l.contains(Faction.FIRE) && l.contains(Faction.JUSTICE) && l.contains(Faction.SHADOW) => Some("Winchest(FJS)")
+    case l if l.length == 3 && l.contains(Faction.TIME) && l.contains(Faction.JUSTICE) && l.contains(Faction.SHADOW) => Some("Kerendon(TJS)")
     case l if l.length == 3 && l.contains(Faction.TIME) && l.contains(Faction.PRIMAL) && l.contains(Faction.SHADOW) => Some("Auralian(TPS)")
 
     case inf if inf.length > 1 => Some(inf.map(f => f.toString.charAt(0).toUpper).mkString)
