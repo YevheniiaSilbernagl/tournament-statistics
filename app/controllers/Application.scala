@@ -113,12 +113,14 @@ class Application @Inject()(
     }
   }
 
-  def sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String) = Action {
+  def sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, mainCam: Option[String]) = Action {
+    val player1 = (if (player1Name.contains("+")) player1Name.split("\\+")(0) else player1Name, player1Score, player1DeckName)
+    val player2 = (if (player2Name.contains("+")) player2Name.split("\\+")(0) else player2Name, player2Score, player2DeckName)
     val file = graphics.sidePanel(
       battlefy.getCurrentTournament.name,
       battlefy.currentRound.getOrElse(""),
-      (if (player1Name.contains("+")) player1Name.split("\\+")(0) else player1Name, player1Score, player1DeckName),
-      (if (player2Name.contains("+")) player2Name.split("\\+")(0) else player2Name, player2Score, player2DeckName)
+      if(mainCam.exists(_.startsWith(player1._1))) player2 else player1,
+      if(mainCam.exists(_.startsWith(player1._1))) player1 else player2
     )
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")

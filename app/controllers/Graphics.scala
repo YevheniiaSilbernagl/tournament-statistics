@@ -147,7 +147,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         if (deck.market.nonEmpty) {
           if (column < max_column - 1) column = column + 1
           counter = 0
-          val md = "Market:"
+          val md = if (deck.hasBlackMarket) "Black market:" else "Market:"
           g.drawString(md, block(2) + 15, 150)
           for (card <- deck.market) {
             if (counter >= max_cards) {

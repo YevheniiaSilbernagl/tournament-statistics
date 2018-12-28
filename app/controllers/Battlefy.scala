@@ -24,9 +24,9 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
   }
 
   def currentRound: Option[String] = {
-    val round = currentStageId.map(stageInfo(_).value.sortBy(_.asInstanceOf[JsObject].value("roundNumber").as[Int]).reverse).getOrElse(Seq()).headOption.map(_.as[JsObject].value("roundNumber").as[JsNumber].value.intValue())
+    val round = currentStageId.map(stageInfo(_).value).toList.flatten.map(_.asInstanceOf[JsObject]).filter(_.value("top").asInstanceOf[JsObject].\\("team").nonEmpty).map(_.value("roundNumber").as[JsNumber].value.intValue())
     val bracket = currentStageInfo.map(_.as[JsObject].value("bracket").as[JsObject].value("type").as[JsString].value)
-    round.map(r => s"Round $r${if (bracket.isDefined) s" ${bracket.get.capitalize}" else ""}")
+    if (round.isEmpty) None else Some(s"Round ${round.max}${if (bracket.isDefined) s" ${bracket.get.capitalize}" else ""}")
   }
 
   type EternalLink = String
