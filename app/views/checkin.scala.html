@@ -1,0 +1,16 @@
+@(tournament_id: String)
+
+@main("ETS Tools") {
+    <div class="container">
+        <table id="@tournament_id" class="info">
+            <tr>
+                <td>
+                    <textarea id="ids" placeholder="Battlefy user IDs" rows="3"cols="50"></textarea><br>
+                    <textarea id="token" placeholder="Battlefy Authorisation token" rows="1"cols="50"></textarea><br>
+                    <a class="btn btn-primary" id="check-in" href="#" download>Check in all</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+}

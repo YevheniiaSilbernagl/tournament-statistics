@@ -58,6 +58,35 @@ jQuery(window).ready(function () {
         refresh_generate_side_panel_link();
     });
 
+    $(document).on('click', '#check-in', function (e) {
+        $(".checkins").each(function () {
+            this.remove();
+        });
+        var block = "<table class='checkins'>";
+        var players = $('#ids').val().split("\n");
+        players.forEach(function (player) {
+            block += "<tr><td class='id' id='" + player + "'>" + player + "</td></tr>";
+        });
+        block += "</table>";
+        $(".container").append(block);
+        var tournament_id = $('.info').attr('id');
+        players.forEach(function (id) {
+            $.ajax({
+                type: "POST",
+                url: "https://api.battlefy.com/tournaments/" + tournament_id + "/teams/" + id + "/check-in",
+                headers: {
+                    "Authorization": $("#token").val()
+                },
+                success: function () {
+                    $("#" + id).append('<span class="badge badge-pill badge-success"> + </span>');
+                },
+                error: function () {
+                    $("#" + id).append('<span class="badge badge-pill badge-danger"> - </span>');
+                }
+            });
+        })
+    });
+
     $(document).on('click', ".opponent-link", function (e) {
         var currentText = $(e.currentTarget).text();
         $("#opponents").each(function () {

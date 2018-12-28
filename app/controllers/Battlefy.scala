@@ -14,6 +14,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 class Battlefy @Inject()(ws: WSClient) extends Controller {
+
+  type EternalLink = String
+  type EternalName = String
+  type BattlefyId = String
+  type DiscordName = String
+
+  def all_tournaments: () => String = () => "https://dtmwra1jsgyb0.cloudfront.net/organizations/5a0e00fdc4cd48033c0083b7/tournaments"
+
+  def stage_info: String => String = (stage: String) => s"https://dtmwra1jsgyb0.cloudfront.net/stages/$stage/matches"
+
+  def players: String => String = (tournament_id: String) => s"https://dtmwra1jsgyb0.cloudfront.net/tournaments/$tournament_id/teams"
+
+  def checkIn: (String, String) => String = (tournament_id: String, player_id: String) => s"https://api.battlefy.com/tournaments/$tournament_id/teams/$player_id/check-in"
+
   def currentOpponent(name: String): Option[String] = currentOpponents.filter(o => o._1.contains(name) || o._2.contains(name)).flatMap(o => if (o._1.contains(name)) o._2 else o._1).headOption
 
   def currentOpponents: List[(Option[String], Option[String])] = {
@@ -29,24 +43,15 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
     if (round.isEmpty) None else Some(s"Round ${round.max}${if (bracket.isDefined) s" ${bracket.get.capitalize}" else ""}")
   }
 
-  type EternalLink = String
-  type EternalName = String
-  type DiscordName = String
-
-  def all_tournaments: () => String = () => "https://dtmwra1jsgyb0.cloudfront.net/organizations/5a0e00fdc4cd48033c0083b7/tournaments"
-
-  def stage_info: String => String = (stage: String) => s"https://dtmwra1jsgyb0.cloudfront.net/stages/$stage/matches"
-
-  def players: String => String = (tournament_id: String) => s"https://dtmwra1jsgyb0.cloudfront.net/tournaments/$tournament_id/teams"
-
-  def listOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName])] =
+  def listOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName], BattlefyId)] =
     Await.result(ws.url(players(tournamentId)).get().map(response => {
       val list = Json.parse(response.body).asInstanceOf[JsArray].value.toList
       list
         .map(p => {
+          val battlefyId = (p \ "_id").as[String]
           val eternalName = (p \ "name").as[String]
           val customFields = (p \ "customFields" \\ "value").toList.map(_.as[String])
-          (eternalName, customFields.find(_.contains("eternalwarcry")), customFields.filterNot(_.contains("eternalwarcry")).headOption)
+          (eternalName, customFields.find(_.contains("eternalwarcry")), customFields.filterNot(_.contains("eternalwarcry")).headOption, battlefyId)
         }
         )
     }), Duration.apply(30, TimeUnit.SECONDS))

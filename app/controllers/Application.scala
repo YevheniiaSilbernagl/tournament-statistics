@@ -28,7 +28,7 @@ class Application @Inject()(
       .withToken(token)
       .withRecommendedShardCount()
       .build()
-    client.getDispatcher.registerListener(new CheckInCommandHandler())
+    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
     client.login()
     client
   }
@@ -153,5 +153,9 @@ class Application @Inject()(
     val file = graphics.casters(list)
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def checkInPage = Action {
+    Ok(views.html.checkin(battlefy.getCurrentTournament.battlefy_id))
   }
 }
