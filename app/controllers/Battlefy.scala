@@ -38,9 +38,12 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
   }
 
   def currentRound: Option[String] = {
-    val round = currentStageId.map(stageInfo(_).value).toList.flatten.map(_.asInstanceOf[JsObject]).filter(_.value("top").asInstanceOf[JsObject].\\("team").nonEmpty).map(_.value("roundNumber").as[JsNumber].value.intValue())
+    val round = currentStageId.map(stageInfo(_).value).toList.flatten.map(_.asInstanceOf[JsObject])
+      .filter(_.value("top").asInstanceOf[JsObject].\\("team").nonEmpty)
+      .filterNot(_.fieldSet.map(_._1).contains("isComplete"))
+      .map(_.value("roundNumber").as[JsNumber].value.intValue())
     val bracket = currentStageInfo.map(_.as[JsObject].value("bracket").as[JsObject].value("type").as[JsString].value)
-    if (round.isEmpty) None else Some(s"Round ${round.max}${if (bracket.isDefined) s" ${bracket.get.capitalize}" else ""}")
+    if (round.isEmpty) None else Some(s"Round ${round.min}${if (bracket.isDefined) s" ${bracket.get.capitalize}" else ""}")
   }
 
   def listOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName], BattlefyId)] =
