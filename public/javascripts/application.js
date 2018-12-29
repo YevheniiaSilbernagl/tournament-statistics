@@ -70,12 +70,16 @@ jQuery(window).ready(function () {
         block += "</table>";
         $(".container").append(block);
         var tournament_id = $('.info').attr('id');
+        var auth = $("#token").val();
+        if (!auth.startsWith("Bearer")) {
+            auth = "Bearer " + auth;
+        }
         players.forEach(function (id) {
             $.ajax({
                 type: "POST",
                 url: "https://api.battlefy.com/tournaments/" + tournament_id + "/teams/" + id + "/check-in",
                 headers: {
-                    "Authorization": $("#token").val()
+                    "Authorization": auth
                 },
                 success: function () {
                     $("#" + id).append('<span class="badge badge-pill badge-success"> + </span>');
