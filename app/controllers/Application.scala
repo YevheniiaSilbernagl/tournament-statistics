@@ -69,10 +69,9 @@ class Application @Inject()(
     graphics.generateImage((player, None), side, eternalWarcry.getDeck(link), Some(name)) match {
       case Right(file) =>
         discordBot.foreach { client =>
-          client.getChannels.find(_.getName == "bot-testing").foreach { channel =>
-            channel.sendFile(file)
-            channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${player.split("\\s")(0)}>")
-          }
+          val channel = client.getApplicationOwner.getOrCreatePMChannel()
+          channel.sendFile(file)
+          channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${player.split("\\s")(0)}>")
         }
         Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
           "content-disposition" -> s"""attachment; filename="${file.getName}"""")
@@ -119,8 +118,8 @@ class Application @Inject()(
     val file = graphics.sidePanel(
       battlefy.getCurrentTournament.name,
       battlefy.currentRound.getOrElse(""),
-      if(mainCam.exists(_.startsWith(player1._1))) player2 else player1,
-      if(mainCam.exists(_.startsWith(player1._1))) player1 else player2
+      if (mainCam.exists(_.startsWith(player1._1))) player2 else player1,
+      if (mainCam.exists(_.startsWith(player1._1))) player1 else player2
     )
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
@@ -156,6 +155,7 @@ class Application @Inject()(
   }
 
   def checkInPage = Action {
-    Ok(views.html.checkin(battlefy.getCurrentTournament.battlefy_id))
+    val tournament = battlefy.getCurrentTournament.battlefy_id
+    Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament)))
   }
 }
