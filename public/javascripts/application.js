@@ -65,7 +65,7 @@ jQuery(window).ready(function () {
         var block = "<table class='checkins'>";
         var players = $('#ids').val().split("\n");
         players.forEach(function (player) {
-            block += "<tr><td class='id' id='" + player + "'>" + player + " - " + $("#info-" + player).text() + "</td></tr>";
+            block += "<tr><td class='id' id='" + player + "'>" + $("#info-" + player).text() + "</td></tr>";
         });
         block += "</table>";
         $(".container").append(block);
