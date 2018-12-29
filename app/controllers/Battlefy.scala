@@ -31,19 +31,24 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
   def currentOpponent(name: String): Option[String] = currentOpponents.filter(o => o._1.contains(name) || o._2.contains(name)).flatMap(o => if (o._1.contains(name)) o._2 else o._1).headOption
 
   def currentOpponents: List[(Option[String], Option[String])] = {
-    val info = currentStageId.map(stageInfo(_).value.sortBy(_.asInstanceOf[JsObject].value("roundNumber").as[Int]).reverse).getOrElse(Seq())
+    val roundNumber = currentRoundNumber
+    val info = currentStageId.map(stageInfo(_).value.filter(i => roundNumber.contains(i.asInstanceOf[JsObject].value("roundNumber").as[Int]))).getOrElse(Seq())
     info.map(o => o.as[JsObject].value("top").as[JsObject] -> o.as[JsObject].value("bottom").as[JsObject])
       .map(o => (if (o._1.keys.contains("team")) Some(o._1) else None) -> (if (o._2.keys.contains("team")) Some(o._2) else None))
       .map(o => o._1.map(_.value("team").as[JsObject].value("name").as[String]) -> o._2.map(_.value("team").as[JsObject].value("name").as[String])).toList
   }
 
-  def currentRound: Option[String] = {
+  def currentRoundNumber: Option[Int] = {
     val round = currentStageId.map(stageInfo(_).value).toList.flatten.map(_.asInstanceOf[JsObject])
       .filter(_.value("top").asInstanceOf[JsObject].\\("team").nonEmpty)
       .filterNot(_.fieldSet.map(_._1).contains("isComplete"))
       .map(_.value("roundNumber").as[JsNumber].value.intValue())
+    if (round.isEmpty) None else Some(round.min)
+  }
+
+  def currentRound: Option[String] = {
     val bracket = currentStageInfo.map(_.as[JsObject].value("bracket").as[JsObject].value("type").as[JsString].value)
-    if (round.isEmpty) None else Some(s"Round ${round.min}${if (bracket.isDefined) s" ${bracket.get.capitalize}" else ""}")
+    currentRoundNumber.map(rn => s"Round $rn${bracket.map(_.capitalize).getOrElse("")}")
   }
 
   def listOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName], BattlefyId)] =
