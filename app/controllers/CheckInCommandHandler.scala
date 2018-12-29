@@ -49,12 +49,12 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
           val alreadyCheckedIn = event.getMessage.getReactions.toList.find { reaction =>
             reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)
           }.exists { validEmoji =>
-            validEmoji.getUsers.contains(event.getAuthor)
+            validEmoji.getUsers.contains(event.getUser)
           }
           if (!alreadyCheckedIn) {
             val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
-            if (players.exists(player => player._3.isDefined && player._3.get.startsWith(s"${event.getAuthor.getName}#"))) {
-              event.getAuthor.getOrCreatePMChannel().sendMessage(MESSAGE_FOR_WRONG_EMOJI)
+            if (players.exists(player => player._3.isDefined && player._3.get.startsWith(s"${event.getUser.getName}#"))) {
+              event.getUser.getOrCreatePMChannel().sendMessage(MESSAGE_FOR_WRONG_EMOJI)
             }
           }
 
