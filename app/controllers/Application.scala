@@ -66,12 +66,13 @@ class Application @Inject()(
 
   def side(side: String, link: String, name: String, player: String) = Action {
     eternalWarcry.changeDeckName(link, name)
-    graphics.generateImage((player, None), side, eternalWarcry.getDeck(link), Some(name)) match {
+    val playersName = player.trim
+    graphics.generateImage((playersName, None), side, eternalWarcry.getDeck(link), Some(name)) match {
       case Right(file) =>
         discordBot.foreach { client =>
           val channel = client.getApplicationOwner.getOrCreatePMChannel()
           channel.sendFile(file)
-          channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${player.split("[\\s\\+]")(0)}>")
+          channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${playersName.split("[\\s\\+]")(0)}>")
         }
         Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
           "content-disposition" -> s"""attachment; filename="${file.getName}"""")
