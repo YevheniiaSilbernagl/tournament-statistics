@@ -146,7 +146,6 @@ jQuery(window).ready(function () {
             $(editField).remove();
             $(parent).append('<p class="p-header deck-name">' + currentText + '</p>');
             refresh_links();
-
         }
     }
 
@@ -161,10 +160,10 @@ jQuery(window).ready(function () {
         players.each(function () {
             var playerDiv = this;
             if (opponentId > 1) generatedUrl += "&";
-            var mainCamPlayer = $('input[name=maincam]:checked').parent().find('p').find('a').text();
             generatedUrl += "player" + opponentId + "Name=" + encodeURIComponent($(playerDiv).find(".p-header a").text())
                 + "&player" + opponentId + "Score=" + encodeURIComponent($(playerDiv).find("input").val()) +
                 "&player" + opponentId + "DeckName=" + encodeURIComponent($(playerDiv).find(".deck-name").text());
+            var mainCamPlayer = $('input[name=maincam]:checked').parent().find('p').find('a').text();
             if (mainCamPlayer !== "") generatedUrl += "&mainCam=" + mainCamPlayer;
             opponentId += 1;
         });

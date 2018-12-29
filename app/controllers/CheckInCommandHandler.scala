@@ -28,9 +28,13 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
 
   @EventSubscriber
   def onMessageReceived(event: ReactionAddEvent): Unit = {
+
+    def check_in_closed: Boolean = event.getMessage.getReactions.toList.filter(reaction =>
+      reaction.getEmoji.getName.equals(XENORATH_EMOJI)).exists(reaction => reaction.getUsers.contains(event.getAuthor))
+
     if (event.getMessage.getContent.startsWith(CHECK_IN_MESSAGE))
       event.getReaction match {
-        case reaction if reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI) =>
+        case reaction if !check_in_closed && reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI) =>
           val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
           val reactionAuthor = event.getUser
           val potentialPlayers = players.filter(player => player._3.isDefined && player._3.get.startsWith(s"${reactionAuthor.getName}#"))
@@ -45,7 +49,7 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
           if (checkedInPlayers.nonEmpty) {
             event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(checkedInPlayers.mkString("\n"))
           }
-        case reaction =>
+        case _ if !check_in_closed =>
           val alreadyCheckedIn = event.getMessage.getReactions.toList.find { reaction =>
             reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)
           }.exists { validEmoji =>
@@ -57,7 +61,7 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
               event.getUser.getOrCreatePMChannel().sendMessage(MESSAGE_FOR_WRONG_EMOJI)
             }
           }
-
+        case _ =>
       }
   }
 }
