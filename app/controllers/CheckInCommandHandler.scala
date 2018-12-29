@@ -1,6 +1,7 @@
 package controllers
 
 import sx.blah.discord.api.events.EventSubscriber
+import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent
 import sx.blah.discord.handle.impl.events.guild.channel.message.reaction.ReactionAddEvent
 import sx.blah.discord.handle.obj.IUser
 
@@ -15,6 +16,15 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
 
   val CHECK_IN_MESSAGE = s"To check in for today's ETS event respond to this comment with $CHECK_IN_EMOJI"
   val MESSAGE_FOR_WRONG_EMOJI = s"The emoji you have used to check in is not valid please use $CHECK_IN_EMOJI"
+  val CHECK_IN_STARTED_MESSAGE = s"Check in started"
+
+  @EventSubscriber
+  def onMessageReceived(event: MessageReceivedEvent): Unit = {
+    event.getMessage.getContent match {
+      case message if message == CHECK_IN_MESSAGE => event.getAuthor.getOrCreatePMChannel().sendMessage(CHECK_IN_STARTED_MESSAGE)
+      case _ =>
+    }
+  }
 
   @EventSubscriber
   def onMessageReceived(event: ReactionAddEvent): Unit = {
@@ -28,7 +38,7 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
             reactionAuthor.getOrCreatePMChannel().sendMessage(MESSAGE_TO_NOT_REGISTERED_PLAYER)
             event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(message_to_TO_about_not_registered_player(reactionAuthor.getName))
           }
-        case reaction if reaction.getEmoji.getName.startsWith(XENORATH_EMOJI) && event.getAuthor == event.getMessage.getAuthor =>
+        case reaction if reaction.getEmoji.getName.startsWith(XENORATH_EMOJI) && event.getAuthor == event.getUser =>
           val checkIns: List[IUser] = event.getMessage.getReactions.toList.find(reaction => reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)).map(_.getUsers.toList).getOrElse(List[IUser]())
           val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
           val checkedInPlayers = checkIns.flatMap(user => players.find(player => player._3.isDefined && player._3.get.startsWith(s"${user.getName}#")).map(_._4))
