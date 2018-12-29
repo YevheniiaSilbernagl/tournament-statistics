@@ -28,7 +28,8 @@ class EternalWarcry @Inject()(ws: WSClient) extends Controller {
     {
       val deck = Await.result(ws.url(url.substring(0, Option(url.indexOf("?")).filterNot(_ < 0).getOrElse(url.length)))
         .get().map(response => Deck.parse(url, response.body)), Duration.apply(30, TimeUnit.SECONDS))
-      decksCache.put(url, deck)
+      if (!deck.notTournamentDeck)
+        decksCache.put(url, deck)
       deck
     })
 
