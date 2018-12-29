@@ -38,7 +38,7 @@ class Docs @Inject()(fs: FileSystem) extends Controller {
     line(tournament.name)
     pageBreak
     for ((eternalName, deck) <- info) {
-      line(eternalName)
+      line(eternalName.split("\\+")(0))
       line(deck.name)
       line(" ")
       for (card <- deck.eternalFormat) {
