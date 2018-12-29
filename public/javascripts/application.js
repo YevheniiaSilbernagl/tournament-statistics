@@ -107,8 +107,8 @@ jQuery(window).ready(function () {
                         '                                   <a target="_blank" href="/player?playerName=' + opponent.name + '">' + opponent.name + '</a>\n' +
                         '                               </p>\n' +
                         '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
-                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-secondary generate-left noprint" download>Main(left)</a>\n' +
-                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-right?link=' + opponent.deck.url + '&name=' + opponent.deck.name + '&player=' + opponent.name + '" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>\n' +
+                        '                               <a link="' + encodeURIComponent(opponent.deck.url) + '" href="/download/tourney-left?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-secondary generate-left noprint" download>Main(left)</a>\n' +
+                        '                               <a link="' + encodeURIComponent(opponent.deck.url) + '" href="/download/tourney-right?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>\n' +
                         '                               <input type="radio" name="maincam"> Main cam' +
                         '                           </div>\n' +
                         '                           <div><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +

@@ -71,7 +71,7 @@ class Application @Inject()(
         discordBot.foreach { client =>
           val channel = client.getApplicationOwner.getOrCreatePMChannel()
           channel.sendFile(file)
-          channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${player.split("\\s")(0)}>")
+          channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${player.split("[\\s\\+]")(0)}>")
         }
         Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
           "content-disposition" -> s"""attachment; filename="${file.getName}"""")
