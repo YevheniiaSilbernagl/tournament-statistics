@@ -16,7 +16,7 @@ import scala.concurrent.duration._
 class Cache @Inject()(config: Configuration) extends Controller {
 
   private val mc: MemcachedClient =
-    (config.getString("MEMCACHIER_SERVERS"), config.getString("MEMCACHIER_USERNAME"), config.getString("MEMCACHIER_PASSWORD")) match {
+    (config.getString("memcached.servers"), config.getString("memcached.username"), config.getString("memcached.password")) match {
       case (Some(serverAddresses), Some(username), Some(password)) =>
         val servers: List[InetSocketAddress] = AddrUtil.getAddresses(serverAddresses.replace(",", " ")).toList
         val authInfo: AuthInfo = AuthInfo.plain(username, password)
