@@ -6,11 +6,12 @@ import sx.blah.discord.api.events.EventSubscriber
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent
 
 case class DropMeCommandHandler @Inject()(battlefy: Battlefy, dropMe: DropMe) {
-  val allowedChannels = List("bot-testing") //#tournament-chat #tournament-help #bot-testing
+  val allowedChannels = List("bot-testing", "tournament-chat", "tournament-help")
 
   @EventSubscriber
   def onMessageReceived(event: MessageReceivedEvent): Unit = {
     def privateMessageToBot: Boolean = event.getChannel.getName == event.getAuthor.getName
+
     if (privateMessageToBot) {
       event.getMessage match {
         case message if dropMe.isSubscribeCommand(message) =>
