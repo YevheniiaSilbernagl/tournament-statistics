@@ -10,26 +10,25 @@ import play.api.libs.ws.WSClient
 import play.api.mvc.Controller
 import types.Deck
 
-import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
-class EternalWarcry @Inject()(ws: WSClient) extends Controller {
+class EternalWarcry @Inject()(ws: WSClient, cache: Cache) extends Controller {
+  val cacheDuration: FiniteDuration = 30.days
+
   def changeDeckName(url: String, customName: String): Unit = {
-    decksCache.put(url, getDeck(url).copy(name = customName))
+    cache.put(url, getDeck(url).copy(name = customName), cacheDuration)
   }
-
-  val decksCache: mutable.HashMap[String, Deck] = scala.collection.mutable.HashMap()
 
   def card_icon: String => String = (name: String) => s"https://cards.eternalwarcry.com/cards/icon/${name.replaceAll("\\s", "_")}.jpg"
 
-  def getDeck(url: String): Deck = decksCache.getOrElse(url,
-    {
+  def getDeck(url: String): Deck =
+    cache.get[Deck](url).getOrElse({
       val deck = Await.result(ws.url(url.substring(0, Option(url.indexOf("?")).filterNot(_ < 0).getOrElse(url.length)))
         .get().map(response => Deck.parse(url, response.body)), Duration.apply(30, TimeUnit.SECONDS))
-      if (!deck.notTournamentDeck)
-        decksCache.put(url, deck)
+      if (deck.isTournamentDeck)
+        cache.put(url, deck, cacheDuration)
       deck
     })
 

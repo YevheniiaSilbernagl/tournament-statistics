@@ -6,7 +6,6 @@ import javax.inject.Inject
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
-import sx.blah.discord.api.{ClientBuilder, IDiscordClient}
 import types.Deck
 
 import scala.collection.JavaConversions._
@@ -20,18 +19,10 @@ class Application @Inject()(
                              db: DB,
                              graphics: Graphics,
                              docs: Docs,
-                             config: Configuration) extends Controller {
+                             config: Configuration,
+                             discord: Discord
+                           ) extends Controller {
   private val WithBasicAuth = new BasicAuthAction(db, battlefy)
-
-  val discordBot: Option[IDiscordClient] = config.getString("discord.bot.token").map { token =>
-    val client = new ClientBuilder()
-      .withToken(token)
-      .withRecommendedShardCount()
-      .build()
-    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
-    client.login()
-    client
-  }
 
   def index = Action {
     Ok(views.html.index(battlefy.getCurrentTournament))
@@ -69,7 +60,7 @@ class Application @Inject()(
     val playersName = player.trim
     graphics.generateImage((playersName, None), side, eternalWarcry.getDeck(link), Some(name)) match {
       case Right(file) =>
-        discordBot.foreach { client =>
+        discord.bot.foreach { client =>
           val channel = client.getApplicationOwner.getOrCreatePMChannel()
           channel.sendFile(file)
           channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${playersName.split("[\\s\\+]")(0)}>")
@@ -141,7 +132,7 @@ class Application @Inject()(
   }
 
   def sendMessage(user: String, message: String) = Action {
-    discordBot.map { channel =>
+    discord.bot.map { channel =>
       channel.getUsers.find(_.getName == user).map(u => u.getOrCreatePMChannel().sendMessage(message)) match {
         case Some(_) => Ok("")
         case _ => NotAcceptable("User not found")

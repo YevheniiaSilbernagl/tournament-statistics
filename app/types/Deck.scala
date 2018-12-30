@@ -12,6 +12,8 @@ case class Deck(
                  notTournamentDeck: Boolean,
                  userDefinedArchetype: Option[String]
                ) {
+  val isTournamentDeck: Boolean = !notTournamentDeck
+
   def hasBlackMarket: Boolean = {
     val mainCards = mainDeck.map(_._1)
     val marketCards = market.map(_._1)

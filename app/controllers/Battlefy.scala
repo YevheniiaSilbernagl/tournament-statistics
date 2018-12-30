@@ -7,11 +7,13 @@ import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.api.mvc.Controller
+import sx.blah.discord.handle.obj.IUser
 import types.Tournament
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
+import scala.language.implicitConversions
 
 class Battlefy @Inject()(ws: WSClient) extends Controller {
 
@@ -97,5 +99,17 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
       val checkInStarted = tournament.\("checkInStartTime").toOption.map(v => DateTime.parse(v.as[String])).exists(_.isBeforeNow)
       Tournament(id, name, date, None, checkInStarted = checkInStarted, event_type = None)
     }), Duration.apply(30, TimeUnit.SECONDS))
+  }
+}
+
+object Battlefy {
+
+  implicit def uToP(user: IUser): Participant = Participant(user)
+}
+
+case class Participant(user: IUser) {
+  def isParticipant(battlefy: Battlefy): Boolean = {
+    val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
+    players.exists(player => player._3.isDefined && player._3.get.startsWith(s"${user.getName}#"))
   }
 }
