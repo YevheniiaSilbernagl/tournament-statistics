@@ -244,12 +244,6 @@ jQuery(window).ready(function () {
                     $(this).append('<span class="badge badge-pill badge-danger">Not a valid eternal name</span>')
                 }
             });
-            discordNames.each(function () {
-                var name = $(this).text().trim();
-                if (!discordFormat.test(name)) {
-                    $(this).append('<span class="badge badge-pill badge-danger">Not a valid discord name</span>')
-                }
-            });
         }
     )
 });

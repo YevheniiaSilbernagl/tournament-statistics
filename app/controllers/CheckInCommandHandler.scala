@@ -4,7 +4,7 @@ import controllers.Battlefy._
 import sx.blah.discord.api.events.EventSubscriber
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent
 import sx.blah.discord.handle.impl.events.guild.channel.message.reaction.ReactionAddEvent
-import sx.blah.discord.handle.obj.IUser
+import sx.blah.discord.handle.obj.{IGuild, IUser}
 
 import scala.collection.JavaConversions._
 
@@ -45,7 +45,10 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
         case reaction if reaction.getEmoji.getName.startsWith(XENORATH_EMOJI) && event.getAuthor == event.getUser =>
           val checkIns: List[IUser] = event.getMessage.getReactions.toList.find(reaction => reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)).map(_.getUsers.toList).getOrElse(List[IUser]())
           val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
-          val checkedInPlayers = checkIns.flatMap(user => players.find(player => player._3.isDefined && player._3.get.startsWith(s"${user.getName}#")).map(_._4))
+          val checkedInPlayers = checkIns.flatMap(user => players.find(player =>
+            player._3.isDefined &&
+            player._3.get.startsWith(s"${user.getNicknameForGuild(event.getGuild)}#${user.getDiscriminator}{}")
+          ).map(_._4))
           if (checkedInPlayers.nonEmpty) {
             event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(checkedInPlayers.mkString("\n"))
           }

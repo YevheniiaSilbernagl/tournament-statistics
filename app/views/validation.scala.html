@@ -1,4 +1,4 @@
-@(players: List[(String, Option[String], Option[String], String)])
+@(players: List[(String, Option[String], Option[String], String)], discordUsers: Seq[String])
 
     @main("Validate decks") {
         <div class="container-fluid">
@@ -6,7 +6,10 @@
                <div class="row player border-top" id="player_@i">
                    <div class="col-sm eternalName"> @{players(i)._1} </div>
                    <div class="col-6 deckLinkBlock"> <a href="@{players(i)._2}" class="deckLink" target="_blank" style="color: black">@{players(i)._2}</a> </div>
-                   <div class="col-sm discordName"> @{players(i)._3} </div>
+                   <div class="col-sm discordName"> @{players(i)._3} @{
+                       if(!discordUsers.map(_.toLowerCase).contains(players(i)._3.getOrElse("").toLowerCase))
+                       <span class="badge badge-pill badge-danger">Not a valid discord name</span>
+                   }</div>
                </div>
            }
         </div>

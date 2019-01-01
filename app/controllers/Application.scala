@@ -6,6 +6,7 @@ import javax.inject.Inject
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
+import sx.blah.discord.handle.obj.IGuild
 import types.Deck
 
 import scala.collection.JavaConversions._
@@ -38,7 +39,14 @@ class Application @Inject()(
   }
 
   def validateDecks(tournamentId: String) = WithBasicAuth {
-    Ok(views.html.validation(battlefy.listOfPlayers(tournamentId)))
+    val players = battlefy.listOfPlayers(tournamentId)
+    val allPlayers: List[String] = discord.bot.map(_.getGuilds.toList).getOrElse(List[IGuild]())
+      .flatMap(guild => guild.getUsers.filterNot(_.isBot)
+        .flatMap(user => List(
+          user.getDisplayName(guild) + "#" + user.getDiscriminator,
+          user.getName + "#" + user.getDiscriminator
+        ))).distinct
+    Ok(views.html.validation(players, allPlayers))
   }
 
   def generateDeckDoc(tournamentId: String) = WithBasicAuth {

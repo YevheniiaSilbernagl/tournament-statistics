@@ -8,6 +8,7 @@ import sx.blah.discord.api.{ClientBuilder, IDiscordClient}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.language.implicitConversions
 
 class Discord @Inject()(config: Configuration, battlefy: Battlefy, dropMe: DropMe, actorSystem: ActorSystem, cache: Cache)
                        (implicit executionContext: ExecutionContext) extends Controller {
