@@ -8,8 +8,11 @@
                    <div class="col-6 deckLinkBlock"> <a href="@{players(i)._2}" class="deckLink" target="_blank" style="color: black">@{players(i)._2}</a> </div>
                    <div class="col-sm discordName"> @{players(i)._3} @{
                        if(!discordUsers.map(_.toLowerCase).contains(players(i)._3.getOrElse("").toLowerCase))
-                       <span class="badge badge-pill badge-danger">Not a valid discord name</span>
-                   }</div>
+                       <span class="badge badge-pill badge-danger">Not a valid discord name</span><br/>
+                       <div>Your discord nickname submitted for the ETS is {players(i)._3.getOrElse("")}
+                       Please update it to a correct one as the ETS bot will not recognize you.</div>
+                   }
+                   </div>
                </div>
            }
         </div>

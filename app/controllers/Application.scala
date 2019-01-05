@@ -38,6 +38,22 @@ class Application @Inject()(
     }
   }
 
+  def sendMessageToAllPlayers(message: String) = Action {
+    val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id).filter(_._1.contains("Xenorath"))
+    for {bot <- discord.bot
+         player <- players
+         name <- player._3
+         user <- bot.getUsersByName(name.split("#")(0))
+    } {
+      try {
+        user.getOrCreatePMChannel().sendMessage(message)
+      } catch {
+        case NonFatal(e) => println(s"Message has not been sent to $name")
+      }
+    }
+    Ok("Messages have been sent")
+  }
+
   def validateDecks(tournamentId: String) = WithBasicAuth {
     val players = battlefy.listOfPlayers(tournamentId)
     val allPlayers: List[String] = discord.bot.map(_.getGuilds.toList).getOrElse(List[IGuild]())

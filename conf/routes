@@ -20,6 +20,7 @@ GET     /stats                      controllers.Application.generateStats
 GET     /players/stats              controllers.Application.generateStatsForPlayers(players: String)
 GET     /message                    controllers.Application.sendMessage(player: String, message: String)
 GET     /checkin                    controllers.Application.checkInPage
+POST    /message                    controllers.Application.sendMessageToAllPlayers(message: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
