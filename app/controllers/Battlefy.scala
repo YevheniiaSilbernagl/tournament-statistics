@@ -43,8 +43,10 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
   def currentRoundNumber: Option[Int] = {
     val stage = currentStageId
     val round = stage.map(stageInfo(_).value).toList.flatten.map(_.asInstanceOf[JsObject]).filter(_.value("top")
-      .asInstanceOf[JsObject].\\("team").nonEmpty).filter(o => !o.value("isComplete").asInstanceOf[JsBoolean].value)
-      .map(_.value("roundNumber").as[JsNumber].value.intValue())
+      .asInstanceOf[JsObject].\\("team").nonEmpty).filter { o =>
+      !o.fieldSet.map(_._1).contains("isComplete") ||
+        !o.value("isComplete").asInstanceOf[JsBoolean].value
+    }.map(_.value("roundNumber").as[JsNumber].value.intValue())
     if (round.isEmpty) None else Some(round.min)
   }
 
