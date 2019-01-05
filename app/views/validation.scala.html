@@ -9,8 +9,8 @@
                    <div class="col-sm discordName"> @{players(i)._3} @{
                        if(!discordUsers.map(_.toLowerCase).contains(players(i)._3.getOrElse("").toLowerCase))
                        <span class="badge badge-pill badge-danger">Not a valid discord name</span><br/>
-                       <div>Your discord nickname submitted for the ETS is {players(i)._3.getOrElse("")}
-                       Please update it to a correct one as the ETS bot will not recognize you.</div>
+                       <div style="color: darkred">Your discord nickname submitted for the ETS is {players(i)._3.getOrElse("")}
+                       Please update it to {discordUsers.filter(_.toLowerCase.contains(players(i)._3.getOrElse("").split("#")(0).toLowerCase)).map(n => s""""$n"""").mkString(",")} as the ETS bot will not recognize you.</div>
                    }
                    </div>
                </div>
