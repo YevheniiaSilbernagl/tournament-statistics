@@ -35,7 +35,7 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
     def check_in_closed: Boolean = event.getMessage.getReactions.toList.filter(reaction =>
       reaction.getEmoji.getName.equals(XENORATH_EMOJI)).exists(reaction => reaction.getUsers.contains(event.getAuthor))
 
-    if (event.getMessage.getContent.startsWith(CHECK_IN_MESSAGE))
+    if (event.getMessage.getContent.startsWith(CHECK_IN_MESSAGE) || event.getReaction.getEmoji.getName.startsWith(XENORATH_EMOJI))
       event.getReaction match {
         case reaction if !check_in_closed && reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI) =>
           if (!event.getUser.isParticipant(battlefy)) {
@@ -45,10 +45,7 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
         case reaction if reaction.getEmoji.getName.startsWith(XENORATH_EMOJI) && event.getAuthor == event.getUser =>
           val checkIns: List[IUser] = event.getMessage.getReactions.toList.find(reaction => reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)).map(_.getUsers.toList).getOrElse(List[IUser]())
           val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
-          val checkedInPlayers = checkIns.flatMap(user => players.find(player =>
-            player._3.isDefined &&
-            player._3.get.startsWith(s"${user.getNicknameForGuild(event.getGuild)}#${user.getDiscriminator}{}")
-          ).map(_._4))
+          val checkedInPlayers = players.filter(player => player._3.isDefined && checkIns.map(ci => ci.getName + "#" + ci.getDiscriminator).contains(player._3.get)).map(_._4)
           if (checkedInPlayers.nonEmpty) {
             event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(checkedInPlayers.mkString("\n"))
           }
