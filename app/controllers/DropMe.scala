@@ -39,20 +39,20 @@ class DropMe @Inject()(cache: Cache) extends Controller {
 
   val messageToUserRequestConfirmation: String =
     s"""If you want to drop the tournament please type following command in this chat:
-       |$dropMeConfirmCommand
+       |**$dropMeConfirmCommand**
        |
        |If you don't want to drop please type:
-       |$dropMeCancelCommand
+       |**$dropMeCancelCommand**
      """.stripMargin
 
   val instructions: String =
     s"""
-       |$dropMeRequestCommand - request to drop from the tournament
-       |$dropMeConfirmCommand - confirmation that you want to drop from the tournament
-       |$dropMeCancelCommand - cancel the current drop request
+       |**$dropMeRequestCommand** - request to drop from the tournament
+       |**$dropMeConfirmCommand** - confirmation that you want to drop from the tournament
+       |**$dropMeCancelCommand** - cancel the current drop request
      """.stripMargin
 
-  def userConfirmed(user: IUser) = s"""Player ${user.getName} confirmed that they want to drop from the tournament"""
+  def userConfirmed(user: IUser) = s"""**${user.getName}** confirmed that they want to drop"""
 
   def potentialDrop(discord: IDiscordClient, drop: Drop): String =
     s"""User potentially wants to drop but hasn't confirmed:

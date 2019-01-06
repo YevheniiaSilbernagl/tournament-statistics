@@ -4,7 +4,7 @@ import controllers.Battlefy._
 import sx.blah.discord.api.events.EventSubscriber
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent
 import sx.blah.discord.handle.impl.events.guild.channel.message.reaction.ReactionAddEvent
-import sx.blah.discord.handle.obj.{IGuild, IUser}
+import sx.blah.discord.handle.obj.{IReaction, IUser}
 
 import scala.collection.JavaConversions._
 
@@ -32,27 +32,33 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
   @EventSubscriber
   def onMessageReceived(event: ReactionAddEvent): Unit = {
 
-    def check_in_closed: Boolean = event.getMessage.getReactions.toList.filter(reaction =>
-      reaction.getEmoji.getName.equals(XENORATH_EMOJI)).exists(reaction => reaction.getUsers.contains(event.getAuthor))
+    def is_ok_hand(reaction: IReaction): Boolean = reaction.getEmoji.getName.startsWith(XENORATH_EMOJI)
 
-    if (event.getMessage.getContent.startsWith(CHECK_IN_MESSAGE) || event.getReaction.getEmoji.getName.startsWith(XENORATH_EMOJI))
+    def is_check_in_emoji(reaction: IReaction): Boolean = reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)
+
+    def get_check_in_emoji: Option[IReaction] = event.getMessage.getReactions.toList.find(is_check_in_emoji)
+
+    def check_in_closed: Boolean = event.getMessage.getReactions.toList.filter(reaction =>
+      is_ok_hand(reaction)).exists(reaction => reaction.getUsers.contains(event.getAuthor))
+
+    if (event.getMessage.getContent.startsWith(CHECK_IN_MESSAGE))
       event.getReaction match {
-        case reaction if !check_in_closed && reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI) =>
-          if (!event.getUser.isParticipant(battlefy)) {
-            event.getUser.getOrCreatePMChannel().sendMessage(MESSAGE_TO_NOT_REGISTERED_PLAYER)
-            event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(message_to_TO_about_not_registered_player(event.getUser.getName))
-          }
-        case reaction if reaction.getEmoji.getName.startsWith(XENORATH_EMOJI) && event.getAuthor == event.getUser =>
-          val checkIns: List[IUser] = event.getMessage.getReactions.toList.find(reaction => reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)).map(_.getUsers.toList).getOrElse(List[IUser]())
+        case reaction if !check_in_closed && is_check_in_emoji(reaction) && !event.getUser.isParticipant(battlefy) =>
+          event.getUser.getOrCreatePMChannel().sendMessage(MESSAGE_TO_NOT_REGISTERED_PLAYER)
+          event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(message_to_TO_about_not_registered_player(event.getUser.getName))
+
+        case reaction if !check_in_closed && is_check_in_emoji(reaction) =>
+
+        case reaction if is_ok_hand(reaction) && event.getAuthor == event.getUser =>
+          val checkIns: List[IUser] = get_check_in_emoji.map(_.getUsers.toList).getOrElse(List[IUser]())
           val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
           val checkedInPlayers = players.filter(player => player._3.isDefined && checkIns.map(ci => ci.getName + "#" + ci.getDiscriminator).contains(player._3.get)).map(_._4)
           if (checkedInPlayers.nonEmpty) {
             event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(checkedInPlayers.mkString("\n"))
           }
+
         case _ if !check_in_closed =>
-          val alreadyCheckedIn = event.getMessage.getReactions.toList.find { reaction =>
-            reaction.getEmoji.getName.startsWith(CHECK_IN_EMOJI)
-          }.exists { validEmoji =>
+          val alreadyCheckedIn = get_check_in_emoji.exists { validEmoji =>
             validEmoji.getUsers.contains(event.getUser)
           }
           if (!alreadyCheckedIn) {
@@ -60,6 +66,7 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
               event.getUser.getOrCreatePMChannel().sendMessage(MESSAGE_FOR_WRONG_EMOJI)
             }
           }
+
         case _ =>
       }
   }
