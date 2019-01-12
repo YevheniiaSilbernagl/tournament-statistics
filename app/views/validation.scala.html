@@ -10,7 +10,10 @@
                        if(!discordUsers.contains(players(i)._3.getOrElse("")))
                        <span class="badge badge-pill badge-danger">Not a valid discord name</span><br/>
                        <div style="color: darkred">Your discord nickname submitted for the ETS is {players(i)._3.getOrElse("")}
-                       Please update it to {discordUsers.filter(_.toLowerCase.contains(players(i)._3.getOrElse("").split("#")(0).toLowerCase)).map(n => s""""$n"""").mkString(",")} as the ETS bot will not recognize you.</div>
+                        {if(!players(i)._3.getOrElse("").split("#")(0).isEmpty)
+                            <div> Please update it to {discordUsers.filter(_.toLowerCase.contains(players(i)._3.getOrElse("").split("#")(0).toLowerCase)).map(n => s""""$n"""").mkString(",")} as the ETS bot will not recognize you.</div>
+                        }
+                        </div>
                    }
                    </div>
                </div>
