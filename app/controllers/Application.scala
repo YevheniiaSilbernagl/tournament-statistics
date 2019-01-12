@@ -141,7 +141,7 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
-  def streaming = WithBasicAuth(Ok(views.html.streaming(battlefy.currentOpponents)))
+  def streaming = WithBasicAuth(Ok(views.html.streaming(battlefy.getCurrentTournament.battlefy_id, battlefy.currentOpponents)))
 
   def topCards(tournamentId: String): Action[AnyContent] = Action {
     val players = battlefy.listOfPlayers(tournamentId)

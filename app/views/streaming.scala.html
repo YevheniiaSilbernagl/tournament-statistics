@@ -1,4 +1,4 @@
-@(opponents: List[(Option[String], Option[String])])
+@(tournamentId: String, opponents: List[(Option[String], Option[String])])
 
 @main("ETS Tools") {
     <div class="container">
@@ -27,6 +27,12 @@
                 <td>
                     <textarea id="casters-list" placeholder="Casters" rows="3"cols="50"></textarea><br>
                     <a class="btn btn-primary" id="generate-casters-list" href="#" download>Generate casters list for the side panel</a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <a class="btn btn-primary" href="@routes.Application.topCards(tournamentId)" download>Top 10 Cards</a>
+                    <a class="btn btn-primary" href="@routes.Application.topPlayers(tournamentId)" download>Top 10 players</a>
                 </td>
             </tr>
         </table>
