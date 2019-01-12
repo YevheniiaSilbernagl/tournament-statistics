@@ -143,6 +143,24 @@ class Application @Inject()(
 
   def streaming = WithBasicAuth(Ok(views.html.streaming(battlefy.currentOpponents)))
 
+  def topCards(tournamentId: String): Action[AnyContent] = Action {
+    val players = battlefy.listOfPlayers(tournamentId)
+    val topCards = players.map(_._2).filter(_.isDefined).flatMap(l => eternalWarcry.getDeck(l.get).cards)
+      .groupBy(_._1).map(p => p._1 -> p._2.map(_._2).sum).filterNot(_._1.isPower).map(p => p._1.name -> p._2).toList.sortBy(_._2).reverse.take(10)
+    val file = graphics.topCards(topCards)
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def topPlayers(tournamentId: String): Action[AnyContent] = Action {
+    val players = battlefy.listOfPlayers(tournamentId)
+        val totalStats = players.map(_._1).flatMap(db.playerId).map( db.playerStats)
+        val top10 = totalStats.map(p => (p._1, p._2(4)._4)).sortBy(_._2).reverse.take(10)
+    val file = graphics.topPlayers(top10)
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
   def getOpponentsInfo(opponents: String) = Action {
     val tournamentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
     val players = opponents.split("-:-").toList.map(_.trim.split("\\s")(0)).map(n => if (n.contains("+")) n.split("\\+")(0) else n)

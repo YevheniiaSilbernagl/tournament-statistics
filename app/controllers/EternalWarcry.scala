@@ -22,6 +22,7 @@ class EternalWarcry @Inject()(ws: WSClient, cache: Cache) extends Controller {
   }
 
   def card_icon: String => String = (name: String) => s"https://cards.eternalwarcry.com/cards/icon/${name.replaceAll("\\s", "_")}.jpg"
+  def card_full_image: String => String = (name: String) => s"https://cards.eternalwarcry.com/cards/full/${name.replaceAll("\\s", "_")}.png"
 
   def getDeck(url: String): Deck =
     cache.get[Deck](url).getOrElse({
@@ -34,6 +35,11 @@ class EternalWarcry @Inject()(ws: WSClient, cache: Cache) extends Controller {
 
   def cardIcon(name: String): BufferedImage = {
     val response = Await.result(ws.url(card_icon(name)).get(), Duration.apply(30, TimeUnit.SECONDS))
+    ImageIO.read(new ByteArrayInputStream(response.bodyAsBytes))
+  }
+
+  def cardFullImage(name: String): BufferedImage = {
+    val response = Await.result(ws.url(card_full_image(name)).get(), Duration.apply(30, TimeUnit.SECONDS))
     ImageIO.read(new ByteArrayInputStream(response.bodyAsBytes))
   }
 }

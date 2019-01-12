@@ -52,6 +52,93 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     preferredFontSize
   }
 
+  def saveFile(g: Graphics2D, image: BufferedImage, fileName: String): File = {
+    g.dispose()
+
+    val resultFile = new File(s"${fs.parent}/$fileName")
+    val iter = ImageIO.getImageWritersByFormatName("png")
+    val writer = iter.next()
+    val iwp = writer.getDefaultWriteParam
+    if (iwp.canWriteCompressed) {
+      iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
+      iwp.setCompressionQuality(1.0f)
+    }
+    writer.setOutput(new FileImageOutputStream(resultFile))
+    writer.write(null, new IIOImage(image, null, null), iwp)
+    writer.dispose()
+    resultFile
+  }
+
+  def column(players: scala.List[(String, String)], fontSize: Float): BufferedImage = {
+    val dest = new BufferedImage(600, 480, BufferedImage.TYPE_INT_ARGB)
+    val renderedGraphics = graphicsSettings(dest.createGraphics())
+    FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
+    for (i <- players.indices)
+      renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.split("-")(0).trim}", 0, (i+1) * 80)
+    dest
+  }
+
+  def topPlayers(top10: scala.List[(String, String)]): File = {
+    fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(48f)))
+        g.drawString(s"Top ${top10.size} players", 40, 80)
+
+        val longestLine = top10.map(_._1).sortBy(_.length).reverse.head + " - 100.00%"
+        val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
+        g.drawImage(column(top10.take(5), fontSize), 350, 300, null)
+        g.drawImage(column(top10.drop(5), fontSize), 1100, 300, null)
+
+        saveFile(g, image, "top-players.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+  }
+
+  def topCards(cards: scala.List[(String, Int)]): File = {
+    if (cards.size > 10) throw new Exception(s"Too many cards to display [max 10]")
+    else fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(48f)))
+        g.drawString(s"Top ${cards.size} cards", 40, 80)
+        val numberOfLines = if (cards.size > 6) 2 else 1
+        val numberOfCardsPerLine: Int = (cards.size.toDouble / numberOfLines).round.intValue()
+        val cardSize = (240, 350)
+
+        def cardsLine(cardList: scala.List[(String, Int)]): BufferedImage = {
+          val dest = new BufferedImage(if (cardList.size > 5) 1700 else 1430, cardSize._2 + 30, BufferedImage.TYPE_INT_ARGB)
+          val renderedGraphics = graphicsSettings(dest.createGraphics())
+          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+          val width = dest.getWidth / cardList.size
+          for (i <- cardList.indices) {
+            val image = scale(eternalWarcry.cardFullImage(cardList(i)._1), cardSize._1, cardSize._2)
+            renderedGraphics.setColor(new Color(244, 206, 109))
+            val number = cardList(i)._2.toString
+            val wordWidth = renderedGraphics.getFontMetrics.stringWidth(number)
+            renderedGraphics.drawString(number, (width * i + 20) + (cardSize._1 / 2) - wordWidth / 2, 18)
+            renderedGraphics.drawImage(image, width * i + 20, 10, null)
+          }
+          dest
+        }
+
+        if (numberOfLines == 1) {
+          val line = cardsLine(cards)
+          g.drawImage(line, (image.getWidth - line.getWidth) / 2, 360, null)
+        } else {
+          val line1 = cardsLine(cards.take(cards.size / 2))
+          val line2 = cardsLine(cards.drop(cards.size / 2))
+          g.drawImage(line1, (image.getWidth - line2.getWidth) / 2, 135, null)
+          g.drawImage(line2, (image.getWidth - line1.getWidth) / 2, 535, null)
+        }
+
+        saveFile(g, image, s"top-${cards.size}-cards.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+  }
+
   def generateImage(player: (String, Option[String]),
                     side: String,
                     deck: Deck,
@@ -204,20 +291,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           }
         }
 
-        g.dispose()
-
-        val resultFile = new File(s"${fs.parent}/tourney-$side.png")
-        val iter = ImageIO.getImageWritersByFormatName("png")
-        val writer = iter.next()
-        val iwp = writer.getDefaultWriteParam
-        if (iwp.canWriteCompressed) {
-          iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
-          iwp.setCompressionQuality(1.0f)
-        }
-        writer.setOutput(new FileImageOutputStream(resultFile))
-        writer.write(null, new IIOImage(image, null, null), iwp)
-        writer.dispose()
-        Right(resultFile)
+        Right(saveFile(g, image, s"tourney-$side.png"))
       case _ =>
         Left(new Exception(s"${side.capitalize} background image not found"))
     }
@@ -244,20 +318,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     for (i <- casters.indices) {
       g.drawString(casters(i), 50, 50 + 40 * (i + 1))
     }
-    g.dispose()
-
-    val resultFile = new File(s"${fs.parent}/casters.png")
-    val iter = ImageIO.getImageWritersByFormatName("png")
-    val writer = iter.next()
-    val iwp = writer.getDefaultWriteParam
-    if (iwp.canWriteCompressed) {
-      iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
-      iwp.setCompressionQuality(1.0f)
-    }
-    writer.setOutput(new FileImageOutputStream(resultFile))
-    writer.write(null, new IIOImage(image, null, null), iwp)
-    writer.dispose()
-    resultFile
+    saveFile(g, image, "casters.png")
   }
 
   def sidePanel(
