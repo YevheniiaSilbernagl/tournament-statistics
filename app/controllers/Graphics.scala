@@ -160,12 +160,12 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         }
 
         //stats block
-        val margin_value = 200
+        val margin_value = 240
         val margin_name = 40
         val margin_block_name1 = 100
         val margin_block_name2 = 90
         val spacing = 30
-        val start = 670
+        val start = 570
         val underline_spacing = 3
         FONT.foreach(f => g.setFont(f.deriveFont(24f)))
 
