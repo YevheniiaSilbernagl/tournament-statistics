@@ -76,6 +76,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         val cardHeight = 48
         val cardWidth = image.getWidth / 3 - 20
         var counter = 0
+        var hadToShift = false
 
         def block(i: Int) = i * 20 + column * cardWidth
 
@@ -145,10 +146,19 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           }
         }
         if (deck.market.nonEmpty) {
-          if (column < max_column - 1) column = column + 1
-          counter = 0
+          if (column < max_column - 1) {
+            column = column + 1
+            counter = 0
+          }
           val md = if (deck.hasBlackMarket) "Black market:" else "Market:"
-          g.drawString(md, block(2) + 15, 150)
+          if (counter > 0) {
+            g.drawString(md, block(2) + 15, 150 + ((counter * cardHeight) + 50))
+            counter += 1
+            hadToShift = true
+          } else {
+            g.drawString(md, block(2) + 15, 150)
+          }
+
           for (card <- deck.market) {
             if (counter >= max_cards) {
               counter = 0
@@ -159,37 +169,39 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           }
         }
 
-        //stats block
-        val margin_value = 240
-        val margin_name = 40
-        val margin_block_name1 = 100
-        val margin_block_name2 = 90
-        val spacing = 30
-        val start = 570
-        val underline_spacing = 3
-        FONT.foreach(f => g.setFont(f.deriveFont(24f)))
+        if (!hadToShift) {
+          //stats block
+          val margin_value = 230
+          val margin_name = 40
+          val margin_block_name1 = 100
+          val margin_block_name2 = 90
+          val spacing = 30
+          val start = 570
+          val underline_spacing = 3
+          FONT.foreach(f => g.setFont(f.deriveFont(24f)))
 
-        database.playerId(playersName).map(id => database.playerStats(id)).foreach {
-          stats =>
-            stats._2.find(_._1 == "Rounds: Win-Loss").foreach(record => {
-              g.drawString("Win - Loss", block(2) + margin_name, start + spacing)
-              g.drawString(record._3, block(2) + margin_value, start + spacing)
-              g.drawString("Win - Loss", block(2) + margin_name, start + 5 * spacing)
-              g.drawString(record._4, block(2) + margin_value, start + 5 * spacing)
-            })
-            stats._2.find(_._1 == "Rounds: Win-Loss %").foreach(record => {
-              g.drawString("Win Rate", block(2) + margin_name, start + 2 * spacing)
-              g.drawString(record._3.substring(0, record._3.indexOf("-")).trim, block(2) + margin_value, start + 2 * spacing)
-              g.drawString("Win Rate", block(2) + margin_name, start + 6 * spacing)
-              g.drawString(record._4.substring(0, record._4.indexOf("-")).trim, block(2) + margin_value, start + 6 * spacing)
-            })
-            val yr_str = s"${new DateTime().getYear} Record"
-            g.drawString(yr_str, block(2) + margin_block_name1, start)
-            g.drawLine(block(2) + margin_block_name1, start + underline_spacing, block(2) + margin_block_name1 + g.getFontMetrics.stringWidth(yr_str), start + underline_spacing)
+          database.playerId(playersName).map(id => database.playerStats(id)).foreach {
+            stats =>
+              stats._2.find(_._1 == "Rounds: Win-Loss").foreach(record => {
+                g.drawString("Win - Loss", block(2) + margin_name, start + spacing)
+                g.drawString(record._3, block(2) + margin_value, start + spacing)
+                g.drawString("Win - Loss", block(2) + margin_name, start + 5 * spacing)
+                g.drawString(record._4, block(2) + margin_value, start + 5 * spacing)
+              })
+              stats._2.find(_._1 == "Rounds: Win-Loss %").foreach(record => {
+                g.drawString("Win Rate", block(2) + margin_name, start + 2 * spacing)
+                g.drawString(record._3.substring(0, record._3.indexOf("-")).trim, block(2) + margin_value, start + 2 * spacing)
+                g.drawString("Win Rate", block(2) + margin_name, start + 6 * spacing)
+                g.drawString(record._4.substring(0, record._4.indexOf("-")).trim, block(2) + margin_value, start + 6 * spacing)
+              })
+              val yr_str = s"${new DateTime().getYear} Record"
+              g.drawString(yr_str, block(2) + margin_block_name1, start)
+              g.drawLine(block(2) + margin_block_name1, start + underline_spacing, block(2) + margin_block_name1 + g.getFontMetrics.stringWidth(yr_str), start + underline_spacing)
 
-            val cr_str = "ETS Career Stats"
-            g.drawString(cr_str, block(2) + margin_block_name2, start + 4 * spacing)
-            g.drawLine(block(2) + margin_block_name2, start + 4 * spacing + underline_spacing, block(2) + margin_block_name2 + g.getFontMetrics.stringWidth(cr_str), start + 4 * spacing + underline_spacing)
+              val cr_str = "ETS Career Stats"
+              g.drawString(cr_str, block(2) + margin_block_name2, start + 4 * spacing)
+              g.drawLine(block(2) + margin_block_name2, start + 4 * spacing + underline_spacing, block(2) + margin_block_name2 + g.getFontMetrics.stringWidth(cr_str), start + 4 * spacing + underline_spacing)
+          }
         }
 
         g.dispose()
