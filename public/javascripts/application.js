@@ -63,7 +63,7 @@ jQuery(window).ready(function () {
             this.remove();
         });
         var block = "<table class='checkins'>";
-        var players = $('#ids').val().split("\n");
+        var players = $('#ids').val().split(/\s+/);
         players.forEach(function (player) {
             block += "<tr><td class='id' id='" + player + "'>" + $("#info-" + player).text() + "</td></tr>";
         });
