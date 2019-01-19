@@ -74,7 +74,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     val renderedGraphics = graphicsSettings(dest.createGraphics())
     FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
     for (i <- players.indices)
-      renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.split("-")(0).trim}", 0, (i+1) * 80)
+      renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.split("-")(0).trim}", 0, (i + 1) * 80)
     dest
   }
 
@@ -105,7 +105,6 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         FONT.foreach(f => g.setFont(f.deriveFont(110f)))
         g.drawString(s"The Desk - Top ${cards.size} cards this week", 220, 105)
         val numberOfLines = if (cards.size > 6) 2 else 1
-        val numberOfCardsPerLine: Int = (cards.size.toDouble / numberOfLines).round.intValue()
         val cardSize = (236, 350)
 
         def cardsLine(cardList: scala.List[(String, Int)]): BufferedImage = {
@@ -135,6 +134,46 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         }
 
         saveFile(g, image, s"top-${cards.size}-cards.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+  }
+
+  def customCardList(header: String, cards: scala.List[String]): File = {
+    if (cards.size > 20) throw new Exception(s"Too many cards to display [max 10]")
+    else fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(s"The Desk - $header", 220, 105)
+        val numberOfLines = if (cards.size > 6) 2 else 1
+        val numberOfCardsPerLine: Int = (cards.size.toDouble / numberOfLines).round.intValue()
+        val cardSize = (236, 350)
+
+        def cardsLine(cardList: scala.List[String]): BufferedImage = {
+          val dest = new BufferedImage(if (cardList.size > 5) 1700 else 1430, cardSize._2 + 30, BufferedImage.TYPE_INT_ARGB)
+          val renderedGraphics = graphicsSettings(dest.createGraphics())
+          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+          val width = dest.getWidth / cardList.size
+          for (i <- cardList.indices) {
+            val image = scale(eternalWarcry.cardFullImage(cardList(i)), cardSize._1, cardSize._2)
+            renderedGraphics.setColor(new Color(244, 206, 109))
+            renderedGraphics.drawImage(image, width * i + 20, 10, null)
+          }
+          dest
+        }
+
+        if (numberOfLines == 1) {
+          val line = cardsLine(cards)
+          g.drawImage(line, (image.getWidth - line.getWidth) / 2, 360, null)
+        } else {
+          val line1 = cardsLine(cards.take(cards.size / 2))
+          val line2 = cardsLine(cards.drop(cards.size / 2))
+          g.drawImage(line1, (image.getWidth - line2.getWidth) / 2, 135, null)
+          g.drawImage(line2, (image.getWidth - line1.getWidth) / 2, 535, null)
+        }
+
+        saveFile(g, image, s"${header.replaceAll("\\.", "_")}.png")
       case _ => throw new Exception(s"background image not found")
     }
   }
@@ -258,7 +297,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
         if (!hadToShift) {
           //stats block
-          val margin_value = 230
+          val margin_value = 220
           val margin_name = 40
           val margin_block_name1 = 100
           val margin_block_name2 = 90
