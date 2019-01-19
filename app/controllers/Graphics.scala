@@ -147,25 +147,30 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         FONT.foreach(f => g.setFont(f.deriveFont(110f)))
         g.drawString(s"The Desk - $header", 220, 105)
         val numberOfLines = if (cards.size > 6) 2 else 1
-        val numberOfCardsPerLine: Int = (cards.size.toDouble / numberOfLines).round.intValue()
-        val cardSize = (236, 350)
+        val cardProportions = (236, 350)
+        val totalWidth = 1700
 
         def cardsLine(cardList: scala.List[String]): BufferedImage = {
-          val dest = new BufferedImage(if (cardList.size > 5) 1700 else 1430, cardSize._2 + 30, BufferedImage.TYPE_INT_ARGB)
+          val cardSize: (Int, Int) = if (numberOfLines == 2) cardProportions else {
+            val width = scala.List((totalWidth / cardList.size * 0.95).intValue(), 400).min
+            val height = (width * (cardProportions._2.doubleValue() / cardProportions._1)).intValue()
+            (width, height)
+          }
+          val dest = new BufferedImage(totalWidth, cardSize._2 + 30, BufferedImage.TYPE_INT_ARGB)
           val renderedGraphics = graphicsSettings(dest.createGraphics())
           FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
           val width = dest.getWidth / cardList.size
           for (i <- cardList.indices) {
             val image = scale(eternalWarcry.cardFullImage(cardList(i)), cardSize._1, cardSize._2)
             renderedGraphics.setColor(new Color(244, 206, 109))
-            renderedGraphics.drawImage(image, width * i + 20, 10, null)
+            renderedGraphics.drawImage(image, width * i + (width - cardSize._1) / 2, 10, null)
           }
           dest
         }
 
         if (numberOfLines == 1) {
           val line = cardsLine(cards)
-          g.drawImage(line, (image.getWidth - line.getWidth) / 2, 360, null)
+          g.drawImage(line, (image.getWidth - line.getWidth) / 2, (image.getHeight - line.getHeight)/2, null)
         } else {
           val line1 = cardsLine(cards.take(cards.size / 2))
           val line2 = cardsLine(cards.drop(cards.size / 2))

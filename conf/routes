@@ -12,6 +12,7 @@ GET     /decdoc                     controllers.Application.generateDeckDoc(tour
 GET     /download/doc/expanded      controllers.Application.expandedDeckDoc(tournamentId: String)
 GET     /download/doc/concise       controllers.Application.conciseDeckDoc(tournamentId: String)
 GET     /download/top/cards         controllers.Application.topCards(tournamentId: String)
+GET     /download/list/cards        controllers.Application.customCardList(header:String, cards: List[String])
 GET     /download/top/players       controllers.Application.topPlayers(tournamentId: String)
 GET     /download/tourney-left      controllers.Application.left(link: String, name: String, player: String)
 GET     /download/tourney-right     controllers.Application.right(link: String, name: String, player: String)
