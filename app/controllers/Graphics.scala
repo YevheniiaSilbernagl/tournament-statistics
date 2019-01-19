@@ -83,8 +83,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
-        FONT.foreach(f => g.setFont(f.deriveFont(48f)))
-        g.drawString(s"Top ${top10.size} players", 40, 80)
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(s"The Desk - Top ${top10.size} players this week", 220, 105)
 
         val longestLine = top10.map(_._1).sortBy(_.length).reverse.head + " - 100.00%"
         val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
@@ -102,11 +102,11 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
-        FONT.foreach(f => g.setFont(f.deriveFont(48f)))
-        g.drawString(s"Top ${cards.size} cards", 40, 80)
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(s"The Desk - Top ${cards.size} cards this week", 220, 105)
         val numberOfLines = if (cards.size > 6) 2 else 1
         val numberOfCardsPerLine: Int = (cards.size.toDouble / numberOfLines).round.intValue()
-        val cardSize = (240, 350)
+        val cardSize = (236, 350)
 
         def cardsLine(cardList: scala.List[(String, Int)]): BufferedImage = {
           val dest = new BufferedImage(if (cardList.size > 5) 1700 else 1430, cardSize._2 + 30, BufferedImage.TYPE_INT_ARGB)
