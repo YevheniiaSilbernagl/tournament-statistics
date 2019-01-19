@@ -3,7 +3,9 @@
 
 @main(s"DeckDoc:${tournament.name}") {
     <div class="container">
-        <h1 class="tournament-name"><a href="@routes.Application.doc(tournament.battlefy_id)">DOC: </a> @{tournament.name}</h1>
+        <a href="@routes.Application.expandedDeckDoc(tournament.battlefy_id)"><span class="badge badge-pill badge-primary">Expanded deck doc</span></a>
+        <a href="@routes.Application.conciseDeckDoc(tournament.battlefy_id)"><span class="badge badge-pill badge-secondary">Concise deck doc</span></a>
+        <h1 class="tournament-name">@{tournament.name}</h1>
     @for(player <- players) {
         <p style="page-break-before: always">
         @for(deck <- player._2) {

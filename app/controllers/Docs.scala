@@ -1,17 +1,18 @@
 package controllers
 
 import java.io.File
+import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 
 import javax.inject.Inject
 import org.docx4j.jaxb.Context
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage
 import org.docx4j.wml.{Br, STBrType}
-import play.api.mvc.{Action, AnyContent, Controller}
+import play.api.mvc.Controller
 import types.{Deck, Tournament}
 
 class Docs @Inject()(fs: FileSystem) extends Controller {
-  def doc(tournament: Tournament, info: List[(String, Deck)]): File = {
+  def expandedDeckDoc(tournament: Tournament, info: List[(String, Deck)]): File = {
     val exportFile = new File(s"${fs.parent}/${tournament.name}.docx")
     val wordPackage = WordprocessingMLPackage.createPackage
     val mainDocumentPart = wordPackage.getMainDocumentPart
@@ -51,6 +52,14 @@ class Docs @Inject()(fs: FileSystem) extends Controller {
 
     mainDocumentPart.getContent.add(paragraph)
     wordPackage.save(exportFile)
+    exportFile
+  }
+
+  def conciseDeckDoc(tournament: Tournament, info: List[(String, Option[String], Option[String], String)]): File = {
+    val exportFile = new File(s"${fs.parent}/${tournament.name}.csv")
+    val lines = List(s""""eternal name","discord name", "deck link"""") ++
+      info.map(i => s""""${i._1}","${i._3.getOrElse("")}","${i._2.getOrElse("")}"""")
+    Files.write(exportFile.toPath, lines.mkString("\n").getBytes(UTF_8))
     exportFile
   }
 }

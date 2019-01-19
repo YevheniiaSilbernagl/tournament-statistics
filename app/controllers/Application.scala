@@ -71,9 +71,17 @@ class Application @Inject()(
     }))
   }
 
-  def doc(tournament_id: String): Action[AnyContent] = Action {
+  def expandedDeckDoc(tournament_id: String): Action[AnyContent] = Action {
     val tournament = battlefy.getTournament(tournament_id)
-    val exportFile = docs.doc(tournament, battlefy.listOfPlayers(tournament.battlefy_id).map(i => (i._1, i._2.map(eternalWarcry.getDeck).getOrElse(Deck.empty))))
+    val exportFile = docs.expandedDeckDoc(tournament, battlefy.listOfPlayers(tournament.battlefy_id).map(i => (i._1, i._2.map(eternalWarcry.getDeck).getOrElse(Deck.empty))))
+    Ok(Files.readAllBytes(exportFile.toPath))
+      .withHeaders("Content-Type" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "content-disposition" -> s"""attachment; filename="${exportFile.getName}"""")
+  }
+
+  def conciseDeckDoc(tournament_id: String): Action[AnyContent] = Action {
+    val tournament = battlefy.getTournament(tournament_id)
+    val exportFile = docs.conciseDeckDoc(tournament, battlefy.listOfPlayers(tournament.battlefy_id))
     Ok(Files.readAllBytes(exportFile.toPath))
       .withHeaders("Content-Type" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "content-disposition" -> s"""attachment; filename="${exportFile.getName}"""")
