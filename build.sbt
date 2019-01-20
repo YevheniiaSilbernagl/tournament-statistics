@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(jdbc, cache, ws, specs2 % Test,
   "org.docx4j" % "docx4j" % "6.0.1",
   "org.postgresql" % "postgresql" % "9.4-1200-jdbc41",
   "com.discord4j" % "Discord4J" % "2.10.1",
-  "com.googlecode.xmemcached" % "xmemcached" % "2.4.3"
+  "com.googlecode.xmemcached" % "xmemcached" % "2.4.3",
+  "jfree" % "jfreechart" % "1.0.13"
 )
 
 unmanagedResourceDirectories in Test <+= baseDirectory(_ / "target/web/public/test")

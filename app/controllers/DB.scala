@@ -11,6 +11,25 @@ import types.{Deck, Score, Tournament}
 import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
+  def winRates(playerName: String): List[(DateTime, Double, Double)] = {
+    implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+
+    playerId(playerName) match {
+      case Some(id) =>
+        val tournaments = playerGames(id)._2.groupBy(_._1).map(p => (p._1.date, p._2.map(_._2))).toList.sortBy(_._1).reverse
+        (for (tournament <- tournaments) yield {
+          val tournamentsIncludingThis = tournaments.filterNot(_._1.isAfter(tournament._1))
+          val scores = tournamentsIncludingThis.flatMap(_._2)
+          val totalGames = scores.map(s => s.participant_a_score + s.participant_b_score).sum
+          val gamesWon = scores.map(s => if (s.participant_a_id == id) s.participant_a_score else s.participant_b_score).sum
+          val totalRounds = scores.length
+          val roundsWon = scores.count(s => if (s.participant_a_id == id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
+          (tournament._1, roundsWon.doubleValue() * 100 / totalRounds, gamesWon.doubleValue() * 100 / totalGames)
+        }).sortBy(_._1)
+      case _ => List()
+    }
+  }
+
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
   val eliminationRoundsCache: mutable.HashMap[String, Int] = scala.collection.mutable.HashMap()
@@ -135,7 +154,7 @@ class DB @Inject()(database: Database) extends Controller {
     mutableListOfPlayers.toMap
   }
 
-  def playerStats(playerId: Int): (String, List[(String, String, String, String)], Boolean) = {
+  def playerGames(playerId: Int): (String, List[(Tournament, Score, String)]) = {
     val tournaments: mutable.MutableList[(Tournament, Score, String)] = new mutable.MutableList[(Tournament, Score, String)]()
     val conn: Connection = database.getConnection()
     var name: String = ""
@@ -185,20 +204,24 @@ class DB @Inject()(database: Database) extends Controller {
     } finally {
       conn.close()
     }
+    (name, tournaments.toList)
+  }
 
+  def playerStats(playerId: Int): (String, List[(String, String, String, String)], Boolean) = {
+    val (name, tournaments) = playerGames(playerId)
     val tournaments_info = tournaments.toList.groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
     val this_year_tournaments_info = tournaments_info.filter(_._1._1.date.yearOfCentury() == current_year)
     val this_season_tournaments_info = tournaments_info.filter(t => t._1._1.season.contains(current_season) && t._1._1.date.yearOfCentury() == current_year)
     val info: mutable.ListBuffer[(String, String, String, String)] = new mutable.ListBuffer[(String, String, String, String)]()
 
     def winRate(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
-      val win = if (score.current_player_id == score.participant_a_id) score.participant_a_score else score.participant_b_score
-      val loss = if (score.current_player_id == score.participant_a_id) score.participant_b_score else score.participant_a_score
+      val win = if (playerId == score.participant_a_id) score.participant_a_score else score.participant_b_score
+      val loss = if (playerId == score.participant_a_id) score.participant_b_score else score.participant_a_score
       (win, loss)
     })
 
     def winrate_rounds(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
-      if (score.current_player_id == score.participant_a_id) score.participant_a_score > score.participant_b_score else score.participant_a_score < score.participant_b_score
+      if (playerId == score.participant_a_id) score.participant_a_score > score.participant_b_score else score.participant_a_score < score.participant_b_score
     }).toList
 
     def times(number: Int): String = number match {
@@ -271,20 +294,20 @@ class DB @Inject()(database: Database) extends Controller {
     val tyRoundsPlayed = tyRoundsWon + tyRoundsLost
 
 
-    val all_top8 = top8(tournaments_info)
-    val all_top4 = top4(tournaments_info)
-    val all_top2 = top2(tournaments_info)
     val all_winner = winner(tournaments_info)
+    val all_top2 = top2(tournaments_info).filterNot(d => all_winner.toList.map(_._1._1.name).contains(d._1._1.name))
+    val all_top4 = top4(tournaments_info).filterNot(d => (all_winner.toList ++ all_top2.toList).map(_._1._1.name).contains(d._1._1.name))
+    val all_top8 = top8(tournaments_info).filterNot(d => (all_winner.toList ++ all_top2.toList ++ all_top4.toList).map(_._1._1.name).contains(d._1._1.name))
 
-    val ts_top8 = top8(this_season_tournaments_info)
-    val ts_top4 = top4(this_season_tournaments_info)
-    val ts_top2 = top2(this_season_tournaments_info)
     val ts_winner = winner(this_season_tournaments_info)
+    val ts_top2 = top2(this_season_tournaments_info).filterNot(d => ts_winner.toList.map(_._1._1.name).contains(d._1._1.name))
+    val ts_top4 = top4(this_season_tournaments_info).filterNot(d => (ts_winner.toList ++ ts_top2.toList).map(_._1._1.name).contains(d._1._1.name))
+    val ts_top8 = top8(this_season_tournaments_info).filterNot(d => (ts_winner.toList ++ ts_top2.toList ++ ts_top4.toList).map(_._1._1.name).contains(d._1._1.name))
 
-    val ty_top8 = top8(this_year_tournaments_info)
-    val ty_top4 = top4(this_year_tournaments_info)
-    val ty_top2 = top2(this_year_tournaments_info)
     val ty_winner = winner(this_year_tournaments_info)
+    val ty_top2 = top2(this_year_tournaments_info).filterNot(d => ty_winner.toList.map(_._1._1.name).contains(d._1._1.name))
+    val ty_top4 = top4(this_year_tournaments_info).filterNot(d => (ty_winner.toList ++ ty_top2.toList).map(_._1._1.name).contains(d._1._1.name))
+    val ty_top8 = top8(this_year_tournaments_info).filterNot(d => (ty_winner.toList ++ ty_top2.toList ++ ty_top4.toList).map(_._1._1.name).contains(d._1._1.name))
 
     def round(d: Double): Double = if (d.isNaN) 0.0 else BigDecimal(d).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
 

@@ -9,12 +9,16 @@ import javax.imageio.{IIOImage, ImageIO, ImageWriteParam}
 import javax.inject.Inject
 import net.coobird.thumbnailator.makers.FixedSizeThumbnailMaker
 import net.coobird.thumbnailator.resizers.{DefaultResizerFactory, Resizer}
+import org.jfree.chart.ChartFactory
+import org.jfree.chart.axis.CategoryLabelPositions
+import org.jfree.chart.plot.PlotOrientation._
+import org.jfree.data.category.DefaultCategoryDataset
+import org.jfree.ui.RectangleInsets
 import org.joda.time.DateTime
 import play.api.mvc.Controller
 import types.{Card, Deck}
 
 class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database: DB) extends Controller {
-
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
     val ge = GraphicsEnvironment.getLocalGraphicsEnvironment
@@ -170,7 +174,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
         if (numberOfLines == 1) {
           val line = cardsLine(cards)
-          g.drawImage(line, (image.getWidth - line.getWidth) / 2, (image.getHeight - line.getHeight)/2, null)
+          g.drawImage(line, (image.getWidth - line.getWidth) / 2, (image.getHeight - line.getHeight) / 2, null)
         } else {
           val line1 = cardsLine(cards.take(cards.size / 2))
           val line2 = cardsLine(cards.drop(cards.size / 2))
@@ -438,21 +442,140 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     FONT.foreach(f => g.setFont(f.deriveFont(deckNameFont)))
     g.drawString(player2._3, center(g, player2._3), vsYPosition + p2nHeights + 65 + additionalDistanceFromInfoBox)
     val lineY = vsYPosition + p2nHeights + 85
-
-    g.dispose()
-
-    val resultFile = new File(s"${fs.parent}/left-side-panel.png")
-    val iter = ImageIO.getImageWritersByFormatName("png")
-    val writer = iter.next()
-    val iwp = writer.getDefaultWriteParam
-    if (iwp.canWriteCompressed) {
-      iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
-      iwp.setCompressionQuality(1.0f)
-    }
-    writer.setOutput(new FileImageOutputStream(resultFile))
-    writer.write(null, new IIOImage(image, null, null), iwp)
-    writer.dispose()
-    resultFile
+    saveFile(g, image, "left-side-panel.png")
   }
 
+
+  def trend(playerName: String, stats: scala.List[(DateTime, Double, Double)]): File = {
+    fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(s"The Desk - $playerName Win Rates", 220, 105)
+
+        val dataSet = new DefaultCategoryDataset()
+        stats.foreach { dataPoint =>
+          val date = dataPoint._1.toString("MMM yyyy")
+          dataSet.addValue(dataPoint._2, "rounds win rate", date)
+          dataSet.addValue(dataPoint._3, "games win rate", date)
+        }
+        val trans = new Color(0, 0, 0, 0)
+        val white = new Color(255, 255, 255)
+        val chart = ChartFactory.createLineChart("", "Tournament date", "Win rate(%)", dataSet, VERTICAL, true, false, false)
+        val plot = chart.getPlot
+        val categoryPlot = chart.getCategoryPlot
+        val legend = chart.getLegend
+        plot.setBackgroundPaint(null)
+        chart.setBackgroundPaint(trans)
+        chart.setPadding(new RectangleInsets(3, 3, 3, 3))
+        plot.setBackgroundPaint(trans)
+        legend.setBackgroundPaint(trans)
+        FONT.map(_.deriveFont(30f)).foreach { font =>
+          legend.setItemFont(font)
+          categoryPlot.getRangeAxis.setLabelFont(font)
+          categoryPlot.getDomainAxis.setLabelFont(font)
+          categoryPlot.getRangeAxis.setTickLabelFont(font)
+        }
+        FONT.map(_.deriveFont(24f)).foreach { font =>
+          categoryPlot.getDomainAxis.setTickLabelFont(font)
+        }
+
+        legend.setItemPaint(white)
+        plot.setOutlinePaint(white)
+        categoryPlot.getRangeAxis.setLabelPaint(white)
+        categoryPlot.getDomainAxis.setLabelPaint(white)
+        categoryPlot.getRangeAxis.setAxisLinePaint(white)
+        categoryPlot.getDomainAxis.setAxisLinePaint(white)
+        categoryPlot.getDomainAxis.setTickLabelPaint(white)
+        categoryPlot.getRangeAxis.setTickLabelPaint(white)
+
+        categoryPlot.getDomainAxis.setMaximumCategoryLabelLines(2)
+        categoryPlot.getDomainAxis.setCategoryLabelPositions(CategoryLabelPositions.STANDARD)
+
+        val minY = scala.List(stats.map(_._2).min, stats.map(_._3).min).min - 5.0
+        categoryPlot.getRangeAxis.setLowerBound(minY)
+
+        categoryPlot.getRenderer.setSeriesPaint(0, new Color(205, 192, 172))
+        categoryPlot.getRenderer.setSeriesStroke(0, new BasicStroke(3f))
+        categoryPlot.getRenderer.setSeriesPaint(1, new Color(255, 161, 18))
+        categoryPlot.getRenderer.setSeriesStroke(1, new BasicStroke(3f))
+
+        val chartImage = chart.createBufferedImage(1500, 800)
+        g.drawImage(chartImage, (image.getWidth - chartImage.getWidth) / 2, (image.getHeight - chartImage.getHeight) / 2, chartImage.getWidth, chartImage.getHeight, null)
+
+        saveFile(g, image, s"$playerName-win-rates.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+
+  }
+
+  def compare(player1: (String, scala.List[(DateTime, Double, Double)]),
+              player2: (String, scala.List[(DateTime, Double, Double)])): File = {
+    implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter _)
+
+    fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(s"The Desk - ${player1._1} VS ${player2._1}", 220, 105)
+
+        val dataSet = new DefaultCategoryDataset()
+        (player1._2.map(_._1) ++ player2._2.map(_._1)).distinct.sorted.reverse.foreach { date =>
+          player1._2.filterNot(_._1.isAfter(date)).sorted.headOption.foreach { dataPoint =>
+            dataSet.addValue(dataPoint._2, player1._1, dataPoint._1.toString("MMM yyyy"))
+          }
+          player2._2.filterNot(_._1.isAfter(date)).sorted.headOption.foreach { dataPoint =>
+            dataSet.addValue(dataPoint._2, player2._1, dataPoint._1.toString("MMM yyyy"))
+          }
+        }
+        val trans = new Color(0, 0, 0, 0)
+        val white = new Color(255, 255, 255)
+        val chart = ChartFactory.createLineChart("", "Tournament date", "Win rate(%)", dataSet, VERTICAL, true, false, false)
+        val plot = chart.getPlot
+        val categoryPlot = chart.getCategoryPlot
+        val legend = chart.getLegend
+        plot.setBackgroundPaint(null)
+        chart.setBackgroundPaint(trans)
+        chart.setPadding(new RectangleInsets(3, 3, 3, 3))
+        plot.setBackgroundPaint(trans)
+        legend.setBackgroundPaint(trans)
+        FONT.map(_.deriveFont(30f)).foreach { font =>
+          legend.setItemFont(font)
+          categoryPlot.getRangeAxis.setLabelFont(font)
+          categoryPlot.getDomainAxis.setLabelFont(font)
+          categoryPlot.getRangeAxis.setTickLabelFont(font)
+        }
+        FONT.map(_.deriveFont(24f)).foreach { font =>
+          categoryPlot.getDomainAxis.setTickLabelFont(font)
+        }
+
+        legend.setItemPaint(white)
+        plot.setOutlinePaint(white)
+        categoryPlot.getRangeAxis.setLabelPaint(white)
+        categoryPlot.getDomainAxis.setLabelPaint(white)
+        categoryPlot.getRangeAxis.setAxisLinePaint(white)
+        categoryPlot.getDomainAxis.setAxisLinePaint(white)
+        categoryPlot.getDomainAxis.setTickLabelPaint(white)
+        categoryPlot.getRangeAxis.setTickLabelPaint(white)
+        categoryPlot.getDomainAxis.setMaximumCategoryLabelLines(2)
+        categoryPlot.getDomainAxis.setCategoryLabelPositions(CategoryLabelPositions.STANDARD)
+
+        val minY = scala.List(player1._2.map(_._2).min, player1._2.map(_._3).min, player2._2.map(_._2).min, player2._2.map(_._3).min).min - 5.0
+        categoryPlot.getRangeAxis.setLowerBound(minY)
+
+        categoryPlot.getRenderer.setSeriesPaint(0, new Color(205, 192, 172))
+        categoryPlot.getRenderer.setSeriesStroke(0, new BasicStroke(3f))
+        categoryPlot.getRenderer.setSeriesPaint(1, new Color(255, 161, 18))
+        categoryPlot.getRenderer.setSeriesStroke(1, new BasicStroke(3f))
+
+        val chartImage = chart.createBufferedImage(1500, 800)
+        g.drawImage(chartImage, (image.getWidth - chartImage.getWidth) / 2, (image.getHeight - chartImage.getHeight) / 2, chartImage.getWidth, chartImage.getHeight, null)
+
+        saveFile(g, image, s"${player1._1}-vs-${player2._1}.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+
+  }
 }

@@ -15,8 +15,12 @@
                 <div class="badge badge-warning">Rookie</div>
             }
         </h1>
+        <a href="@routes.Application.playerTrend(name)"><span class="badge-pill badge-primary">Win rate history</span></a>
         @if(opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
             <table>
+                <tr><td>
+                    <a href="@routes.Application.compareWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">Compare win rates</span></a>
+                </td></tr>
                 <tr><td>
                     <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
                     <a target="_blank" href="https://eternalwarcry.com/decks/compare?decks=@{deck.get.eternalWarCryId}&decks=@{opponent.get._3.get.eternalWarCryId}">Compare decks</a>

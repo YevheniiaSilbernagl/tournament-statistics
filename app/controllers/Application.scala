@@ -237,4 +237,18 @@ class Application @Inject()(
     }
     Ok("")
   }
+
+  def playerTrend(playerName: String) = Action {
+    val file = graphics.trend(playerName, db.winRates(playerName))
+    discord.notifyAdmin(_.sendFile(file))
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def compareWinRates(player1Name: String, player2Name: String) = Action {
+    val file = graphics.compare((player1Name, db.winRates(player1Name)), (player2Name, db.winRates(player2Name)))
+    discord.notifyAdmin(_.sendFile(file))
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
 }
