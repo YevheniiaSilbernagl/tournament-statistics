@@ -2,14 +2,13 @@ package controllers
 
 import java.nio.file.Files
 
+import controllers.discord.Discord
 import javax.inject.Inject
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
-import sx.blah.discord.handle.obj.IGuild
 import types.Deck
 
-import scala.collection.JavaConversions._
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
@@ -39,30 +38,15 @@ class Application @Inject()(
   }
 
   def sendMessageToAllPlayers(message: String) = Action {
-    val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id).filter(_._1.contains("Xenorath"))
-    for {bot <- discord.bot
-         player <- players
-         name <- player._3
-         user <- bot.getUsersByName(name.split("#")(0))
-    } {
-      try {
-        user.getOrCreatePMChannel().sendMessage(message)
-      } catch {
-        case NonFatal(e) => println(s"Message has not been sent to $name")
-      }
-    }
+    battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
+      .flatMap(_._3).map(_.split("#")(0)).distinct
+      .foreach(player => discord.sendPM(player, message))
     Ok("Messages have been sent")
   }
 
   def validateDecks(tournamentId: String) = WithBasicAuth {
-    val players = battlefy.listOfPlayers(tournamentId)
-    val allPlayers: List[String] = discord.bot.map(_.getGuilds.toList).getOrElse(List[IGuild]())
-      .flatMap(guild => guild.getUsers.filterNot(_.isBot)
-        .flatMap(user => List(
-          user.getDisplayName(guild) + "#" + user.getDiscriminator,
-          user.getName + "#" + user.getDiscriminator
-        ))).distinct
-    Ok(views.html.validation(players, allPlayers))
+    discord.notifyAdmin(_.sendMessage("test"))
+    Ok(views.html.validation(battlefy.listOfPlayers(tournamentId), discord.allPlayers))
   }
 
   def generateDeckDoc(tournamentId: String) = WithBasicAuth {
@@ -92,11 +76,14 @@ class Application @Inject()(
     val playersName = player.trim
     graphics.generateImage((playersName, None), side, eternalWarcry.getDeck(link), Some(name)) match {
       case Right(file) =>
-        discord.bot.foreach { client =>
-          val channel = client.getApplicationOwner.getOrCreatePMChannel()
-          channel.sendFile(file)
-          channel.sendMessage(s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${playersName.split("[\\s\\+]")(0)}>")
-        }
+
+        discord.notifyAdmin(_.sendFile(file))
+        discord.notifyStreamers(_.sendFile(file))
+
+        val statsMessage = s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${playersName.split("[\\s\\+]")(0)}>"
+        discord.notifyAdmin(_.sendMessage(statsMessage))
+        discord.notifyStreamers(_.sendMessage(statsMessage))
+
         Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
           "content-disposition" -> s"""attachment; filename="${file.getName}"""")
       case Left(error) => NotFound(error.getMessage)
@@ -156,12 +143,20 @@ class Application @Inject()(
     val topCards = players.map(_._2).filter(_.isDefined).flatMap(l => eternalWarcry.getDeck(l.get).cards)
       .groupBy(_._1).map(p => p._1 -> p._2.map(_._2).sum).filterNot(_._1.isPower).map(p => p._1.name -> p._2).toList.sortBy(_._2).reverse.take(10)
     val file = graphics.topCards(topCards)
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
   def customCardList(header: String, cards: List[String]): Action[AnyContent] = Action {
-    val file = graphics.customCardList("1.42.3 Changes", cards)
+    val file = graphics.customCardList(header, cards)
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
@@ -171,6 +166,10 @@ class Application @Inject()(
     val totalStats = players.map(_._1).flatMap(db.playerId).map(db.playerStats)
     val top10 = totalStats.map(p => (p._1, p._2(2)._4)).sortBy(_._2).reverse.take(10)
     val file = graphics.topPlayers(top10)
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
@@ -188,12 +187,10 @@ class Application @Inject()(
   }
 
   def sendMessage(user: String, message: String) = Action {
-    discord.bot.map { channel =>
-      channel.getUsers.find(_.getName == user).map(u => u.getOrCreatePMChannel().sendMessage(message)) match {
-        case Some(_) => Ok("")
-        case _ => NotAcceptable("User not found")
-      }
-    }.getOrElse(NotAcceptable("Other error"))
+    discord.sendPM(user, message) match {
+      case Some(_) => Ok("")
+      case _ => NotAcceptable("User not found")
+    }
   }
 
   def generateCastersList(list: String) = Action {

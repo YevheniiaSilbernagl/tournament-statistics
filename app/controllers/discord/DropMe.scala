@@ -1,7 +1,8 @@
-package controllers
+package controllers.discord
 
 import java.util.concurrent.TimeUnit
 
+import controllers.Cache
 import javax.inject.Inject
 import org.joda.time.DateTime
 import play.api.mvc.Controller
@@ -17,7 +18,7 @@ class DropMe @Inject()(cache: Cache) extends Controller {
   type Name = String
   type Drop = (Long, Name, Channel, DateTime)
 
-  val subscriptionCacheKey = "subscribed"
+  val subscriptionCacheKey = "drops_subscribed"
   val dropsCacheKey = "drops"
   val cacheDuration: FiniteDuration = 3.days
   val delayBeforeNotificationToTO: FiniteDuration = 5.minutes
@@ -30,8 +31,9 @@ class DropMe @Inject()(cache: Cache) extends Controller {
   val dropMeConfirmCommand = s"$dropMeCommand confirm"
   val dropMeRequestCommand = s"$dropMeCommand request"
   val dropMeCancelCommand = s"$dropMeCommand cancel"
+  val dropMeHelpCommand = s"$dropMeCommand help"
 
-  val messageForSubscribedAdmin = s"You subscribed for !dropme messages. Subscription expires in $cacheDuration"
+  val messageForSubscribedAdmin = s"You subscribed for $dropMeCommand messages. Subscription expires in $cacheDuration"
 
   val confirmConfirmation = s"TO's have been notified about your request"
 
@@ -70,9 +72,11 @@ class DropMe @Inject()(cache: Cache) extends Controller {
 
   def isCancelCommand(message: IMessage): Boolean = message.getContent == dropMeCancelCommand
 
+  def isHelpMeComand(message: IMessage): Boolean = message.getContent == dropMeHelpCommand
+
   def subscribeTO(user: IUser): Unit = {
     val currentlySubscribed = cache.get[List[Long]](subscriptionCacheKey).getOrElse(List())
-    cache.put(subscriptionCacheKey, currentlySubscribed :+ user.getLongID, cacheDuration)
+    cache.put(subscriptionCacheKey, (currentlySubscribed :+ user.getLongID).distinct, cacheDuration)
     user.getOrCreatePMChannel().sendMessage(messageForSubscribedAdmin)
   }
 
@@ -108,7 +112,7 @@ class DropMe @Inject()(cache: Cache) extends Controller {
     val drops = cache.get[List[Drop]](dropsCacheKey).getOrElse(List())
     val dropsToProcess = drops.filter(dropMessage => dropMessage._4.isBefore(DateTime.now.minusMinutes(delayBeforeNotificationToTO.toUnit(TimeUnit.MINUTES).intValue())))
     dropsToProcess.foreach { m =>
-      listOfTOs.foreach(to => discord.getUserByID(to).getOrCreatePMChannel().sendMessage(potentialDrop(discord, m)))
+      listOfTOs.distinct.foreach(to => discord.getUserByID(to).getOrCreatePMChannel().sendMessage(potentialDrop(discord, m)))
     }
     cache.put(dropsCacheKey, drops.filterNot(dropsToProcess.contains(_)), cacheDuration)
   }

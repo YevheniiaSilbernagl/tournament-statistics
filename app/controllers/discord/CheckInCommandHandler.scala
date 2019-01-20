@@ -1,5 +1,6 @@
-package controllers
+package controllers.discord
 
+import controllers.Battlefy
 import controllers.Battlefy._
 import sx.blah.discord.api.events.EventSubscriber
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent

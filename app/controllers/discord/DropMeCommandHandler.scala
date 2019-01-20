@@ -1,5 +1,6 @@
-package controllers
+package controllers.discord
 
+import controllers.Battlefy
 import controllers.Battlefy._
 import javax.inject.Inject
 import sx.blah.discord.api.events.EventSubscriber
@@ -23,8 +24,10 @@ case class DropMeCommandHandler @Inject()(battlefy: Battlefy, dropMe: DropMe) {
         case message if dropMe.isCancelCommand(message) && event.getAuthor.isParticipant(battlefy) =>
           dropMe.cancel(event)
 
-        case _ =>
+        case message if dropMe.isHelpMeComand(message) && event.getAuthor.isParticipant(battlefy) =>
           dropMe.help(event)
+
+        case _ =>
       }
     } else if (allowedChannels.contains(event.getChannel.getName) || privateMessageToBot) {
       event.getMessage match {
