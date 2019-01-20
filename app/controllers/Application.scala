@@ -45,7 +45,6 @@ class Application @Inject()(
   }
 
   def validateDecks(tournamentId: String) = WithBasicAuth {
-    discord.notifyAdmin(_.sendMessage("test"))
     Ok(views.html.validation(battlefy.listOfPlayers(tournamentId), discord.allPlayers))
   }
 
@@ -202,5 +201,40 @@ class Application @Inject()(
   def checkInPage = Action {
     val tournament = battlefy.getCurrentTournament.battlefy_id
     Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament)))
+  }
+
+  def importTournament(battlefyUuid: String) = Action {
+    val BYE = "BYE+0000"
+    val tournament = battlefy.getTournamentInfo(battlefyUuid)
+    val tournamentName = (tournament \ "name").as[String]
+    val tournamentId = (tournament \ "_id").as[String]
+    val tournamentStartDate = (tournament \ "startTime").as[String]
+    db.addTournament(tournamentName, tournamentStartDate, tournamentId)
+    db.importDeck(Deck.empty)
+    db.addParticipant(BYE, tournamentId, Deck.empty.link)
+    battlefy.playersInfo(battlefyUuid).foreach { player =>
+      val eternalName = (player \ "name").as[String]
+      val customFields = (player \ "customFields").as[JsArray].value.toList.map(field => (field \ "value").as[String])
+      val discordName = customFields.find(_.contains("#")).getOrElse(eternalName)
+      val battlefyNames = (player \ "players").as[JsArray].value.toList.map(field => (field \ "username").as[String])
+      val deckLinkO = customFields.find(_.contains("eternalwarcry"))
+      val deck = deckLinkO.map(eternalWarcry.getDeck).getOrElse(Deck.empty)
+      db.addPlayer(tournamentId, eternalName, discordName, battlefyNames, deck.link)
+    }
+    (tournament \ "stages").as[JsArray].value.toList.foreach { stage =>
+      val s_id = (stage \ "_id").as[String]
+      val stageType = (stage \ "bracket" \ "type").as[String]
+      battlefy.stageInfo(s_id).value.toList.foreach { game =>
+        val roundNumber = (game \ "roundNumber").as[JsNumber].value.intValue()
+        val player1Name = (game \ "top" \ "team" \ "name").as[String]
+        val (player1Score, player2Name, player2Score) = if ((game \ "isBye").as[Boolean]) (2, BYE, 0) else (
+          (game \ "top" \ "score").as[JsNumber].value.intValue(),
+          (game \ "bottom" \ "team" \ "name").as[String],
+          (game \ "bottom" \ "score").as[JsNumber].value.intValue()
+        )
+        db.importGame(tournamentId, player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
+      }
+    }
+    Ok("")
   }
 }

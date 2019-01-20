@@ -1,16 +1,20 @@
 package controllers
 
-import java.sql.Connection
+import java.sql.{Connection, Statement}
 
 import javax.inject.Inject
 import org.joda.time.DateTime
 import play.api.db.Database
 import play.api.mvc.Controller
-import types.{Score, Tournament}
+import types.{Deck, Score, Tournament}
 
 import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
+  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+
+  val eliminationRoundsCache: mutable.HashMap[String, Int] = scala.collection.mutable.HashMap()
+
   def playerId(name: String): Option[Int] = {
     val conn: Connection = database.getConnection()
     try {
@@ -102,15 +106,9 @@ class DB @Inject()(database: Database) extends Controller {
       List((s"$playerShortName - ${score.toList.map(_._1).sum} : ${score.toList.map(_._2).sum} - $opponentShortName", "", ""), ("History: ", "", "")) ++ info.toList
   }
 
+  def current_year: DateTime.Property = new DateTime().yearOfCentury()
 
-  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
-
-  val eliminationRoundsCache: mutable.HashMap[String, Int] = scala.collection.mutable.HashMap()
-
-  lazy val current_year = new DateTime().yearOfCentury()
-
-  lazy val current_season: Int = {
-    //if app is always online than wee need an update here
+  def current_season: Int = {
     val conn: Connection = database.getConnection()
     try {
       val stmt = conn.createStatement
@@ -121,7 +119,6 @@ class DB @Inject()(database: Database) extends Controller {
       conn.close()
     }
   }
-
 
   def getPlayers: Map[Int, String] = {
     val mutableListOfPlayers: mutable.HashMap[Int, String] = new mutable.HashMap[Int, String]()
@@ -137,7 +134,6 @@ class DB @Inject()(database: Database) extends Controller {
     }
     mutableListOfPlayers.toMap
   }
-
 
   def playerStats(playerId: Int): (String, List[(String, String, String, String)], Boolean) = {
     val tournaments: mutable.MutableList[(Tournament, Score, String)] = new mutable.MutableList[(Tournament, Score, String)]()
@@ -334,5 +330,84 @@ class DB @Inject()(database: Database) extends Controller {
       s"${this_year_tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}",
       s"${tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}"))
     (name, info.toList, tournaments_info.size <= 3)
+  }
+
+  def importGame(tournamentId: String, player1Name: String, player2Name: String, player1Score: Int, player2Score: Int, round: Int, stageType: String): Unit = {
+    insert("INSERT into match (participant_a_id, participant_b_id, participant_a_score, participant_b_score, round, bracket_name) VALUES\n" +
+      "  ((select p.id from participant p JOIN player p2 ON p.player_id = p2.id JOIN tournament t ON p.tournament_id = t.id where t.battlefy_uuid=$$" + tournamentId + "$$ and p2.eternal_name=$$" + player1Name + "$$ limit 1),\n" +
+      "   (select p.id from participant p JOIN player p2 ON p.player_id = p2.id JOIN tournament t ON p.tournament_id = t.id where t.battlefy_uuid=$$" + tournamentId + "$$ and p2.eternal_name=$$" + player2Name + "$$ limit 1),\n" +
+      "    " + player1Score + ",\n" +
+      "    " + player2Score + ",\n" +
+      "    " + round + ",\n" +
+      "    $$" + stageType + "$$\n" +
+      "  )")
+  }
+
+  def addPlayer(tournamentId: String, eternalName: String, discordName: String, battlefyNames: List[String], deckLink: String): Unit = {
+    insert("INSERT INTO player (eternal_name) VALUES ('" + eternalName + "') ON CONFLICT DO NOTHING")
+    insert("INSERT into account (player_id, source, name)\n" +
+      "VALUES\n" +
+      "  ((select id from player where eternal_name='" + eternalName + "' LIMIT 1), 'DISCORD', '" + discordName + "'),\n" +
+      "  ((select id from player where eternal_name='" + eternalName + "' LIMIT 1), 'ETERNAL', '" + eternalName + "')\n" +
+      "ON CONFLICT DO NOTHING")
+    battlefyNames.foreach { name => {
+      insert("INSERT into account (player_id, source, name)\n" +
+        "VALUES\n" +
+        "  ((select id from player where eternal_name='" + eternalName + "' LIMIT 1), 'BATTLEFY', '" + name + "')" +
+        "ON CONFLICT DO NOTHING")
+    }
+    }
+    insert("insert into participant (player_id, tournament_id, deck_id) VALUES (\n" +
+      "  (select id from player p where p.eternal_name=$$" + eternalName + "$$ limit 1),\n" +
+      "  (select id from tournament t where t.battlefy_uuid=$$" + tournamentId + "$$ limit 1),\n" +
+      "  (select id from deck d where d.eternalwarcry_link=$$" + deckLink + "$$ limit 1)\n" +
+      ")")
+  }
+
+  def addParticipant(eternalName: String, tournamentId: String, deckLink: String): Unit = {
+    insert("insert into participant (player_id, tournament_id, deck_id) VALUES (\n" +
+      "  (select id from player p where p.eternal_name=$$" + eternalName + "$$ limit 1),\n" +
+      "  (select id from tournament t where t.battlefy_uuid=$$" + tournamentId + "$$ limit 1),\n" +
+      "  (select id from deck d where d.eternalwarcry_link=$$" + deckLink + "$$ limit 1)\n" +
+      ")")
+  }
+
+  def importDeck(deck: Deck): Unit = {
+    insert("INSERT INTO deck (eternalwarcry_link, name) VALUES ($$" + deck.link + "$$, $$" + deck.name + "$$) ON CONFLICT DO NOTHING")
+    deck.mainDeck.foreach(card => {
+      insert("INSERT INTO card (name) VALUES ($$" + card._1.name + "$$) ON CONFLICT DO NOTHING")
+      insert("INSERT INTO pick (deck_id, card_id, number_of_cards, section) VALUES (\n" +
+        "  (SELECT id FROM deck WHERE eternalwarcry_link = $$" + deck.link + "$$ LIMIT 1), \n" +
+        "  (SELECT id FROM card WHERE name = $$" + card._1.name + "$$ LIMIT 1), " + card._2 + ", 'MAIN')")
+    })
+    deck.sideBoard.foreach(card => {
+      insert("INSERT INTO card (name) VALUES ($$" + card._1.name + "$$) ON CONFLICT DO NOTHING")
+      insert("INSERT INTO pick (deck_id, card_id, number_of_cards, section) VALUES (\n" +
+        "  (SELECT id FROM deck WHERE eternalwarcry_link = $$" + deck.link + "$$ LIMIT 1), \n" +
+        "  (SELECT id FROM card WHERE name = $$" + card._1.name + "$$ LIMIT 1), " + card._2 + ", 'SIDE')")
+    })
+    deck.market.foreach(card => {
+      insert("INSERT INTO card (name) VALUES ($$" + card._1.name + "$$) ON CONFLICT DO NOTHING")
+      insert("INSERT INTO pick (deck_id, card_id, number_of_cards, section) VALUES (\n" +
+        "  (SELECT id FROM deck WHERE eternalwarcry_link = $$" + deck.link + "$$ LIMIT 1), \n" +
+        "  (SELECT id FROM card WHERE name = $$" + card._1.name + "$$ LIMIT 1), " + card._2 + ", 'MARKET')")
+    })
+  }
+
+  def addTournament(tournamentName: String, tournamentStartDate: String, tournamentId: String): Unit = {
+    insert("INSERT INTO tournament (name, date, battlefy_uuid) VALUES ('" + tournamentName + "', '" + tournamentStartDate + "', '" + tournamentId + "')")
+  }
+
+  private def insert(sql: String): Unit = {
+    var conn: Connection = null
+    var stmt: Statement = null
+    try {
+      conn = database.getConnection()
+      stmt = conn.createStatement
+      stmt.executeUpdate(sql)
+    } finally {
+      if (stmt != null) stmt.close()
+      if (conn != null) conn.close()
+    }
   }
 }

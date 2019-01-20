@@ -56,16 +56,16 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
   }
 
   def listOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName], BattlefyId)] =
+    playersInfo(tournamentId).map(p => {
+      val battlefyId = (p \ "_id").as[String]
+      val eternalName = (p \ "name").as[String]
+      val customFields = (p \ "customFields" \\ "value").toList.map(_.as[String])
+      (eternalName, customFields.find(_.contains("eternalwarcry")), customFields.filterNot(_.contains("eternalwarcry")).headOption, battlefyId)
+    })
+
+  def playersInfo(tournamentId: String): List[JsValue] =
     Await.result(ws.url(players(tournamentId)).get().map(response => {
-      val list = Json.parse(response.body).asInstanceOf[JsArray].value.toList
-      list
-        .map(p => {
-          val battlefyId = (p \ "_id").as[String]
-          val eternalName = (p \ "name").as[String]
-          val customFields = (p \ "customFields" \\ "value").toList.map(_.as[String])
-          (eternalName, customFields.find(_.contains("eternalwarcry")), customFields.filterNot(_.contains("eternalwarcry")).headOption, battlefyId)
-        }
-        )
+      Json.parse(response.body).asInstanceOf[JsArray].value.toList
     }), Duration.apply(30, TimeUnit.SECONDS))
 
   def getTournament(battlefy_uuid: String): Tournament = {
