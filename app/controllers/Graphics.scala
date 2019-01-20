@@ -446,13 +446,13 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   }
 
 
-  def trend(playerName: String, stats: scala.List[(DateTime, Double, Double)]): File = {
+  def trend(header: String, stats: scala.List[(DateTime, Double, Double)]): File = {
     fs.file(s"/images/background.png") match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
-        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
-        g.drawString(s"The Desk - $playerName Win Rates", 220, 105)
+        FONT.foreach(f => g.setFont(f.deriveFont(80f)))
+        g.drawString(s"The Desk - $header", 220, 90)
 
         val dataSet = new DefaultCategoryDataset()
         stats.foreach { dataPoint =>
@@ -504,7 +504,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         val chartImage = chart.createBufferedImage(1500, 800)
         g.drawImage(chartImage, (image.getWidth - chartImage.getWidth) / 2, (image.getHeight - chartImage.getHeight) / 2, chartImage.getWidth, chartImage.getHeight, null)
 
-        saveFile(g, image, s"$playerName-win-rates.png")
+        saveFile(g, image, s"${header.replaceAll("\\s", "-")}.png")
       case _ => throw new Exception(s"background image not found")
     }
 

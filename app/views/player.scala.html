@@ -15,7 +15,8 @@
                 <div class="badge badge-warning">Rookie</div>
             }
         </h1>
-        <a href="@routes.Application.playerTrend(name)"><span class="badge-pill badge-primary">Win rate history</span></a>
+        <a href="@routes.Application.playerLifetimeWinRate(name)"><span class="badge-pill badge-primary">Lifetime Win Rate</span></a>
+        <a href="@routes.Application.playerTrendingWinRate(name)"><span class="badge-pill badge-primary">Trending Win Rate</span></a>
         @if(opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
             <table>
                 <tr><td>

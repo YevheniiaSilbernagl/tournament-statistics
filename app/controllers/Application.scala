@@ -238,9 +238,18 @@ class Application @Inject()(
     Ok("")
   }
 
-  def playerTrend(playerName: String) = Action {
+  def playerLifetimeWinRate(playerName: String) = Action {
     val name = playerName.split("\\+")(0)
-    val file = graphics.trend(name, db.winRates(name))
+    val file = graphics.trend(s"$name Lifetime Win Rate", db.winRates(name))
+    discord.notifyAdmin(_.sendFile(file))
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+
+  def playerTrendingWinRate(playerName: String) = Action {
+    val name = playerName.split("\\+")(0)
+    val file = graphics.trend(s"$name Trending Win Rate", db.movingAverage(name))
     discord.notifyAdmin(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
@@ -249,7 +258,7 @@ class Application @Inject()(
   def compareWinRates(player1Name: String, player2Name: String) = Action {
     val name1 = player1Name.split("\\+")(0)
     val name2 = player2Name.split("\\+")(0)
-    val file = graphics.compare((name1, db.winRates(name1)), (name2, db.winRates(name2)))
+    val file = graphics.compare((name1, db.movingAverage(name1)), (name2, db.movingAverage(name2)))
     discord.notifyAdmin(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")

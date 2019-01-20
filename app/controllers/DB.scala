@@ -30,6 +30,25 @@ class DB @Inject()(database: Database) extends Controller {
     }
   }
 
+  def movingAverage(playerName: String, window: Int = 4): List[(DateTime, Double, Double)] = {
+    implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+
+    playerId(playerName) match {
+      case Some(id) =>
+        val tournaments = playerGames(id)._2.groupBy(_._1).map(p => (p._1.date, p._2.map(_._2))).toList.sortBy(_._1).reverse
+        (for (tournament <- tournaments) yield {
+          val tournamentsIncludingThis = tournaments.filterNot(_._1.isAfter(tournament._1)).take(window)
+          val scores = tournamentsIncludingThis.flatMap(_._2)
+          val totalGames = scores.map(s => s.participant_a_score + s.participant_b_score).sum
+          val gamesWon = scores.map(s => if (s.participant_a_id == id) s.participant_a_score else s.participant_b_score).sum
+          val totalRounds = scores.length
+          val roundsWon = scores.count(s => if (s.participant_a_id == id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
+          (tournament._1, roundsWon.doubleValue() * 100 / totalRounds, gamesWon.doubleValue() * 100 / totalGames)
+        }).sortBy(_._1)
+      case _ => List()
+    }
+  }
+
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
   val eliminationRoundsCache: mutable.HashMap[String, Int] = scala.collection.mutable.HashMap()
