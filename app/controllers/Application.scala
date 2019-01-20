@@ -169,7 +169,7 @@ class Application @Inject()(
   def topPlayers(tournamentId: String): Action[AnyContent] = Action {
     val players = battlefy.listOfPlayers(tournamentId)
     val totalStats = players.map(_._1).flatMap(db.playerId).map(db.playerStats)
-    val top10 = totalStats.map(p => (p._1, p._2(4)._4)).sortBy(_._2).reverse.take(10)
+    val top10 = totalStats.map(p => (p._1, p._2(2)._4)).sortBy(_._2).reverse.take(10)
     val file = graphics.topPlayers(top10)
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
