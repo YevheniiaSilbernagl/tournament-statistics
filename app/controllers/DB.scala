@@ -11,7 +11,7 @@ import types.{Deck, Score, Tournament}
 import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
-  def winRates(playerName: String): List[(DateTime, Double, Double)] = {
+  def lifeTimeWinRates(playerName: String): List[(DateTime, Double, Double)] = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
     playerId(playerName) match {
@@ -30,7 +30,7 @@ class DB @Inject()(database: Database) extends Controller {
     }
   }
 
-  def movingAverage(playerName: String, window: Int = 4): List[(DateTime, Double, Double)] = {
+  def trendingWinRates(playerName: String, window: Int = 4): List[(DateTime, Double, Double)] = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
     playerId(playerName) match {

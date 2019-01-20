@@ -240,7 +240,7 @@ class Application @Inject()(
 
   def playerLifetimeWinRate(playerName: String) = Action {
     val name = playerName.split("\\+")(0)
-    val file = graphics.trend(s"$name Lifetime Win Rate", db.winRates(name))
+    val file = graphics.trend(s"$name Lifetime Win Rate", db.lifeTimeWinRates(name))
     discord.notifyAdmin(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
@@ -249,16 +249,25 @@ class Application @Inject()(
 
   def playerTrendingWinRate(playerName: String) = Action {
     val name = playerName.split("\\+")(0)
-    val file = graphics.trend(s"$name Trending Win Rate", db.movingAverage(name))
+    val file = graphics.trend(s"$name Trending Win Rate", db.trendingWinRates(name))
     discord.notifyAdmin(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
-  def compareWinRates(player1Name: String, player2Name: String) = Action {
+  def compareLifetimeWinRates(player1Name: String, player2Name: String) = Action {
     val name1 = player1Name.split("\\+")(0)
     val name2 = player2Name.split("\\+")(0)
-    val file = graphics.compare((name1, db.movingAverage(name1)), (name2, db.movingAverage(name2)))
+    val file = graphics.compare(s"Lifetime Win Rate", (name1, db.lifeTimeWinRates(name1)), (name2, db.lifeTimeWinRates(name2)))
+    discord.notifyAdmin(_.sendFile(file))
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def compareTrendingWinRates(player1Name: String, player2Name: String) = Action {
+    val name1 = player1Name.split("\\+")(0)
+    val name2 = player2Name.split("\\+")(0)
+    val file = graphics.compare(s"Trending Win Rate", (name1, db.trendingWinRates(name1)), (name2, db.trendingWinRates(name2)))
     discord.notifyAdmin(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")

@@ -20,7 +20,8 @@
         @if(opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
             <table>
                 <tr><td>
-                    <a href="@routes.Application.compareWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">Compare win rates</span></a>
+                    <a href="@routes.Application.compareLifetimeWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">Compare lifetime win rates</span></a>
+                    <a href="@routes.Application.compareTrendingWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">Compare trending win rates</span></a>
                 </td></tr>
                 <tr><td>
                     <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">

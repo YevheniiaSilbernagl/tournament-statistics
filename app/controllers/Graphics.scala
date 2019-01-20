@@ -451,8 +451,11 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
-        FONT.foreach(f => g.setFont(f.deriveFont(80f)))
-        g.drawString(s"The Desk - $header", 220, 90)
+        val theDesk = "The Desk - "
+        g.drawString(theDesk, 220, 105)
+        val theDeskWidth = g.getFontMetrics.stringWidth(theDesk)
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, header, 1650 - theDeskWidth, 80f, 110f))))
+        g.drawString(header, 220 + theDeskWidth, 90)
 
         val dataSet = new DefaultCategoryDataset()
         stats.foreach { dataPoint =>
@@ -510,7 +513,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
   }
 
-  def compare(player1: (String, scala.List[(DateTime, Double, Double)]),
+  def compare(header: String,
+              player1: (String, scala.List[(DateTime, Double, Double)]),
               player2: (String, scala.List[(DateTime, Double, Double)])): File = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter _)
 
@@ -519,7 +523,12 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
         FONT.foreach(f => g.setFont(f.deriveFont(110f)))
-        g.drawString(s"The Desk - ${player1._1} VS ${player2._1}", 220, 105)
+        val str = s"${player1._1} VS ${player2._1} $header"
+        val theDesk = "The Desk - "
+        g.drawString(theDesk, 220, 105)
+        val theDeskWidth = g.getFontMetrics.stringWidth(theDesk)
+        FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, str, 1650 - theDeskWidth, 80f, 110f))))
+        g.drawString(str, 220 + theDeskWidth, 90)
 
         val dataSet = new DefaultCategoryDataset()
         (player1._2.map(_._1) ++ player2._2.map(_._1)).distinct.sorted.reverse.foreach { date =>
