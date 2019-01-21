@@ -300,9 +300,11 @@ class Application @Inject()(
     Ok(views.html.series_points(battlefy.getCurrentTournament, points.filter(p => p._2._1 != 0 || p._2._2 != 0)))
   }
 
-  def invitationalPoints = Action {
-    val points = cache.get[List[(String, Int)]](invitationalPointsCacheKey).getOrElse {
-      val p = db.currentSeasonPlayers.toList.map(p => (p._2, db.invitationalPointsCurrentSeason(p._1)._1)).filter(_._2 != 0).sortBy(_._2).reverse
+  def invitationalPoints: Action[AnyContent] = Action {
+    val points = cache.get[List[(String, Int, List[String])]](invitationalPointsCacheKey).getOrElse {
+      val p = db.currentSeasonPlayers.toList.map { p =>
+        (p._2, db.invitationalPointsCurrentSeason(p._1)._1, db.winsOfTheSeason(p._1))
+      }.filter(_._2 != 0).sortBy(_._2).reverse
       cache.put(invitationalPointsCacheKey, p, 7.days)
       p
     }

@@ -1,5 +1,5 @@
 @import types.Tournament
-@(tournament: Tournament, points: List[(String, Int)])
+@(tournament: Tournament, points: List[(String, Int, List[String])])
 
 @main(tournament, "Invitational points") {
     <table class="table table-striped table-hover">
@@ -8,6 +8,7 @@
                 <th>Standing</th>
                 <th>Player</th>
                 <th>Invitational points</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -16,6 +17,9 @@
                     <td>@{i + 1}</td>
                     <td><a href="@routes.Application.playerStats(None, Option(points(i)._1))">@{points(i)._1}</a></td>
                     <td>@{points(i)._2}</td>
+                    <td>@if(points(i)._3.nonEmpty) {
+                        <b>@{points(i)._3.mkString("\n")}</b>
+                    }</td>
                 </tr>
             }
         </tbody>

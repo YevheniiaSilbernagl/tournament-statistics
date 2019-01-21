@@ -13,7 +13,18 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 
 class DB @Inject()(database: Database, cache: Cache) extends Controller {
+
   val scorePointsCacheDuration: FiniteDuration = 1.day
+
+  def winsOfTheSeason(id: Int): List[String] = {
+    val (name, tournaments) = playerGames(id)
+    val season = current_season
+    val thisSeasonTournaments = tournaments
+      .filter(_._1.date.year == DateTime.now().year)
+      .filter(_._1.season.contains(season))
+      .groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+    winner(thisSeasonTournaments).map(_._1._1.name).toList
+  }
 
   def currentSeasonPlayers: Map[Int, String] = {
     val season = current_season
