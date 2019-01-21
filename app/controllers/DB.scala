@@ -12,14 +12,31 @@ import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
 
+  def seriesPointsCurrentSeason(id: Int): (Int, Map[String, Int]) = {
+    val (name, tournaments) = playerGames(id)
+    val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year)
+    val season = current_season
+    val thisSeasonTournaments = thisYearTournaments.filter(_._1.season.contains(season)).groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+    val wins = winner(thisSeasonTournaments)
+    val inTop2 = top2(thisSeasonTournaments).filterNot(e => wins.toList.map(_._1._1).contains(e._1._1))
+    val inTop4 = top4(thisSeasonTournaments).filterNot(e => (wins.toList ++ inTop2.toList).map(_._1._1).contains(e._1._1))
+    val inTop8 = top8(thisSeasonTournaments).filterNot(e => (wins.toList ++ inTop2.toList++ inTop4.toList).map(_._1._1).contains(e._1._1))
+    val undefeatedSwiss = thisSeasonTournaments.map(t => t._1 -> (t._2.filter(_.bracket_name == "swiss").count(s => !s.isWinner) == 0)).filter(_._2)
+    val all = wins.map(t =>
+      s"Winner - ${t._1._1.name}" -> 4) ++
+      inTop2.map(t => s"Top 2 - ${t._1._1.name}" -> 3) ++
+      inTop4.map(t => s"Top 4 - ${t._1._1.name}" -> 2) ++
+      inTop8.map(t => s"Top 8 - ${t._1._1.name}" -> 1) ++
+      undefeatedSwiss.map(g => s"Undefeated swiss - ${g._1._1.name}" -> 1)
+    (all.values.toList.sum, all)
+  }
+
   def invitationalPointsCurrentSeason(id: Int): (Int, Map[String, Int]) = {
     val (name, tournaments) = playerGames(id)
     val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year)
     val season = current_season
     val scores = thisYearTournaments.filter(_._1.season.contains(season)).groupBy(_._1)
-      .map(g => (g._1.name, g._2.map(_._2).count(score =>
-        if (score.participant_a_id == score.current_player_id) score.participant_a_score > score.participant_b_score
-        else score.participant_b_score > score.participant_a_score)))
+      .map(g => (g._1.name, g._2.map(_._2).count(_.isWinner)))
     (scores.values.toList.sorted.reverse.take(4).sum, scores)
   }
 
@@ -35,7 +52,7 @@ class DB @Inject()(database: Database) extends Controller {
           val totalGames = scores.map(s => s.participant_a_score + s.participant_b_score).sum
           val gamesWon = scores.map(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score else s.participant_b_score).sum
           val totalRounds = scores.length
-          val roundsWon = scores.count(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
+          val roundsWon = scores.count(_.isWinner)
           (tournament._1, roundsWon.doubleValue() * 100 / totalRounds, gamesWon.doubleValue() * 100 / totalGames)
         }).sortBy(_._1)
       case _ => List()
@@ -54,7 +71,7 @@ class DB @Inject()(database: Database) extends Controller {
           val totalGames = scores.map(s => s.participant_a_score + s.participant_b_score).sum
           val gamesWon = scores.map(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score else s.participant_b_score).sum
           val totalRounds = scores.length
-          val roundsWon = scores.count(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
+          val roundsWon = scores.count(_.isWinner)
           (tournament._1, roundsWon.doubleValue() * 100 / totalRounds, gamesWon.doubleValue() * 100 / totalGames)
         }).sortBy(_._1)
       case _ => List()
@@ -238,6 +255,51 @@ class DB @Inject()(database: Database) extends Controller {
     (name, tournaments.toList)
   }
 
+  def max_elimination_round(tournament: String): Int = {
+    eliminationRoundsCache.get(tournament) match {
+      case Some(v) => v
+      case None => val conn: Connection = database.getConnection()
+        var name: String = ""
+        try {
+          val stmt = conn.createStatement
+          val rs = stmt.executeQuery(
+            s"""
+               |SELECT Max(m.round) as max_round
+               |FROM tournament t
+               |  JOIN participant p ON t.id = p.tournament_id
+               |  JOIN match m ON (p.id = m.participant_a_id OR p.id = m.participant_b_id)
+               |WHERE t.name = '$tournament' AND m.bracket_name = 'elimination'
+               """.stripMargin)
+          rs.next()
+          val v = rs.getInt("max_round")
+          eliminationRoundsCache.put(tournament, v)
+          v
+        } finally {
+          conn.close()
+        }
+    }
+  }
+
+  def times(number: Int): String = number match {
+    case 0 => "-"
+    case 1 => "once: "
+    case 2 => "twice: "
+    case _ => s"$number times: "
+  }
+
+  def top8(inf: Map[(Tournament, String), List[Score]]): Map[(Tournament, String), List[Score]] = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 2))).filter(_._2.nonEmpty)
+
+  def top4(inf: Map[(Tournament, String), List[Score]]): Map[(Tournament, String), List[Score]] = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 1))).filter(_._2.nonEmpty)
+
+  def top2(inf: Map[(Tournament, String), List[Score]]): Map[(Tournament, String), List[Score]] = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == max_elimination_round(p._1._1.name))).filter(_._2.nonEmpty)
+
+  def winner(inf: Map[(Tournament, String), List[Score]]): Map[(Tournament, String), List[Score]] = inf.map(p => p._1 -> p._2
+    .filter { s => s.bracket_name == "elimination" && s.round == max_elimination_round(p._1._1.name) && s.isWinner })
+    .filter(_._2.nonEmpty)
+
+  def premiere(inf: Map[(Tournament, String), List[Score]]): Int = inf.count(_._1._1.isPremiereEvent)
+
+
   def playerStats(playerId: Int): (String, List[(String, String, String, String)], Boolean) = {
     val (name, tournaments) = playerGames(playerId)
     val tournaments_info = tournaments.groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
@@ -251,57 +313,7 @@ class DB @Inject()(database: Database) extends Controller {
       (win, loss)
     })
 
-    def winrate_rounds(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
-      if (score.current_player_id == score.participant_a_id) score.participant_a_score > score.participant_b_score else score.participant_a_score < score.participant_b_score
-    }).toList
-
-    def times(number: Int): String = number match {
-      case 0 => "-"
-      case 1 => "once: "
-      case 2 => "twice: "
-      case _ => s"$number times: "
-    }
-
-    def max_elimination_round(tournament: String): Int = {
-      eliminationRoundsCache.get(tournament) match {
-        case Some(v) => v
-        case None => val conn: Connection = database.getConnection()
-          var name: String = ""
-          try {
-            val stmt = conn.createStatement
-            val rs = stmt.executeQuery(
-              s"""
-                 |SELECT Max(m.round) as max_round
-                 |FROM tournament t
-                 |  JOIN participant p ON t.id = p.tournament_id
-                 |  JOIN match m ON (p.id = m.participant_a_id OR p.id = m.participant_b_id)
-                 |WHERE t.name = '$tournament' AND m.bracket_name = 'elimination'
-               """.stripMargin)
-            rs.next()
-            val v = rs.getInt("max_round")
-            eliminationRoundsCache.put(tournament, v)
-            v
-          } finally {
-            conn.close()
-          }
-      }
-    }
-
-    def top8(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 2))).filter(_._2.nonEmpty)
-
-    def top4(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 1))).filter(_._2.nonEmpty)
-
-    def top2(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == max_elimination_round(p._1._1.name))).filter(_._2.nonEmpty)
-
-    def winner(inf: Map[(Tournament, String), List[Score]]) = inf.map(p => p._1 -> p._2
-      .filter { s =>
-        s.bracket_name == "elimination" && s.round == max_elimination_round(p._1._1.name) &&
-          (if (s.participant_a_id == s.current_player_id) s.participant_a_score > s.participant_b_score
-          else s.participant_b_score > s.participant_a_score)
-      })
-      .filter(_._2.nonEmpty)
-
-    def premiere(inf: Map[(Tournament, String), List[Score]]) = inf.count(_._1._1.isPremiereEvent)
+    def winrate_rounds(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(_.isWinner).toList
 
     val allGamesWon = winRate(tournaments_info).map(_._1).sum
     val allGamesLost = winRate(tournaments_info).map(_._2).sum

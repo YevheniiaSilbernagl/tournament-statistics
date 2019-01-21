@@ -5,7 +5,7 @@
         <div class="container-fluid content">
            @if(players.isEmpty) {
                <div class="alert alert-warning" role="alert">
-                   There are no registered players in this tournament
+                   There are no registered players in @{tournament.name} tournament
                </div>
            } else {
                @for(i <- players.indices){

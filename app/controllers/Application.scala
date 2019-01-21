@@ -113,7 +113,9 @@ class Application @Inject()(
       val opponentId = opponentName.flatMap(db.playerId)
       val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
       val invitationalPoints = db.invitationalPointsCurrentSeason(id)
-      Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption)), previousGames, stats, isRookie, invitationalPoints))
+      val seriesPoints = db.seriesPointsCurrentSeason(id)
+      val opponent =  opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
+      Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie, invitationalPoints, seriesPoints))
     }
 
     playerId match {
