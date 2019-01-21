@@ -1,7 +1,8 @@
-@(players: List[(String, Option[String], Option[String], String)], discordUsers: Seq[String])
+@import types.Tournament
+@(tournament: Tournament, players: List[(String, Option[String], Option[String], String)], discordUsers: Seq[String])
 
-    @main("Validate decks") {
-        <div class="container-fluid">
+    @main(tournament, "Validate decks") {
+        <div class="container-fluid content">
            @for(i <- players.indices){
                <div class="row player border-top" id="player_@i">
                    <div class="col-sm eternalName"> @{players(i)._1} </div>

@@ -22,6 +22,7 @@ GET         /download/tourney-left                controllers.Application.left(l
 GET         /download/tourney-right               controllers.Application.right(link: String, name: String, player: String)
 GET         /download/streaming/panel             controllers.Application.sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, mainCam: Option[String])
 GET         /streaming                            controllers.Application.streaming
+GET         /castersPanel                         controllers.Application.casters
 GET         /opponents/info                       controllers.Application.getOpponentsInfo(opponents: String)
 GET         /casters                              controllers.Application.generateCastersList(list: String)
 GET         /stats                                controllers.Application.generateStats

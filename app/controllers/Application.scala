@@ -45,7 +45,7 @@ class Application @Inject()(
   }
 
   def validateDecks(tournamentId: String) = WithBasicAuth {
-    Ok(views.html.validation(battlefy.listOfPlayers(tournamentId), discord.allPlayers))
+    Ok(views.html.validation(battlefy.getCurrentTournament, battlefy.listOfPlayers(tournamentId), discord.allPlayers))
   }
 
   def generateDeckDoc(tournamentId: String) = WithBasicAuth {
@@ -95,14 +95,14 @@ class Application @Inject()(
 
   def playersStats = Action(statsPage)
 
-  def generateStats = Action(Ok(views.html.mass_stats()))
+  def generateStats = Action(Ok(views.html.mass_stats(battlefy.getCurrentTournament)))
 
   def generateStatsForPlayers(players: String) = Action {
     val stats = players.split("\\n").map(_.trim).filterNot(_.isEmpty).distinct.map(p => p -> db.worldsStats(p)).toMap
     Ok(Json.obj("players" -> stats))
   }
 
-  def statsPage = Ok(views.html.stats(db.getPlayers.toList.sortBy(_._2.toLowerCase)))
+  def statsPage = Ok(views.html.stats(battlefy.getCurrentTournament, db.getPlayers.toList.sortBy(_._2.toLowerCase)))
 
   def playerStats(playerId: Option[Int], playerName: Option[String] = None) = Action {
     def stat(id: Int) = {
@@ -112,7 +112,8 @@ class Application @Inject()(
       val opponentName = battlefy.currentOpponent(name)
       val opponentId = opponentName.flatMap(db.playerId)
       val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
-      Ok(views.html.player(name, deck, opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption)), previousGames, stats, isRookie))
+      val invitationalPoints = db.invitationalPointsCurrentSeason(id)
+      Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption)), previousGames, stats, isRookie, invitationalPoints))
     }
 
     playerId match {
@@ -135,7 +136,9 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
-  def streaming = WithBasicAuth(Ok(views.html.streaming(battlefy.getCurrentTournament.battlefy_id, battlefy.currentOpponents)))
+  def streaming = WithBasicAuth(Ok(views.html.streaming(battlefy.getCurrentTournament, battlefy.getCurrentTournament.battlefy_id, battlefy.currentOpponents)))
+
+  def casters = WithBasicAuth(Ok(views.html.casters_panel(battlefy.getCurrentTournament)))
 
   def topCards(tournamentId: String): Action[AnyContent] = Action {
     val players = battlefy.listOfPlayers(tournamentId)
@@ -199,8 +202,8 @@ class Application @Inject()(
   }
 
   def checkInPage = Action {
-    val tournament = battlefy.getCurrentTournament.battlefy_id
-    Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament)))
+    val tournament = battlefy.getCurrentTournament
+    Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament.battlefy_id)))
   }
 
   def importTournament(battlefyUuid: String) = Action {

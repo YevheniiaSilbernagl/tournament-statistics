@@ -1,15 +1,11 @@
 @import types.Tournament
 @(tournament: Tournament)
 
-@main("ETS Tools") {
-    <div class="container">
-        <div>@{tournament.name}</div>
-        <div><a href="@routes.Application.validateDecks(tournament.battlefy_id)">Validate decks</a></div>
-        <div><a href="@routes.Application.generateDeckDoc(tournament.battlefy_id)">Build deck doc</a></div>
-        <div><a href="@routes.Application.playersStats">Statistics</a></div>
-        <div><a href="@routes.Application.streaming">Streaming resources</a></div>
-        <div><a href="@routes.Application.generateStats">Generate stats</a></div>
-        <div><a href="@routes.Application.checkInPage">Check In</a></div>
+@main(tournament, "ETS Tools") {
+    <div class="jumbotron">
+        <h1 class="display-4"><img src="@routes.Assets.at("images/favicon.png")" width="100" height="100">ETS Tooling</h1>
+        <hr class="my-4">
+        <p><a href="https://rngeternal.com/ets/invitational-points/">Invitational points</a></p>
+        <p><a href="https://rngeternal.com/ets/series-points/">Series points</a></p>
     </div>
-
 }

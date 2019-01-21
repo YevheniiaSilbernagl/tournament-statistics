@@ -1,39 +1,53 @@
 @import types.{Deck, Tournament}
 @(tournament:Tournament, players: List[(String, Option[Deck])])
 
-@main(s"DeckDoc:${tournament.name}") {
-    <div class="container">
-        <a href="@routes.Application.expandedDeckDoc(tournament.battlefy_id)"><span class="badge badge-pill badge-primary">Expanded deck doc</span></a>
-        <a href="@routes.Application.conciseDeckDoc(tournament.battlefy_id)"><span class="badge badge-pill badge-secondary">Concise deck doc</span></a>
+@main(tournament, s"DeckDoc:${tournament.name}") {
+    <div class="container content">
         <h1 class="tournament-name">@{tournament.name}</h1>
     @for(player <- players) {
         <p style="page-break-before: always">
         @for(deck <- player._2) {
             <div class="deck border-top" deck-url="@{deck.link}">
-                <div class="player-name"><p class="p-header"><a target="_blank" href="@routes.Application.playerStats(None, Option(player._1))">@{if(player._1.contains("+")) player._1.substring(0, player._1.indexOf("+"))else player._1}</a></p>
-                    <a link="@{deck.link}" class="badge badge-secondary generate-left noprint" download>Main(left)</a>
-                    <a link="@{deck.link}" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>
+                <div class="pos-f-t">
+                    <nav class="navbar navbar-light bg-light">
+                        <div class="row container-fluid">
+                            <div class="col-lg-10 justify-content-start">
+                                <div class="player-name">
+                                    <p class="h5 p-header">
+                                        <a target="_blank" href="@routes.Application.playerStats(None, Option(player._1))">@{if(player._1.contains("+")) player._1.substring(0, player._1.indexOf("+"))else player._1}</a> - @{deck.archetype.getOrElse(deck.name)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#@{player._1.split("\\+")(0).replace(" ", "_")}" aria-controls="@{player._1.split("\\+")(0).replace(" ", "_")}" aria-expanded="false" aria-label="Show deck">
+                                    <span class="navbar-toggler-icon"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+                    <div class="collapse" id="@{player._1.split("\\+")(0).replace(" ", "_")}">
+                        <div class="bg-light p-4">
+                            <p class="d-header">Main Deck:</p>
+                            @for(card <- deck.mainDeck) {
+                                <p class="card">@{card._2} @{card._1.eternalFormat}</p>
+                            }
+                            @if(deck.market.nonEmpty) {
+                                <p class="d-header"> </p>
+                                <p class="d-header">--------------MARKET---------------</p>
+                                @for(card <- deck.market) {
+                                    <p class="card">@{card._2} @{card._1.eternalFormat}</p>
+                                }
+                            }
+                            @if(deck.sideBoard.nonEmpty) {
+                                <p class="d-header"> </p>
+                                <p class="d-header">Side board:</p>
+                                @for(card <- deck.sideBoard) {
+                                    <p class="card">@{card._2} @{card._1.eternalFormat}</p>
+                                }
+                            }
+                        </div>
+                    </div>
                 </div>
-                <div><p class="p-header deck-name">@{deck.archetype.getOrElse(deck.name)}</p></div>
-                <p class="d-header"> </p>
-                <p class="d-header">Main Deck:</p>
-                @for(card <- deck.mainDeck) {
-                    <p class="card">@{card._2} @{card._1.eternalFormat}</p>
-                }
-                @if(deck.market.nonEmpty) {
-                    <p class="d-header"> </p>
-                    <p class="d-header">--------------MARKET---------------</p>
-                    @for(card <- deck.market) {
-                        <p class="card">@{card._2} @{card._1.eternalFormat}</p>
-                    }
-                }
-                @if(deck.sideBoard.nonEmpty) {
-                    <p class="d-header"> </p>
-                    <p class="d-header">Side board:</p>
-                    @for(card <- deck.sideBoard) {
-                        <p class="card">@{card._2} @{card._1.eternalFormat}</p>
-                    }
-                }
             </div>
         }
         </p>

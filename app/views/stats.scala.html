@@ -1,11 +1,14 @@
-@(players: List[(Int, String)])
+@import types.Tournament
+@(tournament: Tournament, players: List[(Int, String)])
 
-    @main("Stats") {
-        <div class="container">
-            @for(player <- players) {
-            <div class="row" id="@{player._1}">
-                <div class="col-sm"><a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{player._2}</a></div>
-            </div>
+@main(tournament, "Stats") {
+    <div class="container content">
+        <ul class="list-group">
+        @for(player <- players) {
+            <li class="list-group-item d-flex justify-content-between align-items-center" id="@{player._1}">
+                <a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{player._2}</a>
+            </li>
         }
-        </div>
-    }
+        </ul>
+    </div>
+}

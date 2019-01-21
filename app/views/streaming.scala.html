@@ -1,41 +1,30 @@
-@(tournamentId: String, opponents: List[(Option[String], Option[String])])
+@import types.Tournament
+@(tournament: Tournament, tournamentId: String, opponents: List[(Option[String], Option[String])])
 
-@main("ETS Tools") {
-    <div class="container">
-        <table>
-            <tr>
-                <td>
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Current matches
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        @for(opponent <- opponents) {
-                            @if(opponent._1.isDefined) {
-                                <a class="dropdown-item opponent-link @{
-                                    if(opponent._2.isEmpty) "disabled"
-                                }" href="#">@opponent._1.get -:- @{
-                                    if(opponent._2.isDefined) opponent._2.get else "Bye"
-                                }</a>
-                            }
-                        }
-                        </div>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <textarea id="casters-list" placeholder="Casters" rows="3"cols="50"></textarea><br>
-                    <a class="btn btn-primary" id="generate-casters-list" href="#" download>Generate casters list for the side panel</a>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <a class="btn btn-primary" href="@routes.Application.topCards(tournamentId)" download>Top 10 Cards</a>
-                    <a class="btn btn-primary" href="@routes.Application.topPlayers(tournamentId)" download>Top 10 players</a>
-                </td>
-            </tr>
-        </table>
+@main(tournament, "Current round streaming resources") {
+    <div class="container content">
+        @if(opponents.nonEmpty){
+        <div class="dropdown dropright">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Current matches
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            @for(opponent <- opponents) {
+                @if(opponent._1.isDefined) {
+                    <a class="dropdown-item opponent-link @{
+                        if(opponent._2.isEmpty) "disabled"
+                    }" href="#">@opponent._1.get -:- @{
+                        if(opponent._2.isDefined) opponent._2.get else "Bye"
+                    }</a>
+                }
+            }
+            </div>
+        </div>
+        } else {
+            <div class="alert alert-warning" role="alert">
+                There are no active matches at the moment
+            </div>
+        }
     </div>
 
 }

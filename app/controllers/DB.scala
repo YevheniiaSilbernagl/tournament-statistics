@@ -11,6 +11,18 @@ import types.{Deck, Score, Tournament}
 import scala.collection.mutable
 
 class DB @Inject()(database: Database) extends Controller {
+
+  def invitationalPointsCurrentSeason(id: Int): (Int, Map[String, Int]) = {
+    val (name, tournaments) = playerGames(id)
+    val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year)
+    val season = current_season
+    val scores = thisYearTournaments.filter(_._1.season.contains(season)).groupBy(_._1)
+      .map(g => (g._1.name, g._2.map(_._2).count(score =>
+        if (score.participant_a_id == score.current_player_id) score.participant_a_score > score.participant_b_score
+        else score.participant_b_score > score.participant_a_score)))
+    (scores.values.toList.sorted.reverse.take(4).sum, scores)
+  }
+
   def lifeTimeWinRates(playerName: String): List[(DateTime, Double, Double)] = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
 
@@ -21,9 +33,9 @@ class DB @Inject()(database: Database) extends Controller {
           val tournamentsIncludingThis = tournaments.filterNot(_._1.isAfter(tournament._1))
           val scores = tournamentsIncludingThis.flatMap(_._2)
           val totalGames = scores.map(s => s.participant_a_score + s.participant_b_score).sum
-          val gamesWon = scores.map(s => if (s.participant_a_id == id) s.participant_a_score else s.participant_b_score).sum
+          val gamesWon = scores.map(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score else s.participant_b_score).sum
           val totalRounds = scores.length
-          val roundsWon = scores.count(s => if (s.participant_a_id == id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
+          val roundsWon = scores.count(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
           (tournament._1, roundsWon.doubleValue() * 100 / totalRounds, gamesWon.doubleValue() * 100 / totalGames)
         }).sortBy(_._1)
       case _ => List()
@@ -40,9 +52,9 @@ class DB @Inject()(database: Database) extends Controller {
           val tournamentsIncludingThis = tournaments.filterNot(_._1.isAfter(tournament._1)).take(window)
           val scores = tournamentsIncludingThis.flatMap(_._2)
           val totalGames = scores.map(s => s.participant_a_score + s.participant_b_score).sum
-          val gamesWon = scores.map(s => if (s.participant_a_id == id) s.participant_a_score else s.participant_b_score).sum
+          val gamesWon = scores.map(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score else s.participant_b_score).sum
           val totalRounds = scores.length
-          val roundsWon = scores.count(s => if (s.participant_a_id == id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
+          val roundsWon = scores.count(s => if (s.participant_a_id == s.current_player_id) s.participant_a_score > s.participant_b_score else s.participant_b_score > s.participant_a_score)
           (tournament._1, roundsWon.doubleValue() * 100 / totalRounds, gamesWon.doubleValue() * 100 / totalGames)
         }).sortBy(_._1)
       case _ => List()
@@ -228,19 +240,19 @@ class DB @Inject()(database: Database) extends Controller {
 
   def playerStats(playerId: Int): (String, List[(String, String, String, String)], Boolean) = {
     val (name, tournaments) = playerGames(playerId)
-    val tournaments_info = tournaments.toList.groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+    val tournaments_info = tournaments.groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
     val this_year_tournaments_info = tournaments_info.filter(_._1._1.date.yearOfCentury() == current_year)
     val this_season_tournaments_info = tournaments_info.filter(t => t._1._1.season.contains(current_season) && t._1._1.date.yearOfCentury() == current_year)
     val info: mutable.ListBuffer[(String, String, String, String)] = new mutable.ListBuffer[(String, String, String, String)]()
 
     def winRate(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
-      val win = if (playerId == score.participant_a_id) score.participant_a_score else score.participant_b_score
-      val loss = if (playerId == score.participant_a_id) score.participant_b_score else score.participant_a_score
+      val win = if (score.current_player_id == score.participant_a_id) score.participant_a_score else score.participant_b_score
+      val loss = if (score.current_player_id == score.participant_a_id) score.participant_b_score else score.participant_a_score
       (win, loss)
     })
 
     def winrate_rounds(inf: Map[(Tournament, String), List[Score]]) = inf.values.flatten.map(score => {
-      if (playerId == score.participant_a_id) score.participant_a_score > score.participant_b_score else score.participant_a_score < score.participant_b_score
+      if (score.current_player_id == score.participant_a_id) score.participant_a_score > score.participant_b_score else score.participant_a_score < score.participant_b_score
     }).toList
 
     def times(number: Int): String = number match {
@@ -367,10 +379,6 @@ class DB @Inject()(database: Database) extends Controller {
       s"${times(ts_winner.size)}\n ${ts_winner.map(_._1._1.name).mkString("\n")}",
       s"${times(ty_winner.size)}\n ${ty_winner.map(_._1._1.name).mkString("\n")}",
       s"${times(all_winner.size)}\n ${all_winner.map(_._1._1.name).mkString("\n")}"))
-    info.+=(("Decks played:",
-      s"${this_season_tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}",
-      s"${this_year_tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}",
-      s"${tournaments_info.keySet.map(_._2).toList.sorted.filterNot(_.equals("empty")).mkString("\n")}"))
     (name, info.toList, tournaments_info.size <= 3)
   }
 

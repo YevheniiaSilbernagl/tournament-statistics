@@ -1,0 +1,11 @@
+@import types.Tournament
+@(tournament: Tournament)
+
+@main(tournament, "Generate casters panel") {
+    <div class="container content">
+        <textarea id="casters-list" placeholder="Casters" rows="3" cols="50"></textarea><br>
+        <a class="btn btn-primary" id="generate-casters-list" href="#" download>
+            Generate casters list for the side panel</a>
+    </div>
+
+}

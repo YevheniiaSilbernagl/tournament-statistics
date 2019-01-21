@@ -50,11 +50,16 @@ jQuery(window).ready(function () {
                 block += "</tr>";
             });
             block += "</table>";
-            $(".container").append(block);
+            $(".content").append(block);
         });
     });
 
     $(document).on('click', 'input[name=maincam]', function (e) {
+        var currentTargetName = "." + e.currentTarget.className;
+        $(currentTargetName + ".generate-right").css('visibility', 'hidden');
+        $(currentTargetName + ".generate-left").css('visibility', 'visible');
+        $(".generate-left").not(currentTargetName).css('visibility', 'hidden');
+        $(".generate-right").not(currentTargetName).css('visibility', 'visible');
         refresh_generate_side_panel_link();
     });
 
@@ -62,13 +67,13 @@ jQuery(window).ready(function () {
         $(".checkins").each(function () {
             this.remove();
         });
-        var block = "<table class='checkins'>";
+        var block = "<div class='checkins'>";
         var players = $('#ids').val().split(/\s+/);
         players.forEach(function (player) {
-            block += "<tr><td class='id' id='" + player + "'>" + $("#info-" + player).text() + "</td></tr>";
+            block += "<div class='alert id' role='alert'  id='" + player + "'>" + $("#info-" + player).text() + "</div>";
         });
-        block += "</table>";
-        $(".container").append(block);
+        block += "</div>";
+        $(".content").append(block);
         var tournament_id = $('.info').attr('id');
         var auth = $("#token").val();
         if (!auth.startsWith("Bearer")) {
@@ -82,10 +87,10 @@ jQuery(window).ready(function () {
                     "Authorization": auth
                 },
                 success: function () {
-                    $("#" + id).append('<span class="badge badge-pill badge-success"> + </span>');
+                    $("#" + id).addClass("alert-success");
                 },
                 error: function () {
-                    $("#" + id).append('<span class="badge badge-pill badge-danger"> - </span>');
+                    $("#" + id).addClass("alert-danger");
                 }
             });
         })
@@ -100,29 +105,29 @@ jQuery(window).ready(function () {
             var generated = "";
             response.opponents.forEach(function (opponent) {
                 if (opponent.deck != null) {
-                    generated += '                    <td>\n' +
+                    generated += '                    <td style="padding: 25px">\n' +
                         '                        <div class="deck">\n' +
                         '                           <div class="player-name">\n' +
                         '                               <p class="p-header">\n' +
                         '                                   <a target="_blank" href="/player?playerName=' + opponent.name + '">' + opponent.name + '</a>\n' +
                         '                               </p>\n' +
                         '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
-                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-secondary generate-left noprint" download>Main(left)</a>\n' +
-                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-right?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-dark generate-right noprint" download>Handcam(right)</a>\n' +
-                        '                               <input type="radio" name="maincam"> Main cam' +
+                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-secondary generate-left noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Main(left)</a>\n' +
+                        '                               <a link="' + opponent.deck.url + '" href="/download/tourney-right?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-dark generate-right noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Handcam(right)</a>\n' +
+                        '                               <input type="radio" name="maincam" class="' + opponent.name.replace("+", "_").replace(" ", "_") + '"> Main cam' +
                         '                           </div>\n' +
                         '                           <div><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
-                        '                           <textarea rows="20" cols="50">' + opponent.deck.list + '</textarea>\n' +
+                        '                           <pre data-spy="scroll" style="height: 15pc">' + opponent.deck.list + '</pre>\n' +
                         '                        </div>\n' +
                         '                    </td>\n';
                 }
             });
-            $(".container").append('<div id="opponents">\n' +
-                '            <table class="table-bordered">\n' +
+            $(".content").append('<div id="opponents">\n' +
+                '            <table class="table-bordered" width="100%">\n' +
                 '                <tr>\n' + generated +
                 '                </tr>\n' +
                 '            </table>\n' +
-                '            <a id="generate-panel" class="btn btn-primary" href="#" download>Generate side panel</a>\n' +
+                '            <a id="generate-panel" class="btn btn-primary btn-lg btn-block" href="#" download>Generate side panel</a>\n' +
                 '        </div>');
             refresh_generate_side_panel_link();
         });
@@ -196,7 +201,7 @@ jQuery(window).ready(function () {
             dataType: "json",
             success: function (msg) {
                 $("#generatedResources").remove();
-                $(".container").append('<div id="generatedResources" class="row">' +
+                $(".content").append('<div id="generatedResources" class="row">' +
                     '<div class="col-sm-6"><img src="/assets/images/' + msg.left + '" style="width:100%"></div>' +
                     '<div class="col-sm-6"><img src="/assets/images/' + msg.right + '" style="width:100%"></div>' +
                     '</div>');
