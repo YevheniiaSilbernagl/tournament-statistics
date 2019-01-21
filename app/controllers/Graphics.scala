@@ -451,6 +451,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
         val theDesk = "The Desk - "
         g.drawString(theDesk, 220, 105)
         val theDeskWidth = g.getFontMetrics.stringWidth(theDesk)
