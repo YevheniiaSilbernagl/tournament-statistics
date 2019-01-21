@@ -22,15 +22,13 @@
             <a class="btn btn-outline-primary" href="@routes.Application.playerLifetimeWinRate(name)">Lifetime Win Rate</a>
             <a class="btn btn-outline-primary" href="@routes.Application.playerTrendingWinRate(name)">Trending Win Rate</a>
             <a class="btn btn-outline-dark" href="#">@{seriesPoints._1} - Series points this year</a>
-            <div class="dropdown">
-                <button type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    @{invitationalPoints._1} - Invitational points
-                </button>
-                <div class="dropdown-menu">
-                @for(points <- invitationalPoints._2){
-                    <button class="dropdown-item" type="button"><b>@{points._2}</b> - @{points._1}</button>
-                }
-                </div>
+            <button type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                @{invitationalPoints._1} - Invitational points
+            </button>
+            <div class="dropdown-menu">
+            @for(points <- invitationalPoints._2){
+                <button class="dropdown-item" type="button"><b>@{points._2}</b> - @{points._1}</button>
+            }
             </div>
         </div>
         @if(opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
