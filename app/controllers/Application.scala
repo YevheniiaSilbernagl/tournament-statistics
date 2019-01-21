@@ -120,7 +120,7 @@ class Application @Inject()(
       val opponentId = opponentName.flatMap(db.playerId)
       val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
       val invitationalPoints = db.invitationalPointsCurrentSeason(id)
-      val seriesPoints = db.seriesPointsCurrentSeason(id)
+      val seriesPoints = db.seriesPoints(id)
       val opponent = opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
       Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie, invitationalPoints, seriesPoints))
     }
@@ -292,12 +292,12 @@ class Application @Inject()(
   }
 
   def seriesPoints = Action {
-    val points = cache.get[List[(String, Int)]](seriesPointsCacheKey).getOrElse {
-      val p = db.currentSeasonPlayers.toList.map(p => (p._2, db.seriesPointsCurrentSeason(p._1)._1)).filter(_._2 != 0).sortBy(_._2).reverse
+    val points = cache.get[List[(String, (Int, Int))]](seriesPointsCacheKey).getOrElse {
+      val p = db.currentSeasonPlayers.toList.map(p => (p._2, db.seriesPoints(p._1))).filter(_._2 != 0).sortBy(_._2).reverse
       cache.put(seriesPointsCacheKey, p, 7.days)
       p
     }
-    Ok(views.html.points("Series points", battlefy.getCurrentTournament, points))
+    Ok(views.html.series_points(battlefy.getCurrentTournament, points.filter(p => p._2._1 != 0 || p._2._2 != 0)))
   }
 
   def invitationalPoints = Action {
@@ -306,6 +306,6 @@ class Application @Inject()(
       cache.put(invitationalPointsCacheKey, p, 7.days)
       p
     }
-    Ok(views.html.points("Invitational points", battlefy.getCurrentTournament, points))
+    Ok(views.html.invitational_points(battlefy.getCurrentTournament, points))
   }
 }

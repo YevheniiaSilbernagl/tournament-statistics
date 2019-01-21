@@ -8,7 +8,7 @@
         info: List[(String, String, String, String)],
         isRookie: Boolean,
         invitationalPoints: (Int, Map[String, Int]),
-        seriesPoints: (Int, Map[String, Int])
+        seriesPoints: (Int, Int)
 )
 
 @main(tournament, s"Stats for $name") {
@@ -21,22 +21,13 @@
         <div class="btn-group">
             <a class="btn btn-outline-primary" href="@routes.Application.playerLifetimeWinRate(name)">Lifetime Win Rate</a>
             <a class="btn btn-outline-primary" href="@routes.Application.playerTrendingWinRate(name)">Trending Win Rate</a>
+            <a class="btn btn-outline-dark" href="#">@{seriesPoints._1} - Series points this year</a>
             <div class="dropdown">
                 <button type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     @{invitationalPoints._1} - Invitational points
                 </button>
                 <div class="dropdown-menu">
                 @for(points <- invitationalPoints._2){
-                    <button class="dropdown-item" type="button"><b>@{points._2}</b> - @{points._1}</button>
-                }
-                </div>
-            </div>
-            <div class="dropdown">
-                <button type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    @{seriesPoints._1} - Series points
-                </button>
-                <div class="dropdown-menu">
-                @for(points <- seriesPoints._2){
                     <button class="dropdown-item" type="button"><b>@{points._2}</b> - @{points._1}</button>
                 }
                 </div>

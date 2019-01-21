@@ -1,19 +1,21 @@
 @import types.Tournament
-@(header: String, tournament: Tournament, points: List[(String, Int)])
+@(tournament: Tournament, points: List[(String, (Int, Int))])
 
-@main(tournament, header) {
+@main(tournament, "Series points") {
     <table class="table table-striped table-hover">
         <thead>
             <tr>
                 <th>Player</th>
-                <th>@header</th>
+                <th>This year</th>
+                <th>Career</th>
             </tr>
         </thead>
         <tbody>
             @for(player <- points){
                 <tr>
                     <td><a href="@routes.Application.playerStats(None, Option(player._1))">@{player._1}</a></td>
-                    <td>@{player._2}</td>
+                    <td>@{player._2._1}</td>
+                    <td>@{player._2._2}</td>
                 </tr>
             }
         </tbody>

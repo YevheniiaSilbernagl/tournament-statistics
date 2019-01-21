@@ -1,0 +1,23 @@
+@import types.Tournament
+@(tournament: Tournament, points: List[(String, Int)])
+
+@main(tournament, "Invitational points") {
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Standing</th>
+                <th>Player</th>
+                <th>Invitational points</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for(i <- points.indices){
+                <tr>
+                    <td>@{i + 1}</td>
+                    <td><a href="@routes.Application.playerStats(None, Option(points(i)._1))">@{points(i)._1}</a></td>
+                    <td>@{points(i)._2}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
