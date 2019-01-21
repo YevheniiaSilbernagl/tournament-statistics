@@ -38,4 +38,8 @@ class Cache @Inject()(config: Configuration) extends Controller {
   def put(key: String, value: AnyRef, duration: FiniteDuration): Unit = {
     mc.set(key, duration.toSeconds.intValue(), value)
   }
+
+  def delete(key: String): Unit = {
+    mc.delete(key)
+  }
 }

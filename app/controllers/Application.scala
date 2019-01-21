@@ -4,11 +4,13 @@ import java.nio.file.Files
 
 import controllers.discord.Discord
 import javax.inject.Inject
+import org.joda.time.DateTime._
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
 import types.Deck
 
+import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
@@ -20,9 +22,14 @@ class Application @Inject()(
                              graphics: Graphics,
                              docs: Docs,
                              config: Configuration,
-                             discord: Discord
+                             discord: Discord,
+                             cache: Cache
                            ) extends Controller {
   private val WithBasicAuth = new BasicAuthAction(db, battlefy)
+
+  def seriesPointsCacheKey = s"seriesPoints${now().year().get()}Season${db.current_season}"
+
+  def invitationalPointsCacheKey = s"invitationalPoints${now().year().get()}Season${db.current_season}"
 
   def index = Action {
     Ok(views.html.index(battlefy.getCurrentTournament))
@@ -114,7 +121,7 @@ class Application @Inject()(
       val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
       val invitationalPoints = db.invitationalPointsCurrentSeason(id)
       val seriesPoints = db.seriesPointsCurrentSeason(id)
-      val opponent =  opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
+      val opponent = opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
       Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie, invitationalPoints, seriesPoints))
     }
 
@@ -240,6 +247,8 @@ class Application @Inject()(
         db.importGame(tournamentId, player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
       }
     }
+    cache.delete(invitationalPointsCacheKey)
+    cache.delete(seriesPointsCacheKey)
     Ok("")
   }
 
@@ -280,5 +289,23 @@ class Application @Inject()(
     discord.notifyStreamers(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def seriesPoints = Action {
+    val points = cache.get[List[(String, Int)]](seriesPointsCacheKey).getOrElse {
+      val p = db.currentSeasonPlayers.toList.map(p => (p._2, db.seriesPointsCurrentSeason(p._1)._1)).filter(_._2 != 0).sortBy(_._2).reverse
+      cache.put(seriesPointsCacheKey, p, 7.days)
+      p
+    }
+    Ok(views.html.points("Series points", battlefy.getCurrentTournament, points))
+  }
+
+  def invitationalPoints = Action {
+    val points = cache.get[List[(String, Int)]](invitationalPointsCacheKey).getOrElse {
+      val p = db.currentSeasonPlayers.toList.map(p => (p._2, db.invitationalPointsCurrentSeason(p._1)._1)).filter(_._2 != 0).sortBy(_._2).reverse
+      cache.put(invitationalPointsCacheKey, p, 7.days)
+      p
+    }
+    Ok(views.html.points("Invitational points", battlefy.getCurrentTournament, points))
   }
 }

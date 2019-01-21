@@ -4,6 +4,8 @@
 
 # Home page
 GET         /                                     controllers.Application.index
+GET         /points/invitational                  controllers.Application.invitationalPoints
+GET         /points/series                        controllers.Application.seriesPoints
 GET         /players                              controllers.Application.playersStats
 GET         /player                               controllers.Application.playerStats(playerId: Option[Int], playerName: Option[String])
 GET         /validate                             controllers.Application.validateDecks(tournamentId: String)

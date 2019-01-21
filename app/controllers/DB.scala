@@ -4,40 +4,86 @@ import java.sql.{Connection, Statement}
 
 import javax.inject.Inject
 import org.joda.time.DateTime
+import org.joda.time.DateTime._
 import play.api.db.Database
 import play.api.mvc.Controller
 import types.{Deck, Score, Tournament}
 
 import scala.collection.mutable
+import scala.concurrent.duration._
 
-class DB @Inject()(database: Database) extends Controller {
+class DB @Inject()(database: Database, cache: Cache) extends Controller {
+  val scorePointsCacheDuration: FiniteDuration = 1.day//TODO increase cache duration but clear cache on tournament import
+
+  def currentSeasonPlayers: Map[Int, String] = {
+    val season = current_season
+    val thisYear = now().year().get()
+    val cacheKey = s"${thisYear}_$season"
+    cache.get[Map[Int, String]](cacheKey).getOrElse {
+      val query =
+        s"""
+           |SELECT
+           |  p.id           AS id,
+           |  p.eternal_name AS name
+           |FROM player p
+           |  JOIN participant part ON p.id = part.player_id
+           |  JOIN tournament t ON part.tournament_id = t.id
+           |WHERE t.season = $season AND t.date > date('$thisYear-01-01') AND p.eternal_name != 'BYE+0000'
+       """.stripMargin
+      val info: mutable.ListBuffer[(Int, String)] = new mutable.ListBuffer[(Int, String)]()
+      val conn: Connection = database.getConnection()
+      try {
+        val stmt = conn.createStatement
+        val rs = stmt.executeQuery(query)
+        while (rs.next()) {
+          info.+=((rs.getInt("id"), rs.getString("name")))
+        }
+      } finally {
+        conn.close()
+      }
+      val map = info.toMap
+      cache.put(cacheKey, map, scorePointsCacheDuration)
+      map
+    }
+  }
+
 
   def seriesPointsCurrentSeason(id: Int): (Int, Map[String, Int]) = {
-    val (name, tournaments) = playerGames(id)
-    val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year)
-    val season = current_season
-    val thisSeasonTournaments = thisYearTournaments.filter(_._1.season.contains(season)).groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
-    val wins = winner(thisSeasonTournaments)
-    val inTop2 = top2(thisSeasonTournaments).filterNot(e => wins.toList.map(_._1._1).contains(e._1._1))
-    val inTop4 = top4(thisSeasonTournaments).filterNot(e => (wins.toList ++ inTop2.toList).map(_._1._1).contains(e._1._1))
-    val inTop8 = top8(thisSeasonTournaments).filterNot(e => (wins.toList ++ inTop2.toList++ inTop4.toList).map(_._1._1).contains(e._1._1))
-    val undefeatedSwiss = thisSeasonTournaments.map(t => t._1 -> (t._2.filter(_.bracket_name == "swiss").count(s => !s.isWinner) == 0)).filter(_._2)
-    val all = wins.map(t =>
-      s"Winner - ${t._1._1.name}" -> 4) ++
-      inTop2.map(t => s"Top 2 - ${t._1._1.name}" -> 3) ++
-      inTop4.map(t => s"Top 4 - ${t._1._1.name}" -> 2) ++
-      inTop8.map(t => s"Top 8 - ${t._1._1.name}" -> 1) ++
-      undefeatedSwiss.map(g => s"Undefeated swiss - ${g._1._1.name}" -> 1)
-    (all.values.toList.sum, all)
+    val cacheKey = s"series-points-$id"
+    cache.get[(Int, Map[String, Int])](cacheKey).getOrElse {
+      val (name, tournaments) = playerGames(id)
+      val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year)
+      val season = current_season
+      val thisSeasonTournaments = thisYearTournaments.filter(_._1.season.contains(season)).groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+      val wins = winner(thisSeasonTournaments)
+      val inTop2 = top2(thisSeasonTournaments).filterNot(e => wins.toList.map(_._1._1).contains(e._1._1))
+      val inTop4 = top4(thisSeasonTournaments).filterNot(e => (wins.toList ++ inTop2.toList).map(_._1._1).contains(e._1._1))
+      val inTop8 = top8(thisSeasonTournaments).filterNot(e => (wins.toList ++ inTop2.toList ++ inTop4.toList).map(_._1._1).contains(e._1._1))
+      val undefeatedSwiss = thisSeasonTournaments.map(t => t._1 -> (t._2.filter(_.bracket_name == "swiss").count(s => !s.isWinner) == 0)).filter(_._2)
+      val all = wins.map(t =>
+        s"Winner - ${t._1._1.name}" -> 4) ++
+        inTop2.map(t => s"Top 2 - ${t._1._1.name}" -> 3) ++
+        inTop4.map(t => s"Top 4 - ${t._1._1.name}" -> 2) ++
+        inTop8.map(t => s"Top 8 - ${t._1._1.name}" -> 1) ++
+        undefeatedSwiss.map(g => s"Undefeated swiss - ${g._1._1.name}" -> 1)
+      val points = (all.values.toList.sum, all)
+      cache.put(cacheKey, points, scorePointsCacheDuration)
+      points
+    }
   }
 
   def invitationalPointsCurrentSeason(id: Int): (Int, Map[String, Int]) = {
-    val (name, tournaments) = playerGames(id)
-    val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year)
-    val season = current_season
-    val scores = thisYearTournaments.filter(_._1.season.contains(season)).groupBy(_._1)
-      .map(g => (g._1.name, g._2.map(_._2).count(_.isWinner)))
-    (scores.values.toList.sorted.reverse.take(4).sum, scores)
+    val cacheKey = s"invitational-points-$id"
+    cache.get[(Int, Map[String, Int])](cacheKey).getOrElse {
+      val (name, tournaments) = playerGames(id)
+      val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year)
+      val season = current_season
+      val scores = thisYearTournaments.filter(_._1.season.contains(season)).groupBy(_._1)
+        .map(g => (g._1.name, g._2.map(_._2).count(_.isWinner)))
+      val points = (scores.values.toList.sorted.reverse.take(4).sum, scores)
+      cache.put(cacheKey, points, scorePointsCacheDuration)
+      points
+    }
   }
 
   def lifeTimeWinRates(playerName: String): List[(DateTime, Double, Double)] = {
