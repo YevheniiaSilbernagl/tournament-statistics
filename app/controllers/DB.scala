@@ -26,10 +26,10 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
     winner(thisSeasonTournaments).map(_._1._1.name).toList
   }
 
-  def currentSeasonPlayers: Map[Int, String] = {
-    val season = current_season
-    val thisYear = now().year().get()
-    val cacheKey = s"${thisYear}_$season"
+  def currentSeasonPlayers: Map[Int, String] = gePlayersOfASeason(now().year().get(), current_season)
+
+  def gePlayersOfASeason(year: Int, season: Int): Map[Int, String] = {
+    val cacheKey = s"${year}_$season"
     cache.get[Map[Int, String]](cacheKey).getOrElse {
       val query =
         s"""
@@ -39,7 +39,7 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
            |FROM player p
            |  JOIN participant part ON p.id = part.player_id
            |  JOIN tournament t ON part.tournament_id = t.id
-           |WHERE t.season = $season AND t.date > date('$thisYear-01-01') AND p.eternal_name != 'BYE+0000'
+           |WHERE t.season = $season AND t.date > date('$year-01-01') AND p.eternal_name != 'BYE+0000'
        """.stripMargin
       val info: mutable.ListBuffer[(Int, String)] = new mutable.ListBuffer[(Int, String)]()
       val conn: Connection = database.getConnection()
@@ -58,30 +58,47 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
     }
   }
 
-
   def seriesPoints(id: Int): (Int, Int) = {
     val cacheKey = s"series-points-$id"
     cache.get[(Int, Int)](cacheKey).getOrElse {
       val (name, tournaments) = playerGames(id)
-      val thisYearTournaments = tournaments.filter(_._1.date.year == DateTime.now().year).groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
-      val allTournaments = tournaments.groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+      val thisYearTournaments = tournaments.filter(_._1.includeInSeriesPointsCalculation).filter(_._1.date.year == DateTime.now().year).groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+      val allTournaments = tournaments.filter(_._1.includeInSeriesPointsCalculation).groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+      val result = (seriesPointsCalculation(thisYearTournaments).values.toList.sum, seriesPointsCalculation(allTournaments).values.toList.sum)
+      cache.put(cacheKey, result, scorePointsCacheDuration)
+      result
+    }
+  }
 
-      def points(ts: Map[(Tournament, String), List[Score]]): Int = {
-        val wins = winner(ts)
-        val inTop2 = top2(ts).filterNot(e => wins.toList.map(_._1._1).contains(e._1._1))
-        val inTop4 = top4(ts).filterNot(e => (wins.toList ++ inTop2.toList).map(_._1._1).contains(e._1._1))
-        val inTop8 = top8(ts).filterNot(e => (wins.toList ++ inTop2.toList ++ inTop4.toList).map(_._1._1).contains(e._1._1))
-        val undefeatedSwiss = ts.map(t => t._1 -> (t._2.filter(_.bracket_name == "swiss").count(s => !s.isWinner) == 0)).filter(_._2)
-        val all = wins.map(t =>
-          s"Winner - ${t._1._1.name}" -> 4) ++
-          inTop2.map(t => s"Top 2 - ${t._1._1.name}" -> 3) ++
-          inTop4.map(t => s"Top 4 - ${t._1._1.name}" -> 2) ++
-          inTop8.map(t => s"Top 8 - ${t._1._1.name}" -> 1) ++
-          undefeatedSwiss.map(g => s"Undefeated swiss - ${g._1._1.name}" -> 1)
-        all.values.toList.sum
-      }
+  def seriesPointsCalculation(ts: Map[(Tournament, String), List[Score]]): Map[String, Int] = {
+    val wins = winner(ts)
+    val inTop2 = top2(ts).filterNot(e => wins.toList.map(_._1._1).contains(e._1._1))
+    val inTop4 = top4(ts).filterNot(e => (wins ++ inTop2).toList.map(_._1._1).contains(e._1._1))
+    val inTop8 = top8(ts).filterNot(e => (wins ++ inTop2 ++ inTop4).toList.map(_._1._1).contains(e._1._1))
+    val inTop16 = top16(ts).filterNot(e => (wins ++ inTop2 ++ inTop4 ++ inTop8).toList.map(_._1._1).contains(e._1._1))
+    val undefeatedSwiss = ts.map(t => t._1 -> (t._2.filter(_.bracket_name == "swiss").count(s => !s.isWinner) == 0)).filter(_._2)
+    val all = wins.map(t => s"Winner - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 4 else 12)) ++
+      inTop2.map(t => s"Top 2 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 3 else 10)) ++
+      inTop4.map(t => s"Top 4 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 2 else 8)) ++
+      inTop8.map(t => s"Top 8 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 1 else 6)) ++
+      inTop16.map(t => s"Top 16 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 0 else 4)) ++
+      undefeatedSwiss.map(t => s"Undefeated swiss - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 1 else 0))
+    all
+  }
 
-      val result = (points(thisYearTournaments), points(allTournaments))
+  def communityChampionshipPoints(id: Int): (Int, Map[String, Int]) = {
+    val cacheKey = s"community-championship-points-$id"
+    cache.get[(Int, Map[String, Int])](cacheKey).getOrElse {
+      val (name, tournaments) = playerGames(id)
+      val valuableTournaments = tournaments
+        .filter(_._1.includeInSeriesPointsCalculation)
+        .filter(t => {
+          (t._1.date.year().get() == 2018 && t._1.season.contains(4)) ||
+            (t._1.date.year().get() == 2019 && t._1.season.contains(1))
+        }).groupBy(g => (g._1, g._3)).mapValues(v => v.map(_._2))
+
+      val points = seriesPointsCalculation(valuableTournaments)
+      val result = (points.values.toList.sum, points)
       cache.put(cacheKey, result, scorePointsCacheDuration)
       result
     }
@@ -347,6 +364,8 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
     case 2 => "twice: "
     case _ => s"$number times: "
   }
+
+  def top16(inf: Map[(Tournament, String), List[Score]]): Map[(Tournament, String), List[Score]] = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 3))).filter(_._2.nonEmpty)
 
   def top8(inf: Map[(Tournament, String), List[Score]]): Map[(Tournament, String), List[Score]] = inf.map(p => p._1 -> p._2.filter(s => s.bracket_name == "elimination" && s.round == (max_elimination_round(p._1._1.name) - 2))).filter(_._2.nonEmpty)
 

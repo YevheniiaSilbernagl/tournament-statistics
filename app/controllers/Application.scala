@@ -27,6 +27,8 @@ class Application @Inject()(
                            ) extends Controller {
   private val WithBasicAuth = new BasicAuthAction(db, battlefy)
 
+  def communityChampionshipPointsCacheKey = s"communityChampionshipPoints"
+
   def seriesPointsCacheKey = s"seriesPoints${now().year().get()}Season${db.current_season}"
 
   def invitationalPointsCacheKey = s"invitationalPoints${now().year().get()}Season${db.current_season}"
@@ -122,7 +124,8 @@ class Application @Inject()(
       val invitationalPoints = db.invitationalPointsCurrentSeason(id)
       val seriesPoints = db.seriesPoints(id)
       val opponent = opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
-      Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie, invitationalPoints, seriesPoints))
+      val communityChampionshipPoints = db.communityChampionshipPoints(id)
+      Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie, invitationalPoints, seriesPoints, communityChampionshipPoints))
     }
 
     playerId match {
@@ -298,6 +301,16 @@ class Application @Inject()(
       p
     }
     Ok(views.html.series_points(battlefy.getCurrentTournament, points.filter(p => p._2._1 != 0 || p._2._2 != 0)))
+  }
+
+ def communityChampionshipPoints = Action {
+   val points = cache.get[List[(String, Int)]](communityChampionshipPointsCacheKey).getOrElse {
+      val p = (db.currentSeasonPlayers ++ db.gePlayersOfASeason(2018, 4)).toList
+        .map(p => (p._2, db.communityChampionshipPoints(p._1)._1)).filter(_._2 != 0).sortBy(_._2).reverse
+      cache.put(communityChampionshipPointsCacheKey, p, 7.days)
+      p
+    }
+    Ok(views.html.community_championship_points(battlefy.getCurrentTournament, points.filter(p => p._2 != 0)))
   }
 
   def invitationalPoints: Action[AnyContent] = Action {
