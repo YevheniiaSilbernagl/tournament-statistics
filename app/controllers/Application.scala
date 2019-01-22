@@ -112,7 +112,7 @@ class Application @Inject()(
       val opponentName = battlefy.currentOpponent(name)
       val opponentId = opponentName.flatMap(db.playerId)
       val previousGames: List[(String, String, String)] = opponentName.map(opponent => db.opponentPreviousInteraction(name, opponent)).getOrElse(List())
-      val invitationalPoints = db.invitationalPointsCurrentSeason(id)
+      val invitationalPoints = db.invitationalPointsPlayerCurrentSeason(id)
       val seriesPoints = db.seriesPoints(id)
       val opponent = opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined).map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
       val communityChampionshipPoints = db.communityChampionshipPoints(id)
@@ -180,7 +180,7 @@ class Application @Inject()(
   }
 
   def invitationalPointsScene: Action[AnyContent] = Action {
-    val points = db.invitationalPoints
+    val points = db.invitationalPointsForCurrentSeason
     val winners = points.filter(_._3.nonEmpty)
     val top = points.filter(_._3.isEmpty).sortBy(_._2).reverse.take(24)
     val file = graphics.invitationalPoints(winners.sortBy(_._1) ++ (top ++ points
@@ -323,7 +323,7 @@ class Application @Inject()(
   }
 
   def invitationalPoints: Action[AnyContent] = Action {
-    val points = db.invitationalPoints
+    val points = db.invitationalPointsForCurrentSeason
     Ok(views.html.invitational_points(battlefy.getCurrentTournament, points))
   }
 }
