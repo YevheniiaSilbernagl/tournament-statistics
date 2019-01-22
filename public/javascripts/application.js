@@ -28,6 +28,15 @@ jQuery(window).ready(function () {
         globalSearch: false
     });
 
+    $("#players").fancyTable({
+        sortColumn: 0,
+        sortable: true,
+        pagination: true,
+        perPage: 15,
+        searchable: true,
+        globalSearch: false
+    });
+
 
     $(document).on('click', "#generateResources", function () {
         generate_resources();

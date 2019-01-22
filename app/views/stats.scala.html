@@ -2,13 +2,13 @@
 @(tournament: Tournament, players: List[(Int, String)])
 
 @main(tournament, "Stats") {
-    <div class="container content">
-        <ul class="list-group">
+    <table id="players" class="table table-striped table-hover table-responsive-sm">
         @for(player <- players) {
-            <li class="list-group-item d-flex justify-content-between align-items-center" id="@{player._1}">
+            <tr id="@{player._1}">
+                <td>
                 <a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{player._2}</a>
-            </li>
+                </td>
+            </tr>
         }
-        </ul>
-    </div>
+    </table>
 }
