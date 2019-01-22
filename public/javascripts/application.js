@@ -1,6 +1,33 @@
 jQuery(window).ready(function () {
     $.ajaxSetup({cache: true});
     refresh_links();
+    $("#seriesPointsTable").fancyTable({
+        sortColumn: 4,
+        sortable: true,
+        pagination: true,
+        perPage: 15,
+        searchable: true,
+        globalSearch: false
+    });
+
+    $("#invitationalPointsTable").fancyTable({
+        sortColumn: 4,
+        sortable: true,
+        pagination: true,
+        perPage: 15,
+        searchable: true,
+        globalSearch: false
+    });
+
+    $("#communityChampionshipPointsTable").fancyTable({
+        sortColumn: 4,
+        sortable: true,
+        pagination: true,
+        perPage: 15,
+        searchable: true,
+        globalSearch: false
+    });
+
 
     $(document).on('click', "#generateResources", function () {
         generate_resources();
