@@ -14,7 +14,7 @@
 
 @main(tournament, s"Stats for $name") {
     <div class="container content">
-        <h1>@name
+        <h1>@{name.split("\\+")(0)}
             @if(isRookie) {
                 <div class="badge badge-warning">Rookie</div>
             }

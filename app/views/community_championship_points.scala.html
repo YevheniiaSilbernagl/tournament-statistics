@@ -12,7 +12,7 @@
         <tbody>
             @for(player <- points){
                 <tr>
-                    <td><a href="@routes.Application.playerStats(None, Option(player._1))">@{player._1}</a></td>
+                    <td><a href="@routes.Application.playerStats(None, Option(player._1))">@{player._1.split("\\+")(0)}</a></td>
                     <td>@{player._2}</td>
                 </tr>
             }

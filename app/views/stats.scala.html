@@ -6,7 +6,7 @@
         @for(player <- players) {
             <tr id="@{player._1}">
                 <td>
-                <a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{player._2}</a>
+                <a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{player._2.split("\\+")(0)}</a>
                 </td>
             </tr>
         }

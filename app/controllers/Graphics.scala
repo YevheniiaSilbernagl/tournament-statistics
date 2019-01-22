@@ -537,7 +537,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         g.drawString(theDesk, 220, 105)
         val theDeskWidth = g.getFontMetrics.stringWidth(theDesk)
         FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, header, 1650 - theDeskWidth, 80f, 110f))))
-        g.drawString(header, 220 + theDeskWidth, 90)
+        g.drawString(header, 220 + theDeskWidth, 105)
 
         val dataSet = new DefaultCategoryDataset()
         stats.foreach { dataPoint =>
@@ -610,7 +610,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         g.drawString(theDesk, 220, 105)
         val theDeskWidth = g.getFontMetrics.stringWidth(theDesk)
         FONT.foreach(f => g.setFont(f.deriveFont(adjustFontSize(g, str, 1650 - theDeskWidth, 80f, 110f))))
-        g.drawString(str, 220 + theDeskWidth, 90)
+        g.drawString(str, 220 + theDeskWidth, 105)
 
         val dataSet = new DefaultCategoryDataset()
         (player1._2.map(_._1) ++ player2._2.map(_._1)).distinct.sorted.reverse.foreach { date =>
