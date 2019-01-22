@@ -4,13 +4,11 @@ import java.nio.file.Files
 
 import controllers.discord.Discord
 import javax.inject.Inject
-import org.joda.time.DateTime._
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
 import types.Deck
 
-import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
@@ -22,16 +20,9 @@ class Application @Inject()(
                              graphics: Graphics,
                              docs: Docs,
                              config: Configuration,
-                             discord: Discord,
-                             cache: Cache
+                             discord: Discord
                            ) extends Controller {
   private val WithBasicAuth = new BasicAuthAction(db, battlefy)
-
-  def communityChampionshipPointsCacheKey = s"communityChampionshipPoints"
-
-  def seriesPointsCacheKey = s"seriesPoints${now().year().get()}Season${db.current_season}"
-
-  def invitationalPointsCacheKey = s"invitationalPoints${now().year().get()}Season${db.current_season}"
 
   def index = Action {
     Ok(views.html.index(battlefy.getCurrentTournament))
@@ -188,6 +179,35 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
+  def invitationalPointsScene: Action[AnyContent] = Action {
+    val points = db.invitationalPoints
+    val winners = points.filter(_._3.nonEmpty)
+    val top = points.filter(_._3.isEmpty).sortBy(_._2).reverse.take(24)
+    val file = graphics.invitationalPoints(winners.sortBy(_._1) ++ (top ++ points
+      .filterNot(p => winners.contains(p) || top.contains(p))
+      .filter(p => p._2 == top.last._2))
+      .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)))
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def communityChampionshipPointsScene: Action[AnyContent] = Action {
+    val points = db.communityChampionshipPointsResults
+    val qualified = points.sortBy(_._2).reverse.take(16)
+    val alsoQalified = points.filterNot(p => qualified.contains(p)).filter(_._2 == qualified.last._2)
+    val file = graphics.communityChampionshipPoints((qualified ++ alsoQalified).sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)))
+
+    discord.notifyAdmin(_.sendFile(file))
+    //    discord.notifyStreamers(_.sendFile(file))
+
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
   def getOpponentsInfo(opponents: String) = Action {
     val tournamentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
     val players = opponents.split("-:-").toList.map(_.trim.split("\\s")(0)).map(n => if (n.contains("+")) n.split("\\+")(0) else n)
@@ -250,8 +270,6 @@ class Application @Inject()(
         db.importGame(tournamentId, player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
       }
     }
-    cache.delete(invitationalPointsCacheKey)
-    cache.delete(seriesPointsCacheKey)
     Ok("")
   }
 
@@ -295,32 +313,17 @@ class Application @Inject()(
   }
 
   def seriesPoints = Action {
-    val points = cache.get[List[(String, (Int, Int))]](seriesPointsCacheKey).getOrElse {
-      val p = db.currentSeasonPlayers.toList.map(p => (p._2, db.seriesPoints(p._1))).filter(_._2 != 0).sortBy(_._2).reverse
-      cache.put(seriesPointsCacheKey, p, 7.days)
-      p
-    }
+    val points = db.seriesPointsResults
     Ok(views.html.series_points(battlefy.getCurrentTournament, points.filter(p => p._2._1 != 0 || p._2._2 != 0)))
   }
 
- def communityChampionshipPoints = Action {
-   val points = cache.get[List[(String, Int)]](communityChampionshipPointsCacheKey).getOrElse {
-      val p = (db.currentSeasonPlayers ++ db.gePlayersOfASeason(2018, 4)).toList
-        .map(p => (p._2, db.communityChampionshipPoints(p._1)._1)).filter(_._2 != 0).sortBy(_._2).reverse
-      cache.put(communityChampionshipPointsCacheKey, p, 7.days)
-      p
-    }
+  def communityChampionshipPoints = Action {
+    val points = db.communityChampionshipPointsResults
     Ok(views.html.community_championship_points(battlefy.getCurrentTournament, points.filter(p => p._2 != 0)))
   }
 
   def invitationalPoints: Action[AnyContent] = Action {
-    val points = cache.get[List[(String, Int, List[String])]](invitationalPointsCacheKey).getOrElse {
-      val p = db.currentSeasonPlayers.toList.map { p =>
-        (p._2, db.invitationalPointsCurrentSeason(p._1)._1, db.winsOfTheSeason(p._1))
-      }.filter(_._2 != 0).sortBy(_._2).reverse
-      cache.put(invitationalPointsCacheKey, p, 7.days)
-      p
-    }
+    val points = db.invitationalPoints
     Ok(views.html.invitational_points(battlefy.getCurrentTournament, points))
   }
 }

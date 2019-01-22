@@ -73,16 +73,17 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     resultFile
   }
 
-  def column(players: scala.List[(String, String)], fontSize: Float): BufferedImage = {
-    val dest = new BufferedImage(600, 480, BufferedImage.TYPE_INT_ARGB)
-    val renderedGraphics = graphicsSettings(dest.createGraphics())
-    FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
-    for (i <- players.indices)
-      renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.split("-")(0).trim}", 0, (i + 1) * 80)
-    dest
-  }
-
   def topPlayers(top10: scala.List[(String, String)]): File = {
+
+    def column(players: scala.List[(String, String)], fontSize: Float): BufferedImage = {
+      val dest = new BufferedImage(600, 480, BufferedImage.TYPE_INT_ARGB)
+      val renderedGraphics = graphicsSettings(dest.createGraphics())
+      FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
+      for (i <- players.indices)
+        renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.split("-")(0).trim}", 0, (i + 1) * 80)
+      dest
+    }
+
     fs.file(s"/images/background.png") match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
@@ -96,6 +97,86 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         g.drawImage(column(top10.drop(5), fontSize), 1100, 300, null)
 
         saveFile(g, image, "top-players.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+  }
+
+  def invitationalPoints(results: scala.List[(String, Int, scala.List[String])]): File = {
+
+    def column(players: scala.List[(String, Int, scala.List[String])], fontSize: Float): BufferedImage = {
+      val dest = new BufferedImage(600, 80 * players.size + 50, BufferedImage.TYPE_INT_ARGB)
+      val renderedGraphics = graphicsSettings(dest.createGraphics())
+      FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
+      val star = fs.file("/images/winner_star.png").map(ImageIO.read)
+      for (i <- players.indices) {
+        if (players(i)._3.nonEmpty) {
+          star.foreach(s => renderedGraphics.drawImage(scale(s, 50, 50), 0, (i + 1) * 80 - 50, null))
+          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 55, (i + 1) * 80)
+        } else {
+          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * 80)
+        }
+      }
+      dest
+    }
+
+    fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(s"The Desk - Invitational points", 220, 105)
+
+        val longestLine = results.map(_._1).sortBy(_.length).reverse.head
+        val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
+        val col1 = results.take(results.size / 3)
+        val col2 = results.slice(col1.size, col1.size + results.size / 3)
+        val col3 = results.drop(col1.size + col2.size)
+        val img1 = column(col1, fontSize)
+        val img2 = column(col2, fontSize)
+        val img3 = column(col3, fontSize)
+        g.drawImage(img1, 150, (image.getHeight - img1.getHeight) / 2, null)
+        g.drawImage(img2, 750, (image.getHeight - img2.getHeight) / 2, null)
+        g.drawImage(img3, 1350, (image.getHeight - img3.getHeight) / 2, null)
+
+        saveFile(g, image, "invitational-points.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+  }
+
+
+  def communityChampionshipPoints(results: scala.List[(String, Int)]): File = {
+
+    def column(players: scala.List[(String, Int)], fontSize: Float): BufferedImage = {
+      val dest = new BufferedImage(600, 80 * players.size + 50, BufferedImage.TYPE_INT_ARGB)
+      val renderedGraphics = graphicsSettings(dest.createGraphics())
+      FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
+      val star = fs.file("/images/winner_star.png").map(ImageIO.read)
+      for (i <- players.indices) {
+        renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * 80)
+      }
+      dest
+    }
+
+    fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(s"The Desk - Community championship", 220, 105)
+
+        val longestLine = results.map(_._1).sortBy(_.length).reverse.head
+        val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
+        val col1 = results.take(results.size / 3)
+        val col2 = results.slice(col1.size, col1.size + results.size / 3)
+        val col3 = results.drop(col1.size + col2.size)
+        val img1 = column(col1, fontSize)
+        val img2 = column(col2, fontSize)
+        val img3 = column(col3, fontSize)
+        g.drawImage(img1, 150, (image.getHeight - img1.getHeight) / 2, null)
+        g.drawImage(img2, 750, (image.getHeight - img2.getHeight) / 2, null)
+        g.drawImage(img3, 1350, (image.getHeight - img3.getHeight) / 2, null)
+
+        saveFile(g, image, "community-championship-points.png")
       case _ => throw new Exception(s"background image not found")
     }
   }

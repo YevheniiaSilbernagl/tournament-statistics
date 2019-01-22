@@ -5,6 +5,7 @@ import java.sql.{Connection, Statement}
 import javax.inject.Inject
 import org.joda.time.DateTime
 import org.joda.time.DateTime._
+import play.api.db
 import play.api.db.Database
 import play.api.mvc.Controller
 import types.{Deck, Score, Tournament}
@@ -15,6 +16,22 @@ import scala.concurrent.duration._
 class DB @Inject()(database: Database, cache: Cache) extends Controller {
 
   val scorePointsCacheDuration: FiniteDuration = 1.day
+
+  def communityChampionshipPointsCacheKey = s"communityChampionshipPoints"
+
+  def seriesPointsCacheKey = s"seriesPoints${now().year().get()}Season$current_season"
+
+  def invitationalPointsCacheKey = s"invitationalPoints${now().year().get()}Season$current_season"
+
+  def invitationalPoints: List[(String, Int, List[String])] = {
+    cache.get[List[(String, Int, List[String])]](invitationalPointsCacheKey).getOrElse {
+      val p = currentSeasonPlayers.toList.map { p =>
+        (p._2, invitationalPointsCurrentSeason(p._1)._1, winsOfTheSeason(p._1))
+      }.filter(_._2 != 0).sortBy(_._2).reverse
+      cache.put(invitationalPointsCacheKey, p, 7.days)
+      p
+    }
+  }
 
   def winsOfTheSeason(id: Int): List[String] = {
     val (name, tournaments) = playerGames(id)
@@ -55,6 +72,23 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
       val map = info.toMap
       cache.put(cacheKey, map, scorePointsCacheDuration)
       map
+    }
+  }
+
+  def communityChampionshipPointsResults: List[(String, Int)] = {
+    cache.get[List[(String, Int)]](communityChampionshipPointsCacheKey).getOrElse {
+      val p = (currentSeasonPlayers ++ gePlayersOfASeason(2018, 4)).toList
+        .map(p => (p._2, communityChampionshipPoints(p._1)._1)).filter(_._2 != 0).sortBy(_._2).reverse
+      cache.put(communityChampionshipPointsCacheKey, p, 7.days)
+      p
+    }
+  }
+
+  def seriesPointsResults: List[(String, (Int, Int))] = {
+    cache.get[List[(String, (Int, Int))]](seriesPointsCacheKey).getOrElse {
+      val p = currentSeasonPlayers.toList.map(p => (p._2, seriesPoints(p._1))).filter(_._2 != 0).sortBy(_._2).reverse
+      cache.put(seriesPointsCacheKey, p, 7.days)
+      p
     }
   }
 
@@ -538,6 +572,8 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
 
   def addTournament(tournamentName: String, tournamentStartDate: String, tournamentId: String): Unit = {
     insert("INSERT INTO tournament (name, date, battlefy_uuid) VALUES ('" + tournamentName + "', '" + tournamentStartDate + "', '" + tournamentId + "')")
+    cache.delete(invitationalPointsCacheKey)
+    cache.delete(seriesPointsCacheKey)
   }
 
   private def insert(sql: String): Unit = {

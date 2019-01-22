@@ -3,37 +3,39 @@
 # ~~~~
 
 # Home page
-GET         /                                     controllers.Application.index
-GET         /points/invitational                  controllers.Application.invitationalPoints
-GET         /points/series                        controllers.Application.seriesPoints
-GET         /points/communityChampionship         controllers.Application.communityChampionshipPoints
-GET         /players                              controllers.Application.playersStats
-GET         /player                               controllers.Application.playerStats(playerId: Option[Int], playerName: Option[String])
-GET         /validate                             controllers.Application.validateDecks(tournamentId: String)
-GET         /validateDeck                         controllers.Application.validateDeck(url: String)
-GET         /decdoc                               controllers.Application.generateDeckDoc(tournamentId: String)
-GET         /download/doc/expanded                controllers.Application.expandedDeckDoc(tournamentId: String)
-GET         /download/doc/concise                 controllers.Application.conciseDeckDoc(tournamentId: String)
-GET         /download/top/cards                   controllers.Application.topCards(tournamentId: String)
-GET         /download/list/cards                  controllers.Application.customCardList(header:String, cards: List[String])
-GET         /download/top/players                 controllers.Application.topPlayers(tournamentId: String)
-GET         /download/player/winrate/life         controllers.Application.playerLifetimeWinRate(playerName: String)
-GET         /download/player/winrate/trend        controllers.Application.playerTrendingWinRate(playerName: String)
-GET         /download/winrate/life                controllers.Application.compareLifetimeWinRates(player1Name: String, player2Name: String)
-GET         /download/winrate/trending            controllers.Application.compareTrendingWinRates(player1Name: String, player2Name: String)
-GET         /download/tourney-left                controllers.Application.left(link: String, name: String, player: String)
-GET         /download/tourney-right               controllers.Application.right(link: String, name: String, player: String)
-GET         /download/streaming/panel             controllers.Application.sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, mainCam: Option[String])
-GET         /streaming                            controllers.Application.streaming
-GET         /castersPanel                         controllers.Application.casters
-GET         /opponents/info                       controllers.Application.getOpponentsInfo(opponents: String)
-GET         /casters                              controllers.Application.generateCastersList(list: String)
-GET         /stats                                controllers.Application.generateStats
-GET         /players/stats                        controllers.Application.generateStatsForPlayers(players: String)
-GET         /message                              controllers.Application.sendMessage(player: String, message: String)
-GET         /checkin                              controllers.Application.checkInPage
-POST        /message                              controllers.Application.sendMessageToAllPlayers(message: String)
-POST        /import/tournament                    controllers.Application.importTournament(battlefyUuid: String)
+GET         /                                               controllers.Application.index
+GET         /points/invitational                            controllers.Application.invitationalPoints
+GET         /points/series                                  controllers.Application.seriesPoints
+GET         /points/communityChampionship                   controllers.Application.communityChampionshipPoints
+GET         /players                                        controllers.Application.playersStats
+GET         /player                                         controllers.Application.playerStats(playerId: Option[Int], playerName: Option[String])
+GET         /validate                                       controllers.Application.validateDecks(tournamentId: String)
+GET         /validateDeck                                   controllers.Application.validateDeck(url: String)
+GET         /decdoc                                         controllers.Application.generateDeckDoc(tournamentId: String)
+GET         /download/doc/expanded                          controllers.Application.expandedDeckDoc(tournamentId: String)
+GET         /download/doc/concise                           controllers.Application.conciseDeckDoc(tournamentId: String)
+GET         /download/top/cards                             controllers.Application.topCards(tournamentId: String)
+GET         /download/list/cards                            controllers.Application.customCardList(header:String, cards: List[String])
+GET         /download/top/players                           controllers.Application.topPlayers(tournamentId: String)
+GET         /download/top/players/invitationalpoints        controllers.Application.invitationalPointsScene
+GET         /download/top/players/comchamppoints            controllers.Application.communityChampionshipPointsScene
+GET         /download/player/winrate/life                   controllers.Application.playerLifetimeWinRate(playerName: String)
+GET         /download/player/winrate/trend                  controllers.Application.playerTrendingWinRate(playerName: String)
+GET         /download/winrate/life                          controllers.Application.compareLifetimeWinRates(player1Name: String, player2Name: String)
+GET         /download/winrate/trending                      controllers.Application.compareTrendingWinRates(player1Name: String, player2Name: String)
+GET         /download/tourney-left                          controllers.Application.left(link: String, name: String, player: String)
+GET         /download/tourney-right                         controllers.Application.right(link: String, name: String, player: String)
+GET         /download/streaming/panel                       controllers.Application.sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, mainCam: Option[String])
+GET         /streaming                                      controllers.Application.streaming
+GET         /castersPanel                                   controllers.Application.casters
+GET         /opponents/info                                 controllers.Application.getOpponentsInfo(opponents: String)
+GET         /casters                                        controllers.Application.generateCastersList(list: String)
+GET         /stats                                          controllers.Application.generateStats
+GET         /players/stats                                  controllers.Application.generateStatsForPlayers(players: String)
+GET         /message                                        controllers.Application.sendMessage(player: String, message: String)
+GET         /checkin                                        controllers.Application.checkInPage
+POST        /message                                        controllers.Application.sendMessageToAllPlayers(message: String)
+POST        /import/tournament                              controllers.Application.importTournament(battlefyUuid: String)
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file                         controllers.Assets.at(path="/public", file)
+GET         /assets/*file                                   controllers.Assets.at(path="/public", file)
