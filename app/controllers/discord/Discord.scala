@@ -15,9 +15,10 @@ import sx.blah.discord.api.{ClientBuilder, IDiscordClient}
 import sx.blah.discord.handle.obj.{IGuild, IMessage, IPrivateChannel}
 
 import scala.collection.JavaConversions._
-import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 import scala.language.implicitConversions
+import scala.util.control.NonFatal
 
 class Discord @Inject()(config: Configuration,
                         battlefy: Battlefy,
@@ -32,9 +33,9 @@ class Discord @Inject()(config: Configuration,
       .withToken(token)
       .withRecommendedShardCount()
       .build()
-    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
-    client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
-    client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
+    //    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
+    //    client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
+    //    client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
     client.login()
     client
   }
@@ -44,7 +45,7 @@ class Discord @Inject()(config: Configuration,
   }
 
   def notifyStreamers(operation: IPrivateChannel => IMessage): Unit = {
-    bot.foreach(client => resources.notifyStreamers(client, operation))
+    //    bot.foreach(client => resources.notifyStreamers(client, operation))
   }
 
   def notifyAdmin(operation: IPrivateChannel => IMessage): Unit = {
@@ -65,10 +66,20 @@ class Discord @Inject()(config: Configuration,
       ))).distinct
 
   def getAvatar(name: String): Option[BufferedImage] = {
-    bot.flatMap(b => b.getUsersByName(name).headOption).map{ user =>
-      val avatar = user.getAvatar
-      val response = Await.result(ws.url(s"https://cdn.discordapp.com/avatars/${user.getStringID}/${user.getAvatar}.png").get(), Duration.apply(30, TimeUnit.SECONDS))
-      ImageIO.read(new ByteArrayInputStream(response.bodyAsBytes))
+    bot.flatMap { b =>
+      val strict = b.getUsersByName(name).headOption
+      val similar = allPlayers.filter(_.contains(s"$name#"))
+      if (strict.isEmpty && similar.length == 1) {
+        b.getUsersByName(similar.head.split("#")(0)).headOption
+      } else strict
+    }.filter(_.getAvatar != null).map { user =>
+      try {
+        val avatarUrl = s"https://cdn.discordapp.com/avatars/${user.getStringID}/${user.getAvatar}.png"
+        val response = Await.result(ws.url(avatarUrl).get(), Duration.apply(30, TimeUnit.SECONDS))
+        ImageIO.read(new ByteArrayInputStream(response.bodyAsBytes))
+      } catch {
+        case NonFatal(e) => null
+      }
     }
   }
 }
