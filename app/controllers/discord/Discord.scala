@@ -25,8 +25,8 @@ class Discord @Inject()(config: Configuration,
       .withToken(token)
       .withRecommendedShardCount()
       .build()
-//    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
-//    client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
+    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
+    client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
     client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
     client.login()
     client
