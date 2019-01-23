@@ -202,7 +202,7 @@ class Application @Inject()(
     val file = graphics.communityChampionshipPoints((qualified ++ alsoQalified).sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)))
 
     discord.notifyAdmin(_.sendFile(file))
-    //    discord.notifyStreamers(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
 
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
