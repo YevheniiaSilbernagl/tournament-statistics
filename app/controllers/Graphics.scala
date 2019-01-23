@@ -28,11 +28,14 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   }
 
   def scale(image: BufferedImage, width: Int, height: Int): BufferedImage = {
-    val resizer: Resizer = DefaultResizerFactory.getInstance().getResizer(
-      new Dimension(image.getWidth(), image.getHeight()),
-      new Dimension(width, height))
-    new FixedSizeThumbnailMaker(
-      width, height, false, true).resizer(resizer).make(image)
+    if (image == null) image
+    else {
+      val resizer: Resizer = DefaultResizerFactory.getInstance().getResizer(
+        new Dimension(image.getWidth(), image.getHeight()),
+        new Dimension(width, height))
+      new FixedSizeThumbnailMaker(
+        width, height, false, true).resizer(resizer).make(image)
+    }
   }
 
   def graphicsSettings(g: Graphics2D): Graphics2D = {
