@@ -1,15 +1,21 @@
 package controllers.discord
 
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import controllers.{Battlefy, Cache}
+import javax.imageio.ImageIO
 import javax.inject.Inject
 import play.api.Configuration
+import play.api.libs.ws.WSClient
 import play.api.mvc.Controller
 import sx.blah.discord.api.{ClientBuilder, IDiscordClient}
 import sx.blah.discord.handle.obj.{IGuild, IMessage, IPrivateChannel}
 
 import scala.collection.JavaConversions._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
@@ -18,7 +24,8 @@ class Discord @Inject()(config: Configuration,
                         dropMe: DropMe,
                         resources: StreamingResources,
                         actorSystem: ActorSystem,
-                        cache: Cache)
+                        cache: Cache,
+                        ws: WSClient)
                        (implicit executionContext: ExecutionContext) extends Controller {
   private val bot: Option[IDiscordClient] = config.getString("discord.bot.token").map { token =>
     val client = new ClientBuilder()
@@ -56,5 +63,13 @@ class Discord @Inject()(config: Configuration,
         user.getDisplayName(guild) + "#" + user.getDiscriminator,
         user.getName + "#" + user.getDiscriminator
       ))).distinct
+
+  def getAvatar(name: String): Option[BufferedImage] = {
+    bot.flatMap(b => b.getUsersByName(name).headOption).map{ user =>
+      val avatar = user.getAvatar
+      val response = Await.result(ws.url(s"https://cdn.discordapp.com/avatars/${user.getStringID}/${user.getAvatar}.png").get(), Duration.apply(30, TimeUnit.SECONDS))
+      ImageIO.read(new ByteArrayInputStream(response.bodyAsBytes))
+    }
+  }
 }
 

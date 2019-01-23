@@ -426,7 +426,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     }
   }
 
-  def casters(list: String): File = {
+  def casters(casters: scala.List[(java.lang.String, Option[BufferedImage])]): File = {
     val imageWidth = 278
     val darkerColour = new Color(15, 26, 56)
     val defaultColor = new Color(255, 255, 255)
@@ -443,9 +443,9 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     FONT.foreach(f => g.setFont(f.deriveFont(32f)))
     val castersStr = "Casters:"
     g.drawString(castersStr, center(g, castersStr), 35)
-    val casters = list.split("\n")
     for (i <- casters.indices) {
-      g.drawString(casters(i), 50, 50 + 40 * (i + 1))
+      g.drawString(casters(i)._1, 65, 50 + 40 * (i + 1))
+      casters(i)._2.foreach(avatar => g.drawImage(scale(avatar, 40, 40), 10, 15 + 40 * (i + 1), null))
     }
     saveFile(g, image, "casters.png")
   }

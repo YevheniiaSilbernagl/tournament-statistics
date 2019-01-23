@@ -228,7 +228,7 @@ class Application @Inject()(
   }
 
   def generateCastersList(list: String) = Action {
-    val file = graphics.casters(list)
+    val file = graphics.casters(list.split("\n").map(name => (name ,discord.getAvatar(name))).toList)
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
