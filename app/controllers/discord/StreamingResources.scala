@@ -27,7 +27,7 @@ class StreamingResources @Inject()(cache: Cache) extends Controller {
 
   val instructions: String =
     s"""
-       |**$subscribeCommand** - request to drop from the tournament
+       |**$subscribeCommand** - request to receive generated streaming resources
      """.stripMargin
 
   def isSubscribeCommand(message: IMessage): Boolean = message.getContent == subscribeCommand
