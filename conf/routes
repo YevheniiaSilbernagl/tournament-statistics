@@ -5,6 +5,7 @@
 # Home page
 GET         /                                               controllers.Application.index
 GET         /points/invitational                            controllers.Application.invitationalPoints
+GET         /points/invitational/breakdown                  controllers.Application.invitationalPointsBreakDown(year: Int, season: Int)
 GET         /points/series                                  controllers.Application.seriesPoints
 GET         /points/communityChampionship                   controllers.Application.communityChampionshipPoints
 GET         /players                                        controllers.Application.playersStats

@@ -97,6 +97,11 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
     }
   }
 
+  def invitationalPoints(year: Int, season: Int): Map[(Int, Int, Int), (String, Map[String, Int], List[String])] = {
+    val points = invitationalPointsResource.toList.filter(k => k._1._2 == year && k._1._3 == season)
+    if (points.isEmpty) Map() else points.toMap
+  }
+
   def invitationalPointsForCurrentSeason: List[(String, Int, List[String])] =
     invitationalPointsForASeason(DateTime.now().year.get(), current_season)
 

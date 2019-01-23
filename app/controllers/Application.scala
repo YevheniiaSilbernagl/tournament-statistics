@@ -322,6 +322,11 @@ class Application @Inject()(
     Ok(views.html.community_championship_points(battlefy.getCurrentTournament, points.filter(p => p._2 != 0)))
   }
 
+  def invitationalPointsBreakDown(year: Int, season: Int) = Action {
+    val points = db.invitationalPoints(year, season).toList.sortBy(p => (p._2._2.values.sum, p._2._1)).reverse
+    Ok(views.html.invitational_points_breakdown(battlefy.getCurrentTournament, points))
+  }
+
   def invitationalPoints: Action[AnyContent] = Action {
     val points = db.invitationalPointsForCurrentSeason
     Ok(views.html.invitational_points(battlefy.getCurrentTournament, points))
