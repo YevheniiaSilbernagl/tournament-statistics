@@ -33,9 +33,9 @@ class Discord @Inject()(config: Configuration,
       .withToken(token)
       .withRecommendedShardCount()
       .build()
-    //    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
-    //    client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
-    //    client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
+        client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
+        client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
+        client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
     client.login()
     client
   }
@@ -45,7 +45,7 @@ class Discord @Inject()(config: Configuration,
   }
 
   def notifyStreamers(operation: IPrivateChannel => IMessage): Unit = {
-    //    bot.foreach(client => resources.notifyStreamers(client, operation))
+        bot.foreach(client => resources.notifyStreamers(client, operation))
   }
 
   def notifyAdmin(operation: IPrivateChannel => IMessage): Unit = {
