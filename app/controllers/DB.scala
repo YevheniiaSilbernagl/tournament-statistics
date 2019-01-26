@@ -79,7 +79,8 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
   private def invitationalPointsResource: Map[(Int, Int, Int), (String, Map[String, Int], List[String])] = {
     val cacheKey = "invitational-points-history"
     cache.get[Map[(Int, Int, Int), (String, Map[String, Int], List[String])]](cacheKey).getOrElse {
-      val result = allGames.filter(_._3.season.isDefined).groupBy(p => (p._1, p._3.date.year().get(), p._3.season.get, p._2))
+      val result = allGames.filter(_._3.isWeekly).filter(_._3.season.isDefined)
+        .groupBy(p => (p._1, p._3.date.year().get(), p._3.season.get, p._2))
         .toList.map(p => (p._1, p._2.groupBy(_._3))).map {
         tournamentSeason =>
           val key = (tournamentSeason._1._1, tournamentSeason._1._2, tournamentSeason._1._3)
