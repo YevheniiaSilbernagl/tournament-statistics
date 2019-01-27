@@ -131,15 +131,16 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
         val longestLine = results.map(_._1).sortBy(_.length).reverse.head
         val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
-        val col1 = results.take(results.size / 3)
-        val col2 = results.slice(col1.size, col1.size + results.size / 3)
+        val batchSize = (results.size.doubleValue() / 3).round.intValue()
+        val col1 = results.take(scala.List(batchSize, 10).min)
+        val col2 = results.slice(col1.size, results.size - scala.List(batchSize, 10).min)
         val col3 = results.drop(col1.size + col2.size)
         val img1 = column(col1, fontSize)
         val img2 = column(col2, fontSize)
         val img3 = column(col3, fontSize)
-        g.drawImage(img1, 150, (image.getHeight - img1.getHeight) / 2, null)
-        g.drawImage(img2, 750, (image.getHeight - img2.getHeight) / 2, null)
-        g.drawImage(img3, 1350, (image.getHeight - img3.getHeight) / 2, null)
+        g.drawImage(img1, 150, (image.getHeight - img1.getHeight) / 2 - 5, null)
+        g.drawImage(img2, 750, scala.List((image.getHeight - img2.getHeight) / 2 - 5, 110).max, null)
+        g.drawImage(img3, 1350, (image.getHeight - img3.getHeight) / 2 - 5, null)
 
         saveFile(g, image, "invitational-points.png")
       case _ => throw new Exception(s"background image not found")
@@ -169,14 +170,15 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
         val longestLine = results.map(_._1).sortBy(_.length).reverse.head
         val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
-        val col1 = results.take(results.size / 3)
-        val col2 = results.slice(col1.size, col1.size + results.size / 3)
+        val batchSize = (results.size.doubleValue() / 3).round.intValue()
+        val col1 = results.take(scala.List(batchSize, 10).min)
+        val col2 = results.slice(col1.size, results.size - scala.List(batchSize, 10).min)
         val col3 = results.drop(col1.size + col2.size)
         val img1 = column(col1, fontSize)
         val img2 = column(col2, fontSize)
         val img3 = column(col3, fontSize)
         g.drawImage(img1, 150, (image.getHeight - img1.getHeight) / 2, null)
-        g.drawImage(img2, 750, (image.getHeight - img2.getHeight) / 2, null)
+        g.drawImage(img2, 750, scala.List((image.getHeight - img2.getHeight) / 2 - 5, 110).max, null)
         g.drawImage(img3, 1350, (image.getHeight - img3.getHeight) / 2, null)
 
         saveFile(g, image, "community-championship-points.png")
