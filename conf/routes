@@ -36,7 +36,7 @@ GET         /players/stats                                  controllers.Applicat
 GET         /message                                        controllers.Application.sendMessage(player: String, message: String)
 GET         /checkin                                        controllers.Application.checkInPage
 POST        /message                                        controllers.Application.sendMessageToAllPlayers(message: String)
-POST        /import/tournament                              controllers.Application.importTournament(battlefyUuid: String)
+POST        /import/tournament                              controllers.Application.importTournament(battlefyUuid: String, season: Int, tournamentType: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                   controllers.Assets.at(path="/public", file)

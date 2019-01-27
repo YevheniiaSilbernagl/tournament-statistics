@@ -238,14 +238,14 @@ class Application @Inject()(
     Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament.battlefy_id)))
   }
 
-  def importTournament(battlefyUuid: String) = Action {
+  def importTournament(battlefyUuid: String, season: Int, tournamentType: String) = Action {
     val BYE = "BYE+0000"
     val tournament = battlefy.getTournamentInfo(battlefyUuid)
     val tournamentName = (tournament \ "name").as[String]
     val tournamentId = (tournament \ "_id").as[String]
     val tournamentStartDate = (tournament \ "startTime").as[String]
     db.grantPrivileges()
-    db.addTournament(tournamentName, tournamentStartDate, tournamentId)
+    db.addTournament(tournamentName, tournamentStartDate, tournamentId, season, tournamentType)
     db.importDeck(Deck.empty)
     db.addParticipant(BYE, tournamentId, Deck.empty.link)
     battlefy.playersInfo(battlefyUuid).foreach { player =>

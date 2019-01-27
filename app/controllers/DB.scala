@@ -697,8 +697,15 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
              GRANT ALL PRIVILEGES ON TABLE tournament TO xpvqdfkohdwdvj;""")
   }
 
-  def addTournament(tournamentName: String, tournamentStartDate: String, tournamentId: String): Unit = {
-    insert("INSERT INTO tournament (name, date, battlefy_uuid) VALUES ('" + tournamentName + "', '" + tournamentStartDate + "', '" + tournamentId + "')")
+  def addTournament(tournamentName: String,
+                    tournamentStartDate: String,
+                    tournamentId: String,
+                    season: Int,
+                    tournamentType: String): Unit = {
+    insert(
+      s"""
+         |INSERT INTO tournament (name, date, battlefy_uuid, season, tournament_type)
+         |VALUES ('$tournamentName', '$tournamentStartDate', '$tournamentId', $season, '$tournamentType')""".stripMargin)
     cache.invalidate()
   }
 
