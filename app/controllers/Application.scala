@@ -244,6 +244,7 @@ class Application @Inject()(
     val tournamentName = (tournament \ "name").as[String]
     val tournamentId = (tournament \ "_id").as[String]
     val tournamentStartDate = (tournament \ "startTime").as[String]
+    db.grantPrivileges()
     db.addTournament(tournamentName, tournamentStartDate, tournamentId)
     db.importDeck(Deck.empty)
     db.addParticipant(BYE, tournamentId, Deck.empty.link)

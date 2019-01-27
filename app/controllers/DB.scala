@@ -685,10 +685,21 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
     })
   }
 
+  def grantPrivileges(): Unit = {
+    insert(
+      s"""   GRANT ALL PRIVILEGES ON TABLE account TO xpvqdfkohdwdvj;
+             GRANT ALL PRIVILEGES ON TABLE card TO xpvqdfkohdwdvj;
+             GRANT ALL PRIVILEGES ON TABLE deck TO xpvqdfkohdwdvj;
+             GRANT ALL PRIVILEGES ON TABLE match TO xpvqdfkohdwdvj;
+             GRANT ALL PRIVILEGES ON TABLE participant TO xpvqdfkohdwdvj;
+             GRANT ALL PRIVILEGES ON TABLE pick TO xpvqdfkohdwdvj;
+             GRANT ALL PRIVILEGES ON TABLE player TO xpvqdfkohdwdvj;
+             GRANT ALL PRIVILEGES ON TABLE tournament TO xpvqdfkohdwdvj;""")
+  }
+
   def addTournament(tournamentName: String, tournamentStartDate: String, tournamentId: String): Unit = {
     insert("INSERT INTO tournament (name, date, battlefy_uuid) VALUES ('" + tournamentName + "', '" + tournamentStartDate + "', '" + tournamentId + "')")
-    cache.delete(invitationalPointsCacheKey(DateTime.now().year().get(), current_season))
-    cache.delete(seriesPointsCacheKey)
+    cache.invalidate()
   }
 
   private def insert(sql: String): Unit = {

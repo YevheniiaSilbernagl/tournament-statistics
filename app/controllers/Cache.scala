@@ -42,4 +42,8 @@ class Cache @Inject()(config: Configuration) extends Controller {
   def delete(key: String): Unit = {
     mc.delete(key)
   }
+
+  def invalidate(): Unit = {
+    mc.flushAll()
+  }
 }
