@@ -37,7 +37,6 @@ jQuery(window).ready(function () {
         globalSearch: false
     });
 
-
     $(document).on('click', "#generateResources", function () {
         generate_resources();
     });
@@ -62,6 +61,51 @@ jQuery(window).ready(function () {
         $('#generate-casters-list').attr("href", "/casters?list=" + encodeURIComponent($("#casters-list").val()));
     });
 
+
+    $(document).on('keyup', "#scene-name", function (e) {
+        update_card_list_url()
+    });
+
+    $(document).on('keyup', "#cards-list", function (e) {
+        update_card_list_url();
+    });
+
+    function update_card_list_url() {
+        var lines = $("#cards-list").val().split("\n");
+        var url = "/download/list/cards?header=" + encodeURIComponent($("#scene-name").val());
+        $.each(lines, function (l) {
+            var line = this.split("(")[0].trim();
+            var cardName = line.substring(line.indexOf(" "), line.length).trim();
+            url += "&cards=" + encodeURIComponent(cardName);
+        });
+        $("#generate-cards-list").attr("href", url);
+    }
+
+    $(document).on('click', "#import-tournament", function (e) {
+        var status = $("#status");
+        var season = $("#season").val();
+        var url = "/import/tournament?battlefyUuid=" + $("#tournament-id").val() + "&season=" + season + "&tournamentType=" + $("#tournament-type").val();
+        status.text("");
+        status.removeClass("alert-danger");
+        status.removeClass("alert-success");
+        if (season < 1 || season > 4) {
+            status.addClass("alert-danger");
+            status.text("Season should have value 1 to 4")
+        } else {
+            $.ajax({
+                type: "POST",
+                url: url,
+                success: function (r) {
+                    status.addClass("alert-success");
+                    status.text(r.responseText)
+                },
+                error: function (r) {
+                    status.addClass("alert-danger");
+                    status.text(r.responseText)
+                }
+            });
+        }
+    });
 
     $(document).on('click', "#generate-stats", function (e) {
         $("#info").each(function () {

@@ -28,7 +28,7 @@ class Discord @Inject()(config: Configuration,
                         cache: Cache,
                         ws: WSClient)
                        (implicit executionContext: ExecutionContext) extends Controller {
-  private val bot: Option[IDiscordClient] = config.getString("discord.bot.token").map { token =>
+  private val bot: Option[IDiscordClient] = None/*config.getString("discord.bot.token").map { token =>
     val client = new ClientBuilder()
       .withToken(token)
       .withRecommendedShardCount()
@@ -38,7 +38,7 @@ class Discord @Inject()(config: Configuration,
         client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
     client.login()
     client
-  }
+  }*/
 
   actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = 1.minute) {
     bot.foreach(discordBot => dropMe.notifyTO(discordBot))

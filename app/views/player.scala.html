@@ -9,10 +9,11 @@
         isRookie: Boolean,
         invitationalPoints: (Int, Map[String, Int]),
         seriesPoints: (Int, Int),
-        communityChampionshipPoints: (Int, Map[String, Int])
+        communityChampionshipPoints: (Int, Map[String, Int]),
+        authorized: Boolean
 )
 
-@main(tournament, s"Stats for $name") {
+@main(tournament, s"Stats for $name", authorized) {
     <div class="container content">
         <h1>@{name.split("\\+")(0)}
             @if(isRookie) {

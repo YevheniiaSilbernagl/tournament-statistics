@@ -340,6 +340,20 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
     }
   }
 
+  def existsTournament(battlefyUuid: String): Boolean = {
+    val conn: Connection = database.getConnection()
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery(s"SELECT count(*) as num FROM tournament WHERE battlefy_uuid='$battlefyUuid'")
+      if (rs.next())
+        rs.getInt("num") > 0
+      else
+        false
+    } finally {
+      conn.close()
+    }
+  }
+
   def opponentPreviousInteraction(playerName: String, opponent: String): List[(String, String, String)] = {
     val query =
       s"""

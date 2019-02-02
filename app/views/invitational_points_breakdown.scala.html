@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, points: List[((Int, Int, Int), (String, Map[String, Int], List[String]))])
+@(tournament: Tournament, points: List[((Int, Int, Int), (String, Map[String, Int], List[String]))], authorized: Boolean)
 
-@main(tournament, "Invitational points") {
+@main(tournament, "Invitational points", authorized) {
     <table class="table table-striped table-hover" id="invitationalPointsTable">
         <thead>
             <tr>
@@ -14,11 +14,20 @@
         <tbody>
         @for(i <- points.indices) {
             <tr>
-                <td>@{i + 1}</td>
-                <td><a href="@routes.Application.playerStats(None, Option(points(i)._2._1))">@{points(i)._2._1.split("\\+")(0)}</a>
+                <td>@{
+                    i + 1
+                }</td>
+                <td><a href="@routes.Application.playerStats(None, Option(points(i)._2._1))">@{
+                    points(i)._2._1.split("\\+")(0)
+                }</a>
                 </td>
-                <td>@{points(i)._2._2.values.sum}</td>
-                <td><pre>@{points(i)._2._2.map(p => s"${p._2} - ${p._1}").mkString("\n")}</pre></td>
+                <td>@{
+                    points(i)._2._2.values.sum
+                }</td>
+                <td><pre>@{
+                    points(i)._2._2.map(p => s"${p._2} - ${p._1}").mkString("\n")
+                }</pre>
+                </td>
             </tr>
         }
         </tbody>

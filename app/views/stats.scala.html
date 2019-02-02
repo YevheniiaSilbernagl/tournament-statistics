@@ -1,14 +1,18 @@
 @import types.Tournament
-@(tournament: Tournament, players: List[(Int, String)])
+@(tournament: Tournament, players: List[(Int, String)], authorized: Boolean)
 
-@main(tournament, "Stats") {
+@main(tournament, "Stats", authorized) {
     <table id="players" class="table table-striped table-hover table-responsive-sm">
-        @for(player <- players) {
-            <tr id="@{player._1}">
-                <td>
-                <a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{player._2.split("\\+")(0)}</a>
-                </td>
-            </tr>
-        }
+    @for(player <- players) {
+        <tr id="@{
+            player._1
+        }">
+            <td>
+                <a href="@routes.Application.playerStats(Option(player._1), Option(player._2))">@{
+                    player._2.split("\\+")(0)
+                }</a>
+            </td>
+        </tr>
+    }
     </table>
 }

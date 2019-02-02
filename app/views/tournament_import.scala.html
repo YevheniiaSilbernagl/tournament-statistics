@@ -1,0 +1,39 @@
+@import types.Tournament
+@(tournament: Tournament)
+
+@main(tournament, "Generate custom list of cards", authorized = true) {
+    <div class="container content">
+        <form>
+            <div class="form-group">
+                <textarea id="tournament-id" placeholder="Battlefy uuid" rows="1" cols="50"></textarea><br>
+            </div>
+            <div class="form-group">
+                <label>
+                    Season:
+                    <input type="number" id="season" min="1" max="4" value="1">
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    Event type:
+                    <select id="tournament-type">
+                        <option>eye_of_winter</option>
+                        <option>invitational</option>
+                        <option>last_chance_qualifier</option>
+                        <option>midseason_major</option>
+                        <option>team_league</option>
+                        <option selected>weekly</option>
+                        <option>world_championship</option>
+                        <option>worlds_wildcard</option>
+                    </select>
+                </label></div>
+            <div class="form-group">
+                <a class="btn btn-primary" id="import-tournament" href="#">Import</a>
+            </div>
+            <div class="row">
+                <div id="status"></div>
+            </div>
+        </form>
+    </div>
+
+}

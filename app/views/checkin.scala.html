@@ -1,7 +1,7 @@
 @import types.Tournament
 @(tournament: Tournament, players: List[(String, Option[String], Option[String], String)])
 
-@main(tournament, "Check In") {
+@main(tournament, "Check In", authorized = true) {
     <div class="container content">
         <div style="display: none">
             @for(player <- players){

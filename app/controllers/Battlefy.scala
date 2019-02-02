@@ -69,21 +69,20 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
     }), Duration.apply(30, TimeUnit.SECONDS))
 
   def getTournament(battlefy_uuid: String): Tournament = {
-    val t = getTournamentInfo(battlefy_uuid)
+    val t = getTournamentInfo(battlefy_uuid).get
     Tournament(t.value("_id").as[String], t.value("name").as[String], DateTime.parse(t.value("startTime").as[String]), None, None)
   }
 
-  def getTournamentInfo(battlefy_uuid: String): JsObject = {
+  def getTournamentInfo(battlefy_uuid: String): Option[JsObject] = {
     Await.result(ws.url(all_tournaments()).get().map(response => {
       Json.parse(response.body).asInstanceOf[JsArray].value.toList
         .map(_.as[JsObject]).find(t => t.value("_id").as[String] == battlefy_uuid)
-        .get
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
 
   def currentStageId: Option[String] = currentStageInfo.map(_.asInstanceOf[JsObject].value("_id").as[String])
 
-  def currentStageInfo: Option[JsValue] = getTournamentInfo(getCurrentTournament.battlefy_id).value("stages").asInstanceOf[JsArray]
+  def currentStageInfo: Option[JsValue] = getTournamentInfo(getCurrentTournament.battlefy_id).get.value("stages").asInstanceOf[JsArray]
     .value.toList.sortBy(o => o.asInstanceOf[JsObject].value("startTime").as[String]).reverse.headOption
 
   def stageInfo(stage: String): JsArray = Await.result(ws.url(stage_info(stage)).get().map(response => {

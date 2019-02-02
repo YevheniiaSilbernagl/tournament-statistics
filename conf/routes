@@ -4,6 +4,8 @@
 
 # Home page
 GET         /                                               controllers.Application.index
+GET         /login                                          controllers.Application.login
+GET         /logout                                         controllers.Application.logout
 GET         /points/invitational                            controllers.Application.invitationalPoints
 GET         /points/invitational/breakdown                  controllers.Application.invitationalPointsBreakDown(year: Int, season: Int)
 GET         /points/series                                  controllers.Application.seriesPoints
@@ -29,12 +31,14 @@ GET         /download/tourney-right                         controllers.Applicat
 GET         /download/streaming/panel                       controllers.Application.sidePanel(player1Name: String, player1Score: Int, player1DeckName: String, player2Name: String, player2Score: Int, player2DeckName: String, mainCam: Option[String])
 GET         /streaming                                      controllers.Application.streaming
 GET         /castersPanel                                   controllers.Application.casters
+GET         /customCards                                    controllers.Application.customListOfCards
 GET         /opponents/info                                 controllers.Application.getOpponentsInfo(opponents: String)
 GET         /casters                                        controllers.Application.generateCastersList(list: String)
 GET         /stats                                          controllers.Application.generateStats
 GET         /players/stats                                  controllers.Application.generateStatsForPlayers(players: String)
 GET         /message                                        controllers.Application.sendMessage(player: String, message: String)
 GET         /checkin                                        controllers.Application.checkInPage
+GET         /admin/import/tournament                        controllers.Application.tournamentImport
 POST        /message                                        controllers.Application.sendMessageToAllPlayers(message: String)
 POST        /import/tournament                              controllers.Application.importTournament(battlefyUuid: String, season: Int, tournamentType: String)
 
