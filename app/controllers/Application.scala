@@ -257,11 +257,11 @@ class Application @Inject()(
 
   def checkInPage = Action {
     val tournament = battlefy.getCurrentTournament
-    Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament.battlefy_id)))
-  }
-  def checkInTestPage = Action {
-    val tournament = battlefy.getCurrentTournament
-    Ok(views.html.checkin_test(tournament, battlefy.listOfPlayers(tournament.battlefy_id)))
+    val authToken = (config.getString("battlefy.client.id"), config.getString("battlefy.auth0.client")) match {
+      case (Some(client_id), Some(auth0Client)) => battlefy.getAuthToken(client_id, auth0Client)
+      case _ => None
+    }
+    Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament.battlefy_id), authToken))
   }
 
   def importTournament(battlefyUuid: String, season: Int, tournamentType: String) = SecureBackEnd {

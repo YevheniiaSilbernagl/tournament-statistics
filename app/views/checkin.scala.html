@@ -1,5 +1,5 @@
 @import types.Tournament
-@(tournament: Tournament, players: List[(String, Option[String], Option[String], String)])
+@(tournament: Tournament, players: List[(String, Option[String], Option[String], String)], authToken: Option[String])
 
 @main(tournament, "Check In", authorized = true) {
     <div class="container content">
@@ -13,6 +13,9 @@
                 <td>
                     <textarea id="ids" placeholder="Battlefy user IDs" rows="3"cols="50" spellcheck="false"></textarea><br>
                     <textarea id="token" placeholder="Battlefy Authorisation token" rows="1"cols="50" spellcheck="false"></textarea><br>
+                    @if(authToken.isDefined){
+                        <div>@authToken.get</div>
+                    }
                     <a class="btn btn-primary" id="check-in" href="#" download>Check in all</a>
                 </td>
             </tr>
