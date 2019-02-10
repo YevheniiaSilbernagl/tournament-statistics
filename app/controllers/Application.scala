@@ -259,6 +259,10 @@ class Application @Inject()(
     val tournament = battlefy.getCurrentTournament
     Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament.battlefy_id)))
   }
+  def checkInTestPage = Action {
+    val tournament = battlefy.getCurrentTournament
+    Ok(views.html.checkin_test(tournament, battlefy.listOfPlayers(tournament.battlefy_id)))
+  }
 
   def importTournament(battlefyUuid: String, season: Int, tournamentType: String) = SecureBackEnd {
     if (!db.existsTournament(battlefyUuid)) {

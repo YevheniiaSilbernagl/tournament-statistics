@@ -1,0 +1,23 @@
+@import types.Tournament
+@(tournament: Tournament, players: List[(String, Option[String], Option[String], String)])
+
+@main(tournament, "Check In", authorized = true) {
+    <div class="container content">
+        <div style="display: none">
+            @for(player <- players){
+                <div id="info-@{player._4}">@{player._1}</div>
+            }
+        </div>
+        <table id="@{tournament.battlefy_id}" class="info">
+            <tr>
+                <td>
+                    <textarea id="ids" placeholder="Battlefy user IDs" rows="3"cols="50" spellcheck="false"></textarea><br>
+                    <textarea id="token" placeholder="Battlefy Authorisation token" rows="1"cols="50" spellcheck="false"></textarea><br>
+                    <a class="btn btn-primary" id="check-in" href="#" download>Check in all</a>
+                </td>
+            </tr>
+        </table>
+        <iframe id="battlefy" src="https://battlefy.com" height="600" width="800"></iframe>
+    </div>
+
+}

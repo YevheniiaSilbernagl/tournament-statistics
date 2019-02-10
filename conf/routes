@@ -38,6 +38,7 @@ GET         /stats                                          controllers.Applicat
 GET         /players/stats                                  controllers.Application.generateStatsForPlayers(players: String)
 GET         /message                                        controllers.Application.sendMessage(player: String, message: String)
 GET         /checkin                                        controllers.Application.checkInPage
+GET         /checkin_test                                   controllers.Application.checkInTestPage
 GET         /admin/import/tournament                        controllers.Application.tournamentImport
 POST        /message                                        controllers.Application.sendMessageToAllPlayers(message: String)
 POST        /import/tournament                              controllers.Application.importTournament(battlefyUuid: String, season: Int, tournamentType: String)
