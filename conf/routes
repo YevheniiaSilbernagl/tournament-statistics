@@ -41,6 +41,7 @@ GET         /checkin                                        controllers.Applicat
 GET         /admin/import/tournament                        controllers.Application.tournamentImport
 POST        /message                                        controllers.Application.sendMessageToAllPlayers(message: String)
 POST        /import/tournament                              controllers.Application.importTournament(battlefyUuid: String, season: Int, tournamentType: String)
+POST        /invalidate/cache                               controllers.Application.invalidateCache
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                   controllers.Assets.at(path="/public", file)

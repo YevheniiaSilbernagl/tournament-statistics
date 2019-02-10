@@ -21,7 +21,8 @@ class Application @Inject()(
                              graphics: Graphics,
                              docs: Docs,
                              config: Configuration,
-                             discord: Discord
+                             discord: Discord,
+                             cache: Cache
                            ) extends Controller {
   private val SecureView = new SecureView(db)
   private val SecureBackEnd = new SecureBackEnd(db)
@@ -29,6 +30,11 @@ class Application @Inject()(
   def login = Action { request: Request[AnyContent] =>
     if (SecureBackEnd.isAuthorized(request)) Redirect("/")
     else Unauthorized(views.html.guest_view()).withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized")
+  }
+
+  def invalidateCache: Action[AnyContent] = Action {
+    cache.invalidate()
+    Ok("")
   }
 
   def logout = Action(Unauthorized(views.html.guest_view()).withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized"))
@@ -269,16 +275,17 @@ class Application @Inject()(
         db.addTournament(tournamentName, tournamentStartDate, tournamentId, season, tournamentType)
         db.importDeck(Deck.empty)
         db.addParticipant(BYE, tournamentId, Deck.empty.link)
-        battlefy.playersInfo(battlefyUuid).foreach { player =>
+        battlefy.playersInfo(battlefyUuid).par.foreach { player =>
           val eternalName = (player \ "name").as[String]
           val customFields = (player \ "customFields").as[JsArray].value.toList.map(field => (field \ "value").as[String])
           val discordName = customFields.find(_.contains("#")).getOrElse(eternalName)
           val battlefyNames = (player \ "players").as[JsArray].value.toList.map(field => (field \ "username").as[String])
           val deckLinkO = customFields.find(_.contains("eternalwarcry"))
           val deck = deckLinkO.map(eternalWarcry.getDeck).getOrElse(Deck.empty)
+          db.importDeck(deck)
           db.addPlayer(tournamentId, eternalName, discordName, battlefyNames, deck.link)
         }
-        (tournament \ "stages").as[JsArray].value.toList.foreach { stage =>
+        (tournament \ "stages").as[JsArray].value.toList.par.foreach { stage =>
           val s_id = (stage \ "_id").as[String]
           val stageType = (stage \ "bracket" \ "type").as[String]
           battlefy.stageInfo(s_id).value.toList.foreach { game =>
@@ -294,7 +301,7 @@ class Application @Inject()(
         }
         Ok(s"Tournament $battlefyUuid has been successfully imported")
       }
-    } else Ok(s"Tournament $battlefyUuid exists")
+    } else Conflict(s"Tournament $battlefyUuid exists")
   }
 
   def playerLifetimeWinRate(playerName: String) = SecureBackEnd {

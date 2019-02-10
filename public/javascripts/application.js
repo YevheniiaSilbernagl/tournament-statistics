@@ -97,7 +97,7 @@ jQuery(window).ready(function () {
                 url: url,
                 success: function (r) {
                     status.addClass("alert-success");
-                    status.text(r.responseText)
+                    status.text(r)
                 },
                 error: function (r) {
                     status.addClass("alert-danger");

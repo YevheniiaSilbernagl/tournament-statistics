@@ -49,7 +49,7 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
            |FROM player p
            |  JOIN participant part ON p.id = part.player_id
            |  JOIN tournament t ON part.tournament_id = t.id
-           |  JOIN deck d ON part.deck_id = d.id
+           |  LEFT JOIN deck d ON part.deck_id = d.id
            |  JOIN match m ON (part.id = m.participant_a_id OR part.id = m.participant_b_id)
            |ORDER BY tournament_date""".stripMargin)
       while (rs.next()) {
@@ -79,7 +79,7 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
   private def invitationalPointsResource: Map[(Int, Int, Int), (String, Map[String, Int], List[String])] = {
     val cacheKey = "invitational-points-history"
     cache.get[Map[(Int, Int, Int), (String, Map[String, Int], List[String])]](cacheKey).getOrElse {
-      val result = allGames.filter(_._3.isWeekly).filter(_._3.season.isDefined)
+      val result = allGames.par.filter(_._3.isWeekly).filter(_._3.season.isDefined)
         .groupBy(p => (p._1, p._3.date.year().get(), p._3.season.get, p._2))
         .toList.map(p => (p._1, p._2.groupBy(_._3))).map {
         tournamentSeason =>
