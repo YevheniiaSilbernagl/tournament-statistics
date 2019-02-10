@@ -2,7 +2,7 @@
 @(tournament: Tournament, players: List[(String, Option[String], Option[String], String)], authToken: Option[String])
 
 @main(tournament, "Check In", authorized = true) {
-    <div class="container content">
+    <span class="container content">
         <div style="display: none">
             @for(player <- players){
                 <div id="info-@{player._4}">@{player._1}</div>
@@ -14,7 +14,8 @@
                     <textarea id="ids" placeholder="Battlefy user IDs" rows="3"cols="50" spellcheck="false"></textarea><br>
                     <textarea id="token" placeholder="Battlefy Authorisation token" rows="1"cols="50" spellcheck="false"></textarea><br>
                     @if(authToken.isDefined){
-                        <div>@authToken.get</div>
+                        <div>Try this one: </div><br>
+                        <span style="width:400px; word-wrap:break-word; display:inline-block;">@authToken.get</span>
                     }
                     <a class="btn btn-primary" id="check-in" href="#" download>Check in all</a>
                 </td>
