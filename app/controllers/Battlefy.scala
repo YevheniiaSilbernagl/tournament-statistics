@@ -25,7 +25,7 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
 
   def all_tournaments: () => String = () => "https://dtmwra1jsgyb0.cloudfront.net/organizations/5a0e00fdc4cd48033c0083b7/tournaments"
 
-  def auth(client_id: String, auth0Client:String) = s"https://auth0.battlefy.com/authorize?client_id=$client_id&response_type=token&connection=Username-Password-Authentication&auth0Client=$auth0Client"
+  def auth(client_id: String) = s"https://auth0.battlefy.com/authorize?client_id=$client_id&response_type=token"
 
   def stage_info: String => String = (stage: String) => s"https://dtmwra1jsgyb0.cloudfront.net/stages/$stage/matches"
 
@@ -105,8 +105,8 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
 
-  def getAuthToken(client_id: String, auth0Client:String): Option[String] = {
-    Await.result(ws.url(auth(client_id, auth0Client)).get().map(response => {
+  def getAuthToken(client_id: String): Option[String] = {
+    Await.result(ws.url(auth(client_id)).get().map(response => {
       try {
         val body = response.body
         val str = body.split("var authParams = ")(1).split("\n")(0)

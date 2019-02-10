@@ -255,12 +255,9 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
-  def checkInPage = Action {
+  def checkInPage: Action[AnyContent] = Action {
     val tournament = battlefy.getCurrentTournament
-    val authToken = (config.getString("battlefy.client.id"), config.getString("battlefy.auth0.client")) match {
-      case (Some(client_id), Some(auth0Client)) => battlefy.getAuthToken(client_id, auth0Client)
-      case _ => None
-    }
+    val authToken = config.getString("battlefy.client.id").flatMap(battlefy.getAuthToken)
     Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament.battlefy_id), authToken))
   }
 
