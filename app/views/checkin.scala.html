@@ -14,7 +14,7 @@
                     <textarea id="ids" placeholder="Battlefy user IDs" rows="3"cols="50" spellcheck="false"></textarea><br>
                     <textarea id="token" placeholder="Battlefy Authorisation token" rows="1"cols="50" spellcheck="false"></textarea><br>
                     @if(authToken.isDefined){
-                        <div>Try this one: </div><br>
+                        <div>Try this token: </div><br>
                         <span style="width:400px; word-wrap:break-word; display:inline-block;">@authToken.get</span>
                     }
                     <a class="btn btn-primary" id="check-in" href="#" download>Check in all</a>
