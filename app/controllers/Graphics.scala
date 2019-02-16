@@ -405,6 +405,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
         if (!hadToShift) {
           //stats block
+          column = 2
           val margin_value = 220
           val margin_name = 40
           val margin_block_name1 = 100
