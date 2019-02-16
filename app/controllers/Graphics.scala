@@ -115,12 +115,12 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       val star = fs.file("/images/winner_star.png").map(ImageIO.read)
       for (i <- players.indices) {
+        if (currentTournamentPlayers.contains(players(i)._1)) {
+          renderedGraphics.setColor(new Color(187, 231, 157))
+        } else {
+          renderedGraphics.setColor(defaultColor)
+        }
         if (players(i)._3.nonEmpty) {
-          if (currentTournamentPlayers.contains(players(i)._1)) {
-            renderedGraphics.setColor(new Color(187, 231, 157))
-          } else {
-            renderedGraphics.setColor(defaultColor)
-          }
           star.foreach(s => renderedGraphics.drawImage(scale(s, 50, 50), 0, (i + 1) * 80 - 50, null))
           renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 55, (i + 1) * 80)
         } else {
