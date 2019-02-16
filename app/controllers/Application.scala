@@ -205,14 +205,14 @@ class Application @Inject()(
     val points = db.invitationalPointsForCurrentSeason
     val winners = points.filter(_._3.nonEmpty)
     val top = points.filter(_._3.isEmpty).sortBy(_._2).reverse.take(24)
+    val currentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id).map(_._1)
+
     val file = graphics.invitationalPoints(winners.sortBy(_._1) ++ (top ++ points
       .filterNot(p => winners.contains(p) || top.contains(p))
       .filter(p => p._2 == top.last._2))
-      .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)))
-
+      .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)), currentPlayers)
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))
-
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
@@ -221,7 +221,9 @@ class Application @Inject()(
     val points = db.communityChampionshipPointsResults
     val qualified = points.sortBy(_._2).reverse.take(16)
     val alsoQalified = points.filterNot(p => qualified.contains(p)).filter(_._2 == qualified.last._2)
-    val file = graphics.communityChampionshipPoints((qualified ++ alsoQalified).sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)))
+    val currentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id).map(_._1)
+    val file = graphics.communityChampionshipPoints((qualified ++ alsoQalified)
+      .sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)), currentPlayers)
 
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))

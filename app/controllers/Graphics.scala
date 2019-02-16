@@ -19,6 +19,9 @@ import play.api.mvc.Controller
 import types.{Card, Deck}
 
 class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database: DB) extends Controller {
+  private val defaultColor = new Color(255, 255, 255)
+  private val defaultYellow = new Color(244, 206, 109)
+
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
     val ge = GraphicsEnvironment.getLocalGraphicsEnvironment
@@ -104,7 +107,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     }
   }
 
-  def invitationalPoints(results: scala.List[(String, Int, scala.List[String])]): File = {
+  def invitationalPoints(results: scala.List[(String, Int, scala.List[String])], currentTournamentPlayers: scala.List[String]): File = {
 
     def column(players: scala.List[(String, Int, scala.List[String])], fontSize: Float): BufferedImage = {
       val dest = new BufferedImage(600, 80 * players.size + 50, BufferedImage.TYPE_INT_ARGB)
@@ -113,6 +116,11 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       val star = fs.file("/images/winner_star.png").map(ImageIO.read)
       for (i <- players.indices) {
         if (players(i)._3.nonEmpty) {
+          if (currentTournamentPlayers.contains(players(i)._1)) {
+            renderedGraphics.setColor(new Color(187, 231, 157))
+          } else {
+            renderedGraphics.setColor(defaultColor)
+          }
           star.foreach(s => renderedGraphics.drawImage(scale(s, 50, 50), 0, (i + 1) * 80 - 50, null))
           renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 55, (i + 1) * 80)
         } else {
@@ -148,7 +156,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   }
 
 
-  def communityChampionshipPoints(results: scala.List[(String, Int)]): File = {
+  def communityChampionshipPoints(results: scala.List[(String, Int)], currentTournamentPlayers: scala.List[String]): File = {
 
     def column(players: scala.List[(String, Int)], fontSize: Float): BufferedImage = {
       val dest = new BufferedImage(600, 80 * players.size + 50, BufferedImage.TYPE_INT_ARGB)
@@ -156,6 +164,11 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       val star = fs.file("/images/winner_star.png").map(ImageIO.read)
       for (i <- players.indices) {
+        if (currentTournamentPlayers.contains(players(i)._1)) {
+          renderedGraphics.setColor(new Color(187, 231, 157))
+        } else {
+          renderedGraphics.setColor(defaultColor)
+        }
         renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * 80)
       }
       dest
@@ -204,7 +217,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           val width = dest.getWidth / cardList.size
           for (i <- cardList.indices) {
             val image = scale(eternalWarcry.cardFullImage(cardList(i)._1), cardSize._1, cardSize._2)
-            renderedGraphics.setColor(new Color(244, 206, 109))
+            renderedGraphics.setColor(defaultYellow)
             val number = cardList(i)._2.toString
             val wordWidth = renderedGraphics.getFontMetrics.stringWidth(number)
             renderedGraphics.drawString(number, (width * i + 20) + (cardSize._1 / 2) - wordWidth / 2, 18)
@@ -434,7 +447,6 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   def casters(casters: scala.List[(java.lang.String, Option[BufferedImage])]): File = {
     val imageWidth = 278
     val darkerColour = new Color(15, 26, 56)
-    val defaultColor = new Color(255, 255, 255)
     val image = new BufferedImage(imageWidth, 220, BufferedImage.TYPE_INT_ARGB)
     val g = graphicsSettings(image.createGraphics())
 
