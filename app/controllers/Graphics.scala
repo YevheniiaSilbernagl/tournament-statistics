@@ -517,29 +517,29 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     g.drawString(player2._2.toString, 192, matchScoreY + 162 + additionalDistanceFromInfoBox)
 
 
-    val startY = 550
+    val startY = 550 + additionalDistanceFromInfoBox
     val nameFont = scala.List(adjustFontSize(g, player1._1, maxTextWidth, 14f, 48f), adjustFontSize(g, player2._1, maxTextWidth, 14f, 48f)).min
     val deckNameFont = scala.List(adjustFontSize(g, player1._3, maxTextWidth, 14f, 48f), adjustFontSize(g, player2._3, maxTextWidth, 14f, 48f)).min
     //player1
     FONT.foreach(f => g.setFont(f.deriveFont(nameFont)))
-    g.drawString(player1._1, center(g, player1._1), startY + additionalDistanceFromInfoBox)
+    g.drawString(player1._1, center(g, player1._1), startY)
     val p1nHeights = g.getFontMetrics.getHeight
     FONT.foreach(f => g.setFont(f.deriveFont(deckNameFont)))
-    g.drawString(player1._3, center(g, player1._3), startY + p1nHeights + 5 + additionalDistanceFromInfoBox)
+    g.drawString(player1._3, center(g, player1._3), startY + (p1nHeights + g.getFontMetrics.getHeight) / 2 + 5)
     val p1dnHeights = g.getFontMetrics.getHeight
 
     //VS
     FONT.foreach(f => g.setFont(f.deriveFont(128f)))
-    val vsYPosition = startY + p1nHeights + p1dnHeights + 70
+    val vsYPosition = startY + p1nHeights + p1dnHeights + 75
     val vs = "VS"
-    g.drawString(vs, center(g, vs), vsYPosition + additionalDistanceFromInfoBox)
+    g.drawString(vs, center(g, vs), vsYPosition)
 
     //player2
     FONT.foreach(f => g.setFont(f.deriveFont(nameFont)))
-    g.drawString(player2._1, center(g, player2._1), vsYPosition + 60 + additionalDistanceFromInfoBox)
+    g.drawString(player2._1, center(g, player2._1), vsYPosition + 60)
     val p2nHeights = g.getFontMetrics.getHeight
     FONT.foreach(f => g.setFont(f.deriveFont(deckNameFont)))
-    g.drawString(player2._3, center(g, player2._3), vsYPosition + p2nHeights + 65 + additionalDistanceFromInfoBox)
+    g.drawString(player2._3, center(g, player2._3), vsYPosition + (p2nHeights + g.getFontMetrics.getHeight) / 2 + 65)
     val lineY = vsYPosition + p2nHeights + 85
     saveFile(g, image, "left-side-panel.png")
   }
