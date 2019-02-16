@@ -25,7 +25,7 @@ class DropMe @Inject()(cache: Cache) extends Controller {
 
   val dropMeCommand = "!dropme"
 
-  val allowedWords = List("drop", "dropping")
+  val allowedWords = List("drop", "dropping", "!drop")
 
   val subscribeCommand = s"$dropMeCommand subscribe"
   val dropMeConfirmCommand = s"$dropMeCommand confirm"
