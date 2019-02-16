@@ -12,6 +12,7 @@ import play.api.mvc.Controller
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
 
 class Cache @Inject()(config: Configuration) extends Controller {
 
@@ -33,7 +34,12 @@ class Cache @Inject()(config: Configuration) extends Controller {
     }
 
   def get[T](key: String): Option[T] =
-    Option(mc.get[T](key))
+    try {
+      Option(mc.get[T](key))
+    }
+    catch {
+      case NonFatal(e) => None
+    }
 
   def put(key: String, value: AnyRef, duration: FiniteDuration): Unit = {
     mc.set(key, duration.toSeconds.intValue(), value)
