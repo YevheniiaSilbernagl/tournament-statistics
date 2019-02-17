@@ -204,10 +204,10 @@ class Application @Inject()(
   def invitationalPointsScene: Action[AnyContent] = SecureBackEnd {
     val points = db.invitationalPointsForCurrentSeason
     val winners = points.filter(_._3.nonEmpty)
-    val top = points.filter(_._3.isEmpty).sortBy(_._2).reverse.take(24)
+    val top = points.filter(_._3.isEmpty).sortBy(_._2).reverse.take(32 - winners.size)
     val currentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id).map(_._1)
 
-    val file = graphics.invitationalPoints(winners.sortBy(_._1) ++ (top ++ points
+    val file = graphics.invitationalPoints(winners.sortBy(_._1.toLowerCase) ++ (top ++ points
       .filterNot(p => winners.contains(p) || top.contains(p))
       .filter(p => p._2 == top.last._2))
       .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)), currentPlayers)

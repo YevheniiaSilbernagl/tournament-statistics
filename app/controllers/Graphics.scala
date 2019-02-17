@@ -62,6 +62,16 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     preferredFontSize
   }
 
+  def adjustFontSize(g: Graphics2D, maxHeight: Int, defaultFontSize: Float, maximumFontSize: Float, additionalPadding: Int): Float = {
+    FONT.foreach(f => g.setFont(f.deriveFont(defaultFontSize)))
+    val preferredFontSize = (for (s <- maximumFontSize to 1 by -1) yield (s, {
+      FONT.foreach(f => g.setFont(f.deriveFont(s.toFloat)))
+      g.getFontMetrics.getHeight + additionalPadding
+    })).find(_._2 <= maxHeight).map(_._1.toFloat).getOrElse(defaultFontSize)
+
+    preferredFontSize
+  }
+
   def saveFile(g: Graphics2D, image: BufferedImage, fileName: String): File = {
     g.dispose()
 
@@ -108,9 +118,14 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   }
 
   def invitationalPoints(results: scala.List[(String, Int, scala.List[String])], currentTournamentPlayers: scala.List[String]): File = {
+    val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
+    val tmpGraphics = graphicsSettings(tmp.createGraphics())
+    val additionalLinePadding = 6
 
     def column(players: scala.List[(String, Int, scala.List[String])], fontSize: Float): BufferedImage = {
-      val dest = new BufferedImage(600, 80 * players.size + 50, BufferedImage.TYPE_INT_ARGB)
+      FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
+      val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
+      val dest = new BufferedImage(600, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       val star = fs.file("/images/winner_star.png").map(ImageIO.read)
@@ -121,10 +136,10 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           renderedGraphics.setColor(defaultColor)
         }
         if (players(i)._3.nonEmpty) {
-          star.foreach(s => renderedGraphics.drawImage(scale(s, 50, 50), 0, (i + 1) * 80 - 50, null))
-          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 55, (i + 1) * 80)
+          star.foreach(s => renderedGraphics.drawImage(scale(s, 50, 50), 0, (i + 1) * lineHeights - 50, null))
+          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 55, (i + 1) * lineHeights)
         } else {
-          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * 80)
+          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * lineHeights)
         }
       }
       dest
@@ -137,18 +152,26 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         FONT.foreach(f => g.setFont(f.deriveFont(110f)))
         g.drawString(s"The Desk - Invitational points", 220, 105)
 
+        val col1Height = 770.0
+        val colNextHeight = 920.0
         val longestLine = results.map(_._1).sortBy(_.length).reverse.head
-        val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
         val batchSize = (results.size.doubleValue() / 3).round.intValue()
-        val col1 = results.take(scala.List(batchSize, 10).min)
-        val col2 = results.slice(col1.size, results.size - scala.List(batchSize, 10).min)
-        val col3 = results.drop(col1.size + col2.size)
+        val fontSize = scala.List(adjustFontSize(g, longestLine, 600, 34f, 60f), adjustFontSize(g, (col1Height / batchSize).intValue(), 34f, 60f, additionalLinePadding)).min
+        FONT.foreach(f => g.setFont(f.deriveFont(fontSize)))
+        val col1 = results.take(batchSize)
+        val col3 = results.slice(results.size - (results.size - col1.size) / 2, results.size)
+        val col2 = results.slice(col1.size, results.size - col3.size)
         val img1 = column(col1, fontSize)
         val img2 = column(col2, fontSize)
         val img3 = column(col3, fontSize)
-        g.drawImage(img1, 150, (image.getHeight - img1.getHeight) / 2 - 5, null)
-        g.drawImage(img2, 750, scala.List((image.getHeight - img2.getHeight) / 2 - 5, 110).max, null)
-        g.drawImage(img3, 1350, (image.getHeight - img3.getHeight) / 2 - 5, null)
+
+        val paddingCol1 = {
+          val padding = 65
+          65 + (image.getHeight - padding - img1.getHeight) / 2 - padding
+        }
+        g.drawImage(img1, 150, paddingCol1, null)
+        g.drawImage(img2, 750, paddingCol1, null)
+        g.drawImage(img3, 1350, paddingCol1, null)
 
         saveFile(g, image, "invitational-points.png")
       case _ => throw new Exception(s"background image not found")
