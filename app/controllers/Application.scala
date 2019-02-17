@@ -8,7 +8,7 @@ import javax.inject.Inject
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
-import types.Deck
+import types.{Deck, Score}
 
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
@@ -221,6 +221,32 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
+  def invitationalPointsSceneOnlineUpdate: Action[AnyContent] = SecureBackEnd {
+    val battlefyUuid = battlefy.getCurrentTournament.battlefy_id
+    val currentGames = if (db.existsTournament(battlefyUuid)) List.empty else battlefy.games(battlefyUuid)
+    val points = db.invitationalPointsForCurrentSeason.map { player =>
+      val (name, score, wins) = player
+      val games = currentGames.filter(g => g._1 == name || g._2 == name)
+      (name, score + games.map(g => if (g._1 == name) g._3 > g._4 else g._3 < g._4).count(_ == true), wins)
+    }
+    val winners = points.filter(_._3.nonEmpty)
+    val qualified = points.filter(_._3.isEmpty).sortBy(_._2).reverse
+    val top = qualified.take(32 - winners.size)
+    val currentPlayers = battlefy.listOfPlayers(battlefyUuid).map(_._1)
+    val havePotential = qualified.drop(winners.size).drop(top.size)
+      .filter(_._2 >= (top.map(_._2).min - 2)).filter(p => currentPlayers.contains(p._1))
+
+    val file = graphics.invitationalPoints(winners.sortBy(_._1.toLowerCase) ++ (top ++ points
+      .filterNot(p => winners.contains(p) || top.contains(p))
+      .filter(p => p._2 == top.last._2))
+      .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)),
+      currentPlayers, havePotential.sortBy(_._1.toLowerCase))
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
   def communityChampionshipPointsScene: Action[AnyContent] = SecureBackEnd {
     val points = db.communityChampionshipPointsResults
     val qualified = points.sortBy(_._2).reverse.take(16)
@@ -230,6 +256,43 @@ class Application @Inject()(
     val havePotential = points.drop(allQualified.size)
       .filter(_._2 >= (allQualified.map(_._2).min - 2)).filter(p => currentPlayers.contains(p._1))
 
+    val file = graphics.communityChampionshipPoints(allQualified
+      .sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)),
+      currentPlayers, havePotential)
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def communityChampionshipPointsSceneOnlieUpdate: Action[AnyContent] = SecureBackEnd {
+    val battlefyUuid = battlefy.getCurrentTournament.battlefy_id
+    val allPlayers = db.getPlayers
+    val games = (if (db.existsTournament(battlefyUuid)) List.empty else battlefy.games(battlefyUuid)).flatMap { r =>
+      val participant_a_id = allPlayers.filter(_._2 == r._1).keys.headOption.getOrElse(-1)
+      val participant_b_id = allPlayers.filter(_._2 == r._2).keys.headOption.getOrElse(-1)
+      List(
+        Score(participant_a_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6),
+        Score(participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
+      )
+    }
+    val points = db.communityChampionshipPointsResults
+    val qualified = points.sortBy(_._2).reverse.take(16)
+    val alsoQalified = points.filterNot(p => qualified.contains(p)).filter(_._2 == qualified.last._2)
+
+    def updatePoints(res: (String, Int)): (String, Int) = {
+      val gamesPlayed = games.filter(g => allPlayers.filter(_._2 == res._1).keys.headOption.contains(g.current_player_id))
+      val currentPoints = db.seriesPointsCalculation(Map((battlefy.getCurrentTournament, res._1) -> gamesPlayed))
+      (res._1, res._2 + currentPoints.values.sum)
+    }
+
+    val allQualified = (qualified ++ alsoQalified).map(updatePoints)
+    val currentPlayers = battlefy.listOfPlayers(battlefyUuid).map(_._1)
+    val havePotential = points.drop(allQualified.size)
+      .filter(_._2 >= (allQualified.map(_._2).min - 2))
+      .filter(p => currentPlayers.contains(p._1)).map(updatePoints)
     val file = graphics.communityChampionshipPoints(allQualified
       .sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)),
       currentPlayers, havePotential)
@@ -274,7 +337,6 @@ class Application @Inject()(
 
   def importTournament(battlefyUuid: String, season: Int, tournamentType: String) = SecureBackEnd {
     if (!db.existsTournament(battlefyUuid)) {
-      val BYE = "BYE+0000"
       val tournament_ = battlefy.getTournamentInfo(battlefyUuid)
       if (tournament_.isEmpty) {
         BadRequest(s"Tournament $battlefyUuid not found")
@@ -286,7 +348,7 @@ class Application @Inject()(
         db.grantPrivileges()
         db.addTournament(tournamentName, tournamentStartDate, tournamentId, season, tournamentType)
         db.importDeck(Deck.empty)
-        db.addParticipant(BYE, tournamentId, Deck.empty.link)
+        db.addParticipant(Battlefy.BYE, tournamentId, Deck.empty.link)
         battlefy.playersInfo(battlefyUuid).par.foreach { player =>
           val eternalName = (player \ "name").as[String]
           val customFields = (player \ "customFields").as[JsArray].value.toList.map(field => (field \ "value").as[String])
@@ -297,19 +359,9 @@ class Application @Inject()(
           db.importDeck(deck)
           db.addPlayer(tournamentId, eternalName, discordName, battlefyNames, deck.link)
         }
-        (tournament \ "stages").as[JsArray].value.toList.par.foreach { stage =>
-          val s_id = (stage \ "_id").as[String]
-          val stageType = (stage \ "bracket" \ "type").as[String]
-          battlefy.stageInfo(s_id).value.toList.foreach { game =>
-            val roundNumber = (game \ "roundNumber").as[JsNumber].value.intValue()
-            val player1Name = (game \ "top" \ "team" \ "name").as[String]
-            val (player1Score, player2Name, player2Score) = if ((game \ "isBye").as[Boolean]) (2, BYE, 0) else (
-              (game \ "top" \ "score").as[JsNumber].value.intValue(),
-              (game \ "bottom" \ "team" \ "name").as[String],
-              (game \ "bottom" \ "score").as[JsNumber].value.intValue()
-            )
-            db.importGame(tournamentId, player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
-          }
+        battlefy.games(battlefyUuid).par.foreach { game =>
+          val (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType) = game
+          db.importGame(tournamentId, player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
         }
         Ok(s"Tournament $battlefyUuid has been successfully imported")
       }

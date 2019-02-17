@@ -116,11 +116,32 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
       }
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
+
+  def games(battlefy_id: String): List[(String, String, Int, Int, Int, String)] = getTournamentInfo(battlefy_id) match {
+    case Some(tournament) =>
+      (tournament \ "stages").as[JsArray].value.toList.par.flatMap { stage =>
+        val s_id = (stage \ "_id").as[String]
+        val stageType = (stage \ "bracket" \ "type").as[String]
+        stageInfo(s_id).value.toList.map { game =>
+          val roundNumber = (game \ "roundNumber").as[JsNumber].value.intValue()
+          val player1Name = (game \ "top" \ "team" \ "name").as[String]
+          val (player1Score, player2Name, player2Score) = if ((game \ "isBye").as[Boolean]) (2, Battlefy.BYE, 0) else (
+            (game \ "top" \ "score").as[JsNumber].value.intValue(),
+            (game \ "bottom" \ "team" \ "name").as[String],
+            (game \ "bottom" \ "score").as[JsNumber].value.intValue()
+          )
+          (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
+        }
+      }.toList
+    case _ => List.empty
+  }
 }
 
 object Battlefy {
 
   implicit def uToP(user: IUser): Participant = Participant(user)
+
+  val BYE = "BYE+0000"
 }
 
 case class Participant(user: IUser) {
