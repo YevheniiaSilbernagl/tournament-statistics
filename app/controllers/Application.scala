@@ -214,7 +214,7 @@ class Application @Inject()(
       .filterNot(p => winners.contains(p) || top.contains(p))
       .filter(p => p._2 == top.last._2))
       .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)),
-      currentPlayers, havePotential.take(11).sortBy(_._1.toLowerCase))
+      currentPlayers, havePotential.sortBy(_._1.toLowerCase))
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
@@ -225,9 +225,14 @@ class Application @Inject()(
     val points = db.communityChampionshipPointsResults
     val qualified = points.sortBy(_._2).reverse.take(16)
     val alsoQalified = points.filterNot(p => qualified.contains(p)).filter(_._2 == qualified.last._2)
+    val allQualified = qualified ++ alsoQalified
     val currentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id).map(_._1)
-    val file = graphics.communityChampionshipPoints((qualified ++ alsoQalified)
-      .sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)), currentPlayers)
+    val havePotential = points.drop(allQualified.size)
+      .filter(_._2 >= (allQualified.map(_._2).min - 2)).filter(p => currentPlayers.contains(p._1))
+
+    val file = graphics.communityChampionshipPoints(allQualified
+      .sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)),
+      currentPlayers, havePotential)
 
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))

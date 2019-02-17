@@ -168,7 +168,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         val img1 = column(col1, fontSize)
         val img2 = column(col2, fontSize)
         val img3 = column(col3, fontSize)
-        val img4 = column(playersWithPotential, fontSize)
+        val img4 = column(playersWithPotential.take(col1.size - 1), fontSize)
 
         val paddingCol1 = {
           val padding = 65
@@ -188,20 +188,27 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   }
 
 
-  def communityChampionshipPoints(results: scala.List[(String, Int)], currentTournamentPlayers: scala.List[String]): File = {
+  def communityChampionshipPoints(results: scala.List[(String, Int)],
+                                  currentTournamentPlayers: scala.List[String],
+                                  havePotential: scala.List[(String, Int)]): File = {
+    val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
+    val tmpGraphics = graphicsSettings(tmp.createGraphics())
+    val additionalLinePadding = 6
 
     def column(players: scala.List[(String, Int)], fontSize: Float): BufferedImage = {
-      val dest = new BufferedImage(600, 80 * players.size + 50, BufferedImage.TYPE_INT_ARGB)
+      FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
+      val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
+      val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(_._1.split("\\+")(0)).sortBy(_.length).reverse.head + " - 100")
+      val dest = new BufferedImage(lineLength, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
-      val star = fs.file("/images/winner_star.png").map(ImageIO.read)
       for (i <- players.indices) {
         if (currentTournamentPlayers.contains(players(i)._1)) {
           renderedGraphics.setColor(new Color(187, 231, 157))
         } else {
           renderedGraphics.setColor(defaultColor)
         }
-        renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * 80)
+        renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * lineHeights)
       }
       dest
     }
@@ -213,18 +220,29 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         FONT.foreach(f => g.setFont(f.deriveFont(110f)))
         g.drawString(s"The Desk - Community championship", 220, 105)
 
+        val col1Height = 770.0
+        val colNextHeight = 920.0
         val longestLine = results.map(_._1).sortBy(_.length).reverse.head
-        val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
-        val batchSize = (results.size.doubleValue() / 3).round.intValue()
-        val col1 = results.take(scala.List(batchSize, 10).min)
-        val col2 = results.slice(col1.size, results.size - scala.List(batchSize, 10).min)
-        val col3 = results.drop(col1.size + col2.size)
+        val batchSize = (results.size.doubleValue() / 2).round.intValue()
+        val fontSize = scala.List(adjustFontSize(g, longestLine, 600, 34f, 60f), adjustFontSize(g, (col1Height / batchSize).intValue(), 34f, 60f, additionalLinePadding)).min
+        FONT.foreach(f => g.setFont(f.deriveFont(fontSize)))
+        val col1 = results.take(batchSize)
+        val col2 = results.drop(batchSize)
+
         val img1 = column(col1, fontSize)
         val img2 = column(col2, fontSize)
-        val img3 = column(col3, fontSize)
-        g.drawImage(img1, 150, (image.getHeight - img1.getHeight) / 2, null)
-        g.drawImage(img2, 750, scala.List((image.getHeight - img2.getHeight) / 2 - 5, 110).max, null)
-        g.drawImage(img3, 1350, (image.getHeight - img3.getHeight) / 2, null)
+        val img3 = column(havePotential, fontSize)
+        val paddingCol1 = {
+          val padding = 65
+          65 + (image.getHeight - padding - img1.getHeight) / 2 - padding
+        }
+        val distance = 10
+        val firstPosition = 350
+
+        g.drawImage(img1, firstPosition, paddingCol1, null)
+        g.drawImage(img2, firstPosition + img1.getWidth + distance, paddingCol1, null)
+        g.setComposite(AlphaComposite.SrcOver.derive(0.5f))
+        g.drawImage(img3, firstPosition + img1.getWidth + img2.getWidth + 2 * distance, paddingCol1, null)
 
         saveFile(g, image, "community-championship-points.png")
       case _ => throw new Exception(s"background image not found")
