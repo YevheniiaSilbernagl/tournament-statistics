@@ -204,13 +204,17 @@ class Application @Inject()(
   def invitationalPointsScene: Action[AnyContent] = SecureBackEnd {
     val points = db.invitationalPointsForCurrentSeason
     val winners = points.filter(_._3.nonEmpty)
-    val top = points.filter(_._3.isEmpty).sortBy(_._2).reverse.take(32 - winners.size)
+    val qualified = points.filter(_._3.isEmpty).sortBy(_._2).reverse
+    val top = qualified.take(32 - winners.size)
     val currentPlayers = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id).map(_._1)
+    val havePotential = qualified.drop(winners.size).drop(top.size)
+      .filter(_._2 >= (top.map(_._2).min - 2)).filter(p => currentPlayers.contains(p._1))
 
     val file = graphics.invitationalPoints(winners.sortBy(_._1.toLowerCase) ++ (top ++ points
       .filterNot(p => winners.contains(p) || top.contains(p))
       .filter(p => p._2 == top.last._2))
-      .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)), currentPlayers)
+      .sortBy(p => (top.head._2 - p._2, p._1.toLowerCase)),
+      currentPlayers, havePotential.take(11).sortBy(_._1.toLowerCase))
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",

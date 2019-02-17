@@ -117,7 +117,10 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     }
   }
 
-  def invitationalPoints(results: scala.List[(String, Int, scala.List[String])], currentTournamentPlayers: scala.List[String]): File = {
+  def invitationalPoints(results: scala.List[(String, Int, scala.List[String])],
+                         currentTournamentPlayers: scala.List[String],
+                         playersWithPotential: scala.List[(String, Int, scala.List[String])]
+                        ): File = {
     val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
     val tmpGraphics = graphicsSettings(tmp.createGraphics())
     val additionalLinePadding = 6
@@ -125,7 +128,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     def column(players: scala.List[(String, Int, scala.List[String])], fontSize: Float): BufferedImage = {
       FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
       val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
-      val dest = new BufferedImage(600, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
+      val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(_._1.split("\\+")(0)).sortBy(_.length).reverse.head + " - 100")
+      val dest = new BufferedImage(lineLength, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       val star = fs.file("/images/winner_star.png").map(ImageIO.read)
@@ -164,14 +168,19 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         val img1 = column(col1, fontSize)
         val img2 = column(col2, fontSize)
         val img3 = column(col3, fontSize)
+        val img4 = column(playersWithPotential, fontSize)
 
         val paddingCol1 = {
           val padding = 65
           65 + (image.getHeight - padding - img1.getHeight) / 2 - padding
         }
-        g.drawImage(img1, 150, paddingCol1, null)
-        g.drawImage(img2, 750, paddingCol1, null)
-        g.drawImage(img3, 1350, paddingCol1, null)
+        val distance = 10
+        val firstPosition = 50
+        g.drawImage(img1, firstPosition, paddingCol1, null)
+        g.drawImage(img2, firstPosition + img1.getWidth + distance, paddingCol1, null)
+        g.drawImage(img3, firstPosition + img1.getWidth + img2.getWidth + 2 * distance, paddingCol1, null)
+        g.setComposite(AlphaComposite.SrcOver.derive(0.5f))
+        g.drawImage(img4, firstPosition + img1.getWidth + img2.getWidth + img3.getWidth + 3 * distance, paddingCol1, null)
 
         saveFile(g, image, "invitational-points.png")
       case _ => throw new Exception(s"background image not found")
