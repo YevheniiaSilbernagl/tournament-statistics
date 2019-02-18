@@ -11,9 +11,9 @@ import types.{Deck, Score, Tournament}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class DB @Inject()(database: Database, cache: Cache) extends Controller {
-
   val scorePointsCacheDuration: FiniteDuration = 1.day
 
   def communityChampionshipPointsCacheKey = s"communityChampionshipPoints"
@@ -214,19 +214,22 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
   }
 
   def seriesPointsCalculation(ts: Map[(Tournament, String), List[Score]]): Map[String, Int] = {
-    val wins = winner(ts)
-    val inTop2 = top2(ts).filterNot(e => wins.toList.map(_._1._1).contains(e._1._1))
-    val inTop4 = top4(ts).filterNot(e => (wins ++ inTop2).toList.map(_._1._1).contains(e._1._1))
-    val inTop8 = top8(ts).filterNot(e => (wins ++ inTop2 ++ inTop4).toList.map(_._1._1).contains(e._1._1))
-    val inTop16 = top16(ts).filterNot(e => (wins ++ inTop2 ++ inTop4 ++ inTop8).toList.map(_._1._1).contains(e._1._1))
-    val undefeatedSwiss = ts.map(t => t._1 -> (t._2.filter(_.bracket_name == "swiss").count(s => !s.isWinner) == 0)).filter(_._2)
-    val all = wins.map(t => s"Winner - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 4 else 12)) ++
-      inTop2.map(t => s"Top 2 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 3 else 10)) ++
-      inTop4.map(t => s"Top 4 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 2 else 8)) ++
-      inTop8.map(t => s"Top 8 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 1 else 6)) ++
-      inTop16.map(t => s"Top 16 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 0 else 4)) ++
-      undefeatedSwiss.map(t => s"Undefeated swiss - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 1 else 0))
-    all.filterNot(_._2 == 0)
+    if (ts.isEmpty) Map()
+    else {
+      val wins = winner(ts)
+      val inTop2 = top2(ts).filterNot(e => wins.toList.map(_._1._1).contains(e._1._1))
+      val inTop4 = top4(ts).filterNot(e => (wins ++ inTop2).toList.map(_._1._1).contains(e._1._1))
+      val inTop8 = top8(ts).filterNot(e => (wins ++ inTop2 ++ inTop4).toList.map(_._1._1).contains(e._1._1))
+      val inTop16 = top16(ts).filterNot(e => (wins ++ inTop2 ++ inTop4 ++ inTop8).toList.map(_._1._1).contains(e._1._1))
+      val undefeatedSwiss = ts.map(t => t._1 -> (t._2.filter(_.bracket_name == "swiss").count(s => !s.isWinner) == 0)).filter(_._2)
+      val all = wins.map(t => s"Winner - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 4 else 12)) ++
+        inTop2.map(t => s"Top 2 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 3 else 10)) ++
+        inTop4.map(t => s"Top 4 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 2 else 8)) ++
+        inTop8.map(t => s"Top 8 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 1 else 6)) ++
+        inTop16.map(t => s"Top 16 - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 0 else 4)) ++
+        undefeatedSwiss.map(t => s"Undefeated swiss - ${t._1._1.name}" -> (if (t._1._1.isWeekly) 1 else 0))
+      all.filterNot(_._2 == 0)
+    }
   }
 
   def communityChampionshipPoints(id: Int): (Int, Map[String, Int]) = {
@@ -733,6 +736,26 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
     } finally {
       if (stmt != null) stmt.close()
       if (conn != null) conn.close()
+    }
+  }
+
+  def getPlayerId(eternalName: String): Option[Int] = {
+    val cacheKey = s"$eternalName-id"
+    cache.get[Int](cacheKey) match {
+      case v if v.isDefined => v
+      case _ =>
+        val conn: Connection = database.getConnection()
+        try {
+          val stmt = conn.createStatement
+          val rs = stmt.executeQuery("SELECT id FROM player WHERE eternal_name = '" + eternalName + "'")
+          if (rs.next()) {
+            val id: Integer = rs.getInt("id")
+            cache.put(cacheKey, id, 30 days)
+            Some(id)
+          } else None
+        } finally {
+          conn.close()
+        }
     }
   }
 }

@@ -194,7 +194,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
                                   havePotential: scala.List[(String, Int, Int, Int)]): File = {
     val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
     val tmpGraphics = graphicsSettings(tmp.createGraphics())
-    val additionalLinePadding = 6
+    val additionalLinePadding = 11
     val upArrow = fs.file("/images/up_arrow.png").map(ImageIO.read)
     val downArrow = fs.file("/images/down_arrow.png").map(ImageIO.read)
 
@@ -204,7 +204,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
       val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
       val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(_._1.split("\\+")(0)).sortBy(_.length).reverse.head + " - 100")
-      val dest = new BufferedImage(lineLength, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
+      val dest = new BufferedImage(lineLength, lineHeights * players.size + additionalLinePadding + 50, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       for (i <- players.indices) {
@@ -214,7 +214,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         } else {
           renderedGraphics.setColor(defaultColor)
         }
-       val xPosition = (player._4 match {
+        val xPosition = (player._4 match {
           case 0 => None
           case 1 => upArrow
           case -1 => downArrow
