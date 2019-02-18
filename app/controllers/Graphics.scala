@@ -125,6 +125,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
     val tmpGraphics = graphicsSettings(tmp.createGraphics())
     val additionalLinePadding = 6
+    val arrowSize = 25
+    val starSize = 50
 
     def stringValue(player: (String, Int, Int, scala.List[String])): String = s"${player._1.split("\\+")(0)} - ${(player._2 + player._3).toString}"
 
@@ -132,7 +134,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
       val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
       val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(stringValue).maxBy(_.length))
-      val dest = new BufferedImage(lineLength + 55, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
+      val dest = new BufferedImage(lineLength + 2 * arrowSize, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       val star = fs.file("/images/winner_star.png").map(ImageIO.read)
@@ -144,13 +146,13 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           renderedGraphics.setColor(defaultColor)
         }
         if (player._4.nonEmpty) {
-          star.foreach(s => renderedGraphics.drawImage(scale(s, 50, 50), 0, (i + 1) * lineHeights - 50, null))
-          renderedGraphics.drawString(stringValue(player), 55, (i + 1) * lineHeights)
+          star.foreach(s => renderedGraphics.drawImage(scale(s, starSize, starSize), 0, (i + 1) * lineHeights - starSize, null))
+          renderedGraphics.drawString(stringValue(player), starSize + 5, (i + 1) * lineHeights)
         } else {
           val xPosition = (if (player._3 > 0) upArrow else None) match {
             case Some(arrow) =>
-              renderedGraphics.drawImage(scale(arrow, 25, 25), 0, (i + 1) * lineHeights - 30, null)
-              30
+              renderedGraphics.drawImage(scale(arrow, arrowSize, arrowSize), 0, (i + 1) * lineHeights - arrowSize - 5, null)
+              arrowSize + 5
             case None =>
               0
           }
@@ -205,6 +207,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
     val tmpGraphics = graphicsSettings(tmp.createGraphics())
     val additionalLinePadding = 11
+    val arrowSize = 35
 
     def stringValue(player: (String, Int, Int)): String = s"${player._1.split("\\+")(0)} - ${(player._2 + player._3).toString}"
 
@@ -212,7 +215,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
       val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
       val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(stringValue).maxBy(_.length))
-      val dest = new BufferedImage(lineLength + 25, lineHeights * players.size + additionalLinePadding + 50, BufferedImage.TYPE_INT_ARGB)
+      val dest = new BufferedImage(lineLength + arrowSize, lineHeights * players.size + additionalLinePadding + 50, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       for (i <- players.indices) {
@@ -224,8 +227,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         }
         val xPosition = (if (player._3 > 0) upArrow else None) match {
           case Some(arrow) =>
-            renderedGraphics.drawImage(scale(arrow, 25, 25), 0, (i + 1) * lineHeights - 30, null)
-            30
+            renderedGraphics.drawImage(scale(arrow, arrowSize, arrowSize), 0, (i + 1) * lineHeights - arrowSize, null)
+            arrowSize
           case None =>
             0
         }
