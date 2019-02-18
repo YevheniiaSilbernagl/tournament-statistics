@@ -188,14 +188,19 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   }
 
 
-  def communityChampionshipPoints(results: scala.List[(String, Int)],
+  //(String, Int, Int, Int) Name, Previous score, score diff, upd/down/none
+  def communityChampionshipPoints(results: scala.List[(String, Int, Int, Int)],
                                   currentTournamentPlayers: scala.List[String],
-                                  havePotential: scala.List[(String, Int)]): File = {
+                                  havePotential: scala.List[(String, Int, Int, Int)]): File = {
     val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
     val tmpGraphics = graphicsSettings(tmp.createGraphics())
     val additionalLinePadding = 6
+    val upArrow = fs.file("/images/up_arrow.png").map(ImageIO.read)
+    val downArrow = fs.file("/images/down_arrow.png").map(ImageIO.read)
 
-    def column(players: scala.List[(String, Int)], fontSize: Float): BufferedImage = {
+    def stringValue(player: (String, Int, Int, Int)): String = s"${player._1.split("\\+")(0)} - ${player._2.toString}${if (player._3 != 0) s" + ${player._3.toString}" else ""}"
+
+    def column(players: scala.List[(String, Int, Int, Int)], fontSize: Float): BufferedImage = {
       FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
       val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
       val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(_._1.split("\\+")(0)).sortBy(_.length).reverse.head + " - 100")
@@ -203,12 +208,25 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       for (i <- players.indices) {
-        if (currentTournamentPlayers.contains(players(i)._1)) {
+        val player = players(i)
+        if (currentTournamentPlayers.contains(player._1)) {
           renderedGraphics.setColor(new Color(187, 231, 157))
         } else {
           renderedGraphics.setColor(defaultColor)
         }
-        renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * lineHeights)
+       val xPosition = (player._4 match {
+          case 0 => None
+          case 1 => upArrow
+          case -1 => downArrow
+          case _ => None
+        }) match {
+          case Some(arrow) =>
+            renderedGraphics.drawImage(scale(arrow, 25, 25), 0, (i + 1) * lineHeights - 30, null)
+            30
+          case None =>
+            0
+        }
+        renderedGraphics.drawString(stringValue(player), xPosition, (i + 1) * lineHeights)
       }
       dest
     }
@@ -222,9 +240,9 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
         val col1Height = 770.0
         val colNextHeight = 920.0
-        val longestLine = results.map(_._1).sortBy(_.length).reverse.head
+        val longestLine = results.map(stringValue).sortBy(_.length).reverse.head
         val batchSize = (results.size.doubleValue() / 2).round.intValue()
-        val fontSize = scala.List(adjustFontSize(g, longestLine, 600, 34f, 60f), adjustFontSize(g, (col1Height / batchSize).intValue(), 34f, 60f, additionalLinePadding)).min
+        val fontSize = scala.List(adjustFontSize(g, longestLine, 600, 16f, 60f), adjustFontSize(g, (col1Height / batchSize).intValue(), 34f, 60f, additionalLinePadding)).min
         FONT.foreach(f => g.setFont(f.deriveFont(fontSize)))
         val col1 = results.take(batchSize)
         val col2 = results.drop(batchSize)
@@ -236,8 +254,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           val padding = 65
           65 + (image.getHeight - padding - img1.getHeight) / 2 - padding
         }
-        val distance = 10
-        val firstPosition = 350
+        val distance = 50
+        val firstPosition = 250
 
         g.drawImage(img1, firstPosition, paddingCol1, null)
         g.drawImage(img2, firstPosition + img1.getWidth + distance, paddingCol1, null)

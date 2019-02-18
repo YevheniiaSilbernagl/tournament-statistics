@@ -53,9 +53,13 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
     if (round.isEmpty) None else Some(round.min)
   }
 
-  def currentRound: Option[String] = {
+  def currentRoundTitle: Option[String] = {
+    currentRound.map(rn => s"Round ${rn._1} ${rn._2.capitalize}")
+  }
+
+  def currentRound: Option[(Int, String)] = {
     val bracket = currentStageInfo.map(_.as[JsObject].value("bracket").as[JsObject].value("type").as[JsString].value)
-    currentRoundNumber.map(rn => s"Round $rn ${bracket.map(_.capitalize).getOrElse("")}")
+    currentRoundNumber.flatMap(rn => bracket.map(b => (rn, b)))
   }
 
   def listOfPlayers(tournamentId: String): List[(EternalName, Option[EternalLink], Option[DiscordName], BattlefyId)] =

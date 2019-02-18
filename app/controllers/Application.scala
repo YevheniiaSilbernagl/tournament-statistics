@@ -152,7 +152,7 @@ class Application @Inject()(
     val player2 = (if (player2Name.contains("+")) player2Name.split("\\+")(0) else player2Name, player2Score, player2DeckName)
     val file = graphics.sidePanel(
       battlefy.getCurrentTournament.name,
-      battlefy.currentRound.getOrElse(""),
+      battlefy.currentRoundTitle.getOrElse(""),
       if (mainCam.exists(_.startsWith(player1._1))) player2 else player1,
       if (mainCam.exists(_.startsWith(player1._1))) player1 else player2
     )
@@ -248,7 +248,7 @@ class Application @Inject()(
   }
 
   def communityChampionshipPointsScene: Action[AnyContent] = SecureBackEnd {
-    val points = db.communityChampionshipPointsResults
+    val points = db.communityChampionshipPointsResults.map(r => (r._1, r._2, 0, 0))
     val qualified = points.sortBy(_._2).reverse.take(16)
     val alsoQalified = points.filterNot(p => qualified.contains(p)).filter(_._2 == qualified.last._2)
     val allQualified = qualified ++ alsoQalified
@@ -280,23 +280,47 @@ class Application @Inject()(
     }
     val points = db.communityChampionshipPointsResults
     val qualified = points.sortBy(_._2).reverse.take(16)
-    val alsoQalified = points.filterNot(p => qualified.contains(p)).filter(_._2 == qualified.last._2)
+    val alsoQualified = points.filterNot(p => qualified.contains(p)).filter(_._2 == qualified.last._2)
 
-    def updatePoints(res: (String, Int)): (String, Int) = {
+    val currentRound = battlefy.currentRound
+
+    def updatePoints(res: (String, Int)): (String, Int, Int, Int) = {
       val gamesPlayed = games.filter(g => allPlayers.filter(_._2 == res._1).keys.headOption.contains(g.current_player_id))
+      val previouslyPlayed = gamesPlayed.filter {
+        score =>
+          currentRound match {
+            case None => false
+            case Some((round, bracket)) if round == 1 && bracket == "elimination" => score.bracket_name == "swiss"
+            case Some((round, bracket)) if round == 1 && bracket == "swiss" => false
+            case Some((round, bracket)) => score.bracket_name == bracket && score.round == round - 1
+          }
+      }
       val currentPoints = db.seriesPointsCalculation(Map((battlefy.getCurrentTournament, res._1) -> gamesPlayed))
-      (res._1, res._2 + currentPoints.values.sum)
+      val previousPoints = db.seriesPointsCalculation(Map((battlefy.getCurrentTournament, res._1) -> previouslyPlayed))
+      (res._1, res._2, currentPoints.values.sum, previousPoints.values.sum)
     }
 
-    val allQualified = (qualified ++ alsoQalified).map(updatePoints)
+    val allQualified = (qualified ++ alsoQualified).map(updatePoints)
+    val allQualifiedCurrentStandings = allQualified.sortBy(p => (qualified.head._2 - (p._2 + p._3), p._1.toLowerCase))
+    val allQualifiedPreviousStandings = allQualified.sortBy(p => (qualified.head._2 - (p._2 + p._4), p._1.toLowerCase))
+
     val currentPlayers = battlefy.listOfPlayers(battlefyUuid).map(_._1)
     val havePotential = points.drop(allQualified.size)
       .filter(_._2 >= (allQualified.map(_._2).min - 2))
       .filter(p => currentPlayers.contains(p._1)).map(updatePoints)
-    val file = graphics.communityChampionshipPoints(allQualified
-      .sortBy(p => (qualified.head._2 - p._2, p._1.toLowerCase)),
-      currentPlayers, havePotential)
+      .sortBy(p => (qualified.head._2 - (p._2 + p._3), p._1.toLowerCase))
+    val havePotentialCurrentStandings = havePotential.sortBy(p => (qualified.head._2 - (p._2 + p._3), p._1.toLowerCase))
+    val havePotentialPreviousStandings = havePotential.sortBy(p => (qualified.head._2 - (p._2 + p._4), p._1.toLowerCase))
 
+    def compare(previousStandings: List[(String, Int, Int, Int)], currentStandings: List[(String, Int, Int, Int)]) = currentStandings.map { res =>
+      val (name, basePoints, currentChange, previousChange) = res
+      val previousStanding = previousStandings.find(_._1 == res._1).map(element => previousStandings.indexOf(element)).getOrElse(-1)
+      val currentStanding = currentStandings.indexOf(res)
+      (name, basePoints + previousChange, currentChange - previousChange, previousStanding.compareTo(currentStanding))
+    }
+
+    val file = graphics.communityChampionshipPoints(compare(allQualifiedPreviousStandings, allQualifiedCurrentStandings),
+      currentPlayers, compare(havePotentialPreviousStandings, havePotentialCurrentStandings))
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))
 
