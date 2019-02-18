@@ -21,6 +21,8 @@ import types.{Card, Deck}
 class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database: DB) extends Controller {
   private val defaultColor = new Color(255, 255, 255)
   private val defaultYellow = new Color(244, 206, 109)
+  private val upArrow: Option[BufferedImage] = fs.file("/images/up_arrow.png").map(ImageIO.read)
+  //  private val downArrow: Option[BufferedImage] = fs.file("/images/down_arrow.png").map(ImageIO.read)
 
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
@@ -117,33 +119,43 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     }
   }
 
-  def invitationalPoints(results: scala.List[(String, Int, scala.List[String])],
+  def invitationalPoints(results: scala.List[(String, Int, Int, scala.List[String])],
                          currentTournamentPlayers: scala.List[String],
-                         playersWithPotential: scala.List[(String, Int, scala.List[String])]
+                         playersWithPotential: scala.List[(String, Int, Int, scala.List[String])]
                         ): File = {
     val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
     val tmpGraphics = graphicsSettings(tmp.createGraphics())
     val additionalLinePadding = 6
 
-    def column(players: scala.List[(String, Int, scala.List[String])], fontSize: Float): BufferedImage = {
+    def stringValue(player: (String, Int, Int, scala.List[String])): String = s"${player._1.split("\\+")(0)} - ${(player._2 + player._3).toString}"
+
+    def column(players: scala.List[(String, Int, Int, scala.List[String])], fontSize: Float): BufferedImage = {
       FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
       val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
-      val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(_._1.split("\\+")(0)).sortBy(_.length).reverse.head + " - 100")
-      val dest = new BufferedImage(lineLength, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
+      val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(stringValue).maxBy(_.length))
+      val dest = new BufferedImage(lineLength + 55, lineHeights * players.size + additionalLinePadding, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       val star = fs.file("/images/winner_star.png").map(ImageIO.read)
       for (i <- players.indices) {
-        if (currentTournamentPlayers.contains(players(i)._1)) {
+        val player = players(i)
+        if (currentTournamentPlayers.contains(player._1)) {
           renderedGraphics.setColor(new Color(187, 231, 157))
         } else {
           renderedGraphics.setColor(defaultColor)
         }
-        if (players(i)._3.nonEmpty) {
+        if (player._4.nonEmpty) {
           star.foreach(s => renderedGraphics.drawImage(scale(s, 50, 50), 0, (i + 1) * lineHeights - 50, null))
-          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 55, (i + 1) * lineHeights)
+          renderedGraphics.drawString(stringValue(player), 55, (i + 1) * lineHeights)
         } else {
-          renderedGraphics.drawString(s"${players(i)._1.split("\\+")(0)} - ${players(i)._2.toString}", 0, (i + 1) * lineHeights)
+          val xPosition = (if (player._3 > 0) upArrow else None) match {
+            case Some(arrow) =>
+              renderedGraphics.drawImage(scale(arrow, 25, 25), 0, (i + 1) * lineHeights - 30, null)
+              30
+            case None =>
+              0
+          }
+          renderedGraphics.drawString(stringValue(player), xPosition, (i + 1) * lineHeights)
         }
       }
       dest
@@ -157,10 +169,10 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         g.drawString(s"The Desk - Invitational points", 220, 105)
 
         val col1Height = 770.0
-        val colNextHeight = 920.0
-        val longestLine = results.map(_._1).sortBy(_.length).reverse.head
+        val longestLine = (results ++ playersWithPotential).map(stringValue).maxBy(tmpGraphics.getFontMetrics.stringWidth)
         val batchSize = (results.size.doubleValue() / 3).round.intValue()
-        val fontSize = scala.List(adjustFontSize(g, longestLine, 600, 34f, 60f), adjustFontSize(g, (col1Height / batchSize).intValue(), 34f, 60f, additionalLinePadding)).min
+        val fontSize = scala.List(adjustFontSize(g, longestLine, 430, 9f, 60f),
+          adjustFontSize(g, (col1Height / batchSize).intValue(), 9f, 60f, additionalLinePadding)).min
         FONT.foreach(f => g.setFont(f.deriveFont(fontSize)))
         val col1 = results.take(batchSize)
         val col3 = results.slice(results.size - (results.size - col1.size) / 2, results.size)
@@ -174,7 +186,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           val padding = 65
           65 + (image.getHeight - padding - img1.getHeight) / 2 - padding
         }
-        val distance = 10
+        val distance = 5
         val firstPosition = 50
         g.drawImage(img1, firstPosition, paddingCol1, null)
         g.drawImage(img2, firstPosition + img1.getWidth + distance, paddingCol1, null)
@@ -188,23 +200,20 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   }
 
 
-  //(String, Int, Int, Int) Name, Previous score, score diff, upd/down/none
-  def communityChampionshipPoints(results: scala.List[(String, Int, Int, Int)],
+  def communityChampionshipPoints(results: scala.List[(String, Int, Int)],
                                   currentTournamentPlayers: scala.List[String],
-                                  havePotential: scala.List[(String, Int, Int, Int)]): File = {
+                                  havePotential: scala.List[(String, Int, Int)]): File = {
     val tmp = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB)
     val tmpGraphics = graphicsSettings(tmp.createGraphics())
     val additionalLinePadding = 11
-    val upArrow = fs.file("/images/up_arrow.png").map(ImageIO.read)
-    val downArrow = fs.file("/images/down_arrow.png").map(ImageIO.read)
 
-    def stringValue(player: (String, Int, Int, Int)): String = s"${player._1.split("\\+")(0)} - ${player._2.toString}${if (player._3 != 0) s" + ${player._3.toString}" else ""}"
+    def stringValue(player: (String, Int, Int)): String = s"${player._1.split("\\+")(0)} - ${(player._2 + player._3).toString}"
 
-    def column(players: scala.List[(String, Int, Int, Int)], fontSize: Float): BufferedImage = {
+    def column(players: scala.List[(String, Int, Int)], fontSize: Float): BufferedImage = {
       FONT.foreach(f => tmpGraphics.setFont(f.deriveFont(fontSize)))
       val lineHeights = tmpGraphics.getFontMetrics.getHeight + additionalLinePadding
-      val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(_._1.split("\\+")(0)).sortBy(_.length).reverse.head + " - 100")
-      val dest = new BufferedImage(lineLength, lineHeights * players.size + additionalLinePadding + 50, BufferedImage.TYPE_INT_ARGB)
+      val lineLength = tmpGraphics.getFontMetrics.stringWidth(results.map(stringValue).maxBy(_.length))
+      val dest = new BufferedImage(lineLength + 25, lineHeights * players.size + additionalLinePadding + 50, BufferedImage.TYPE_INT_ARGB)
       val renderedGraphics = graphicsSettings(dest.createGraphics())
       FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
       for (i <- players.indices) {
@@ -214,12 +223,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         } else {
           renderedGraphics.setColor(defaultColor)
         }
-        val xPosition = (player._4 match {
-          case 0 => None
-          case 1 => upArrow
-          case -1 => downArrow
-          case _ => None
-        }) match {
+        val xPosition = (if (player._3 > 0) upArrow else None) match {
           case Some(arrow) =>
             renderedGraphics.drawImage(scale(arrow, 25, 25), 0, (i + 1) * lineHeights - 30, null)
             30
@@ -240,7 +244,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
         val col1Height = 770.0
         val colNextHeight = 920.0
-        val longestLine = results.map(stringValue).sortBy(_.length).reverse.head
+        val longestLine = results.map(stringValue).maxBy(_.length)
         val batchSize = (results.size.doubleValue() / 2).round.intValue()
         val fontSize = scala.List(adjustFontSize(g, longestLine, 600, 16f, 60f), adjustFontSize(g, (col1Height / batchSize).intValue(), 34f, 60f, additionalLinePadding)).min
         FONT.foreach(f => g.setFont(f.deriveFont(fontSize)))
@@ -254,7 +258,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           val padding = 65
           65 + (image.getHeight - padding - img1.getHeight) / 2 - padding
         }
-        val distance = 50
+        val distance = 15
         val firstPosition = 250
 
         g.drawImage(img1, firstPosition, paddingCol1, null)

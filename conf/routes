@@ -23,7 +23,7 @@ GET         /download/top/players                                  controllers.A
 GET         /download/top/players/invitationalpoints               controllers.Application.invitationalPointsScene
 GET         /download/top/players/invitationalpoints/online        controllers.Application.invitationalPointsSceneOnlineUpdate
 GET         /download/top/players/comchamppoints                   controllers.Application.communityChampionshipPointsScene
-GET         /download/top/players/comchamppoints/online            controllers.Application.communityChampionshipPointsSceneOnlieUpdate
+GET         /download/top/players/comchamppoints/online            controllers.Application.communityChampionshipPointsSceneOnlineUpdate
 GET         /download/player/winrate/life                          controllers.Application.playerLifetimeWinRate(playerName: String)
 GET         /download/player/winrate/trend                         controllers.Application.playerTrendingWinRate(playerName: String)
 GET         /download/winrate/life                                 controllers.Application.compareLifetimeWinRates(player1Name: String, player2Name: String)
