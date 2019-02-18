@@ -22,7 +22,6 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
   private val defaultColor = new Color(255, 255, 255)
   private val defaultYellow = new Color(244, 206, 109)
   private val upArrow: Option[BufferedImage] = fs.file("/images/up_arrow.png").map(ImageIO.read)
-  //  private val downArrow: Option[BufferedImage] = fs.file("/images/down_arrow.png").map(ImageIO.read)
 
   lazy val FONT: Option[Font] = {
     import java.awt.{Font, GraphicsEnvironment}
