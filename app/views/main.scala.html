@@ -5,91 +5,143 @@
 
 <html>
     @head(title)
-    <body>
-        <div class="container">
-            @if(authorized){
+<body>
+    <div class="container">
+        @if(authorized) {
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
                 <a class="navbar-brand" href="@routes.Application.index">
                     <img src="@routes.Assets.at("images/favicon.png")" width="30" height="30" alt="">
                 </a>
-                    <ul class="navbar-nav mr-auto justify-content-center">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Deck doc
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="@routes.Application.generateDeckDoc(tournament.battlefy_id)">
-                                    Deck doc view</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="@routes.Application.expandedDeckDoc(tournament.battlefy_id)">
-                                    Expanded deck doc</a>
-                                <a class="dropdown-item" href="@routes.Application.conciseDeckDoc(tournament.battlefy_id)">
-                                    Concise deck doc</a>
-                            </div>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Stats
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="@routes.Application.playersStats">All players</a>
-                                <a class="dropdown-item" href="@routes.Application.generateStats">Selected group</a>
-                            </div>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Streaming
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="@routes.Application.streaming">Current round</a>
-                                <a class="dropdown-item" href="@routes.Application.casters">Casters panel</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="@routes.Application.customListOfCards">Custom list of cards</a>
-                                <a class="dropdown-item" href="@routes.Application.topCards(tournament.battlefy_id)" download>
-                                    Top 10 Cards</a>
-                                <a class="dropdown-item" href="@routes.Application.topPlayers(tournament.battlefy_id)" download>
-                                    Top 10 Players</a>
-                                <a class="dropdown-item" href="@routes.Application.invitationalPointsScene" download>
-                                    Invitational points</a>
-                                <a class="dropdown-item" href="@routes.Application.communityChampionshipPointsScene" download>
-                                    Community championship points</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="@routes.Application.invitationalPointsSceneOnlineUpdate" download>
-                                    Invitational points [ONLINE]</a>
-                                <a class="dropdown-item" href="@routes.Application.communityChampionshipPointsSceneOnlineUpdate" download>
-                                    Community championship points [ONLINE]</a>
-                            </div>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Admin
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="@routes.Application.validateDecks(tournament.battlefy_id)">
-                                    Validate decks</a>
-                                <a class="dropdown-item" href="@routes.Application.checkInPage">Check In</a>
-                                <a class="dropdown-item" href="@routes.Application.tournamentImport">Import tournament</a>
-                                <a class="dropdown-item" href="@routes.Application.currentPairings()">Current pairings</a>
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="@routes.Application.logout()">
-                                Log out
-                            </a>
-                        </li>
-                    </ul>
+                <ul class="navbar-nav mr-auto justify-content-center">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Deck doc
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@routes.Application.generateDeckDoc(tournament.battlefy_id)">
+                                Deck doc view</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@routes.Application.expandedDeckDoc(tournament.battlefy_id)">
+                                Expanded deck doc</a>
+                            <a class="dropdown-item" href="@routes.Application.conciseDeckDoc(tournament.battlefy_id)">
+                                Concise deck doc</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Stats
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@routes.Application.playersStats">All players</a>
+                            <a class="dropdown-item" href="@routes.Application.generateStats">Selected group</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Streaming
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@routes.Application.streaming">Current round</a>
+                            <a class="dropdown-item" href="@routes.Application.casters">Casters panel</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@routes.Application.customListOfCards">Custom list of cards</a>
+                            <a class="dropdown-item" href="@routes.Application.topCards(tournament.battlefy_id)" download>
+                                Top 10 Cards</a>
+                            <a class="dropdown-item" href="@routes.Application.topPlayers(tournament.battlefy_id)" download>
+                                Top 10 Players</a>
+                            <a class="dropdown-item" href="@routes.Application.invitationalPointsScene" download>
+                                Invitational points</a>
+                            <a class="dropdown-item" href="@routes.Application.communityChampionshipPointsScene" download>
+                                Community championship points</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="@routes.Application.invitationalPointsSceneOnlineUpdate" download>
+                                Invitational points [ONLINE]</a>
+                            <a class="dropdown-item" href="@routes.Application.communityChampionshipPointsSceneOnlineUpdate" download>
+                                Community championship points [ONLINE]</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Admin
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@routes.Application.validateDecks(tournament.battlefy_id)">
+                                Validate decks</a>
+                            <a class="dropdown-item" href="@routes.Application.checkInPage">Check In</a>
+                            <a class="dropdown-item" href="@routes.Application.tournamentImport">Import tournament</a>
+                            <a class="dropdown-item" href="@routes.Application.currentPairings()">Current pairings</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Info
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@routes.Application.howToRegister">How to register</a>
+                            <a class="dropdown-item" href="@routes.Application.dayOfTournament">Day of tournament</a>
+                            <a class="dropdown-item" href="@routes.Application.tournamentCalendar">Tournament calendar</a>
+                            <a class="dropdown-item" href="@routes.Application.rules">Main rules</a>
+                            <a class="dropdown-item" href="@routes.Application.invitationalTournaments">
+                                Invitational tournaments</a>
+                        </div>
+                    </li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0">
+                    <a class="nav-link" href="@routes.Application.logout()">
+                        Log out
+                    </a>
+                </form>
             </nav>
-            } else {
-                <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                    <a class="navbar-brand" href="@routes.Application.index">
-                        <img src="@routes.Assets.at("images/favicon.png")" width="30" height="30" alt="">
-                    </a>
-                    <a class="nav-item" href="@routes.Application.index">
-                        Main page
-                    </a>
-                </nav>
-            }
+        } else {
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="@routes.Application.index">
+                    <img src="@routes.Assets.at("images/favicon.png")" width="30" height="30" alt="">
+                </a>
+                <ul class="navbar-nav mr-auto justify-content-center">
+                    <li> <a class="nav-link" href="@routes.Application.index">Main page</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Points
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@routes.Application.invitationalPoints">Invitational points</a>
+                            <a class="dropdown-item" href="@routes.Application.seriesPoints">Series points</a>
+                            <a class="dropdown-item" href="@routes.Application.communityChampionshipPoints">Community championship points</a>
+                            <a class="dropdown-item" href="@routes.Application.playersStats">Statistics</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Info
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="@routes.Application.howToRegister">How to register</a>
+                            <a class="dropdown-item" href="@routes.Application.dayOfTournament">Day of tournament</a>
+                            <a class="dropdown-item" href="@routes.Application.tournamentCalendar">Tournament calendar</a>
+                            <a class="dropdown-item" href="@routes.Application.rules">Main rules</a>
+                            <a class="dropdown-item" href="@routes.Application.invitationalTournaments">
+                                Invitational tournaments</a>
+                        </div>
+                    </li>
+                    <li><a class="nav-link" href="@routes.Application.currentPairings()">Current pairings</a></li>
+                    <li><a href="https://www.twitch.tv/eternaltournamentseries" target="_blank">
+                        <img class="rounded img-thumbnail" src="@routes.Assets.at("images/static/combologo_474x356-2.png")" style="width: auto;
+                            height: 40px;">
+                    </a></li>
+                    <li><a href="https://youtube.com/c/arengeeeternal" target="_blank">
+                        <img class="rounded img-thumbnail" src="@routes.Assets.at("images/static/youtube-logo.jpg")" style="width: auto;
+                            height: 40px;">
+                    </a></li>
+                    <li><a href="https://twitter.com/aReNGeeEternal" target="_blank">
+                        <img class="rounded img-thumbnail" src="@routes.Assets.at("images/static/twitter-logo.png")" style="width: auto;
+                            height: 40px;">
+                    </a></li>
+                </ul>
+                <form class="form-inline my-2 my-lg-0"><a href="@routes.Application.login()" class="btn btn-primary" id="logIn">
+                    Sign in</a></form>
+            </nav>
+        }
         @content
-        </div>
-    </body>
+</div>
+</body>
 </html>

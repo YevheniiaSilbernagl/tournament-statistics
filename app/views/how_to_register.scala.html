@@ -1,0 +1,43 @@
+@import types.Tournament
+@(tournament: Tournament, authorized: Boolean)
+
+@main(tournament, "Registration Tutorial", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="page-title">Registration Tutorial</h1>
+        <div class="entry-content clearfix">
+
+            <p>Four things are now required to register for the ETS:</p>
+            <ol>
+                <li>Your Eternal Username, including your 4 digit friend code, which can be found both in your
+                    Eternal profile and at the top of your Friend List.
+                    <img class="rounded" src="@routes.Assets.at("images/static/eternal-name.png")" style="height: 100px;width: auto">
+                </li>
+                <li>Your Discord Username, including your 4 digit friend code, which can be found in settings of the Discord client.
+                    It is preferred if this username is the same as your Eternal username.<br>
+                    <img class="rounded" src="@routes.Assets.at("images/static/discord-numbers.png")" style="height: 100px;width: auto">
+                    </li>
+                <li>An <a href="http://eternalwarcry.com/" target="_blank">EternalWarcry</a> account, as tournament deck submission
+                    is done via EternalWarcry. It is preferred if this username is the same as your Eternal username.</li>
+                <li>A <a href="https://battlefy.com" target="_blank">Battlefy</a> account, as tournaments are run through Battlefy
+                    and you need an account to register. This account does not need to have the same name as your other accounts.</li>
+            </ol>
+            <p>Being on the Discord is<strong> required</strong>
+                to participate in events! Read the <strong><a href="@routes.Application.dayOfTournament()">On the Day Of Tournament</a></strong>
+                page for more information about the Discord server.</p>
+            <p>Tournaments are currently being run on Battlefy, which means you must register for them on the Battlefy site, via the link on
+                <a href="@routes.Application.index()">our ETS page</a>
+                or in the Eternal Discord.</p>
+            <p>You must submit your Eternal Username, Discord username, and your decklist for the event.</p>
+            <p>Decks must be submitted via <a href="https://eternalwarcry.com/deck-builder" target="_blank">the Eternal Warcry deckbuilder</a>,
+                as a <strong>TOURNAMENT DECK</strong>. The deck must be saved. This ensures that the deck is not visible to other players
+                before the tournament starts and that the decklist cannot be changed during the event.</p>
+            <p><img class="rounded" src="@routes.Assets.at("images/static/TournamentDeck.png")" style="height: 300px;width: auto"></p>
+            <p>You must save your deck before submitting it. If the URL you submit has “deck-builder” in it, it’s not the correct URL.</p>
+            <p>If you want to change your list, you must leave the tournament and register again.</p>
+            <p>You can export your list from Eternal by going into the deck edit screen, then clicking the button below the deck name to go into the detailed view of the deck:</p>
+            <p><img class="rounded" src="@routes.Assets.at("images/static/detailed-view-button.png")" style="height: 300px;width: auto"></p>
+            <p>Once you’re in that view, click the export button in the top left portion of the screen. This will put the deck into your clipboard.</p>
+            <p>You are allowed to submit a 5 card market with your deck, if your deck contains at least 1 Merchant. Markets may not contain duplicate cards, nor may you have more than 5 cards between your market and main deck. If you built a market in game (which it is recommended you do) exporting the deck will also export the market.</p>
+        </div>
+    </div>
+}

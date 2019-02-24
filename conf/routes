@@ -47,5 +47,11 @@ POST        /import/tournament                                     controllers.A
 POST        /invalidate/cache                                      controllers.Application.invalidateCache
 POST        /cache/deck/name                                       controllers.Application.cacheDeckName
 
+GET         /how-to-register                                       controllers.Application.howToRegister
+GET         /day-of-tournament                                     controllers.Application.dayOfTournament
+GET         /tournament-calendar                                   controllers.Application.tournamentCalendar
+GET         /rules                                                 controllers.Application.rules
+GET         /invitational-tournaments                              controllers.Application.invitationalTournaments
+
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                          controllers.Assets.at(path="/public", file)

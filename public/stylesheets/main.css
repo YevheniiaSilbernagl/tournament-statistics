@@ -4,19 +4,17 @@ body {
 
 p {
     display: block;
-    text-indent: 0;
     padding-bottom: 0;
     margin-bottom: 0 !important;
+    text-indent: 50px !important;
 }
 
 .d-header {
-    text-indent: 0;
     padding-top: 15px;
     font-weight: bold;
 }
 
 .p-header {
-    text-indent: 0;
     padding-top: 15px;
     font-weight: bold;
 }
@@ -26,7 +24,6 @@ p {
     margin-bottom: 0 !important;
     border: 0 !important;
     display: block;
-    text-indent: 0;
 }
 
 .tournament-name {
@@ -84,11 +81,9 @@ p {
         margin-bottom: 0 !important;
         border: 0 !important;
         display: block;
-        text-indent: 0 !important;
     }
 
     .d-header {
-        text-indent: 0;
         padding-top: 15px;
         font-weight: bold;
         white-space: pre;
@@ -104,9 +99,9 @@ p {
 
     p {
         display: block;
-        text-indent: 0;
+        text-indent: 50px !important;
         padding-bottom: 0;
         margin-bottom: 0 !important;
-    }
 
+    }
 }

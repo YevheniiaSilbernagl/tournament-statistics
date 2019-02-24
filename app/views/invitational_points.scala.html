@@ -2,6 +2,24 @@
 @(tournament: Tournament, points: List[(String, Int, List[String])], authorized: Boolean)
 
 @main(tournament, "Invitational points", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="page-title">Invitational Points</h1>
+        <p>Invitational Points are a representation of how many tournament matches a player has won in the course of a given Season. They last only for the duration of the season, and are not tracked beyond that season. Record setting Invitational Point values are tracked as part of the Hall of Fame.</p>
+        <h3>Earning Invitational Points</h3>
+        <p>Winning a tournament <strong>match</strong>
+            at a Weekly Tournament awards that player with one Invitational Point. This is the <strong>only</strong>
+            way to earn Invitational Points. All matches are weighted the same – winning in the finals is the same as winning in the 0-5 bracket. Players can gain an unlimited number of points at each weekly tournament, limited only by the number of matches they play and win.</p>
+        <p>However, Invitational Points are tracked by tournament – your total Invitational Points earned in a single tournament are counted as a single “result”. Your four highest results make up your Invitational Point Total. Results beyond the four only count if they are higher – playing in four tournaments and getting 10, 5, 3, 2 points is the same as playing in eight tournaments and getting five points in each one – the total of your four highest results only will be counted. It is not possible to make your Invitational Point total go down by doing poorly in a tournament or missing one, so do your best at every tournament you attend and don’t worry about skipping a tournament or dropping. The system is designed such that you don’t need to do exceptional at every single tournament we run.</p>
+        <p>The current season’s Invitational Points are tracked and publicly visible on this page. Players are listed in descending order of Invitational Points.</p>
+        <p>Invitational points are earned only for the duration of the current season. At the start of a new season, all Invitational Points reset.</p>
+        <h3>Example Scenario</h3>
+        <p>Let’s say over the course of Season Two you went 5-2, 5-2, 4-3, 3-4, and 1-6 at five different tournaments. You earned 5, 5, 4, 3 and 1 point at each tournament, respectively. Your top 4 results combine to give you 17 points, and your other results are discarded.</p>
+        <h2>What are Invitational Points used for?</h2>
+        <h3>Qualifying for the Seasonal Invitational</h3>
+        <p>The primary purpose of Invitational Points is to qualify players for Season Invitationals. This is broken up into three separate invitation waves. First, the eight weekly winners will be invited, then the twenty four players with the highest points that have not already qualified will be invited, and finally, if players decline their invitations or otherwise cannot attend, additional players will be invited based on Invitational Points.</p>
+        <h3>End of Season Series Points</h3>
+        <p><a href="@routes.Application.seriesPoints()">Current standings</a></p>
+    </div>
     <table class="table table-striped table-hover" id="invitationalPointsTable">
         <thead>
             <tr>

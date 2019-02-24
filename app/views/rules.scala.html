@@ -1,0 +1,144 @@
+@import types.Tournament
+@(tournament: Tournament, authorized: Boolean)
+
+@main(tournament, "Official ETS Rules", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="page-title">Rules</h1>
+        <h1 id="officialTournamentRules">Official Tournament Rules</h1>
+        <h2>Deck Registration</h2>
+        <ul>
+            <li>Players must preregister one 75 card Eternal main deck and may also register a unique 5 card market. Decks must be legal for Eternal ranked play:
+                <ul>
+                    <li>No more than four copies of a single card may be included between main deck and market.</li>
+                    <li>You deck must meet Eternal power restrictions (minimum 1/3rd power, maximum 2/3rds power).</li>
+                    <li>Markets may not contain more than one copy of an individual card.</li>
+                    <li>Minimum deck size is 75 cards, maximum deck size is 150 cards.</li>
+                    <li>Your deck will not change after registration.</li>
+                    <li>Decks must be built on EternalWarcry, and be of the type Tournament in order to ensure both privacy and integrity.</li>
+                </ul>
+            </li>
+        </ul>
+        <h2 id="cardReleaseLegality">Card Legality</h2>
+        <p>Cards become legal for tournament play as soon as they are released the Eternal client. You must own all cards you register.</p>
+        <h2><strong>Card Bans</strong></h2>
+        <p>At the organizers discretion, they may deem it necessary to ban a card or card(s) from tournament play. <strong>Card bans will ONLY be used when there is a bug with the card that causes unintended behavior or gameplay problems, and the ban will be lifted as soon as hotfix is available.</strong>
+            For example, End of the Story killing units through Aegis without tribute active would be considered a bug worthy of a card ban (since the player can’t do anything about it). Casting Levitate without any targets would be considered an exploit (since the player has control of targeting).</p>
+        <p>There are four kinds of possible bans, and their effects:</p>
+        <ul>
+            <li><strong>Exploit Ban</strong>
+                – Cards are legal for tournament play, but there is a certain intentional player-triggered action that causes a bug. Triggering this bug is banned and will result in an infraction. Bugs that trigger without the player causing them to will not result in an infraction, though most cards of this type will receive a more severe ban. If playing a card normally is bugged with no special actions, playing a randomly generated card is not considered an exploit.</li>
+            <li><strong>Card Ban</strong>
+                – Announced at least 24 hours beforehand. Banned cards are not legal for tournament play and may not be registered. Generating banned cards (i.e. not in your decklist) is not an infraction, although banned cards are considered exploit banned as well.</li>
+            <li><strong>Emergency Card Ban (pretournament)</strong>
+                – Announced less than 24 hours before decklists close. Banned cards are not legal for tournament play and may not be registered. Players with illegal cards will be contacted and allowed to privately resubmit decklists (before check in begins) or exchange the banned card(s) for any other legal card (after check in).</li>
+            <li><strong>Emergency Card Ban (tournament)</strong>
+                – We really, really hope this doesn’t happen. Whatever happens will be at organizer discretion.</li>
+        </ul>
+        <h2>Spoiling The Stream</h2>
+        <p>Talking in chat while your feature match is in progress has been added to the list of infractions. We’ve received many, many complaints about players talking in twitch chat while their match is in progress on the stream, at the very least letting all and sundry know that this match is over within five minutes. In worse cases, they can spoil an exciting comeback, tease a topdeck, or just reveal that you’re stream sniping (having the stream playing during your feature match is considered stream sniping). We get it, you want to discuss the game/celebrate your win/bemoan your loss. That’s totally fine – just please please please wait until the match is over on stream as well as everywhere else.</p>
+        <h2 id="matches">Matches</h2>
+        <p>Individual matches are played in challenge games between the two players. <em>As there is no way to force Play / Draw, games are to be played as they lie when the challenge happens.</em></p>
+        <p>All matches in the Swiss portion of Weekly Tournaments and LCQs are Best of 3 Series. The Top 8 are Best of 5 Series.</p>
+        <p>Premiere level events use their own format and ruleset.</p>
+        <h2>Weekly Tournament Format</h2>
+        <ul>
+            <li><strong>Checking in: </strong>
+                Players who have registered for the event must check-in on the Battlefy page for the tournament in the 30 minutes before the event, or they will be considered not to be attending and dropped from the event. Players who are not checked in may not play in the tournament.</li>
+            <li>Pairings will be announced via a Battlefy bracket by the Tournament Organizer.</li>
+            <li><strong>Rounds: </strong>
+                The tournament organizer will publicly announce the start and end times of the round in the Discord server.</li>
+            <li>There are no draws allowed, intentional or otherwise. It is not possible to draw in game (ties are broken first by highest player health, then by most cards in deck, then the player who goes second wins)</li>
+            <li><strong>Time Limit:</strong> Once a round is announced, players will have 45 minutes to complete their matches.
+                <ul>
+                    <li>In the event of a round finishing before a match, the current game will be suspended. Both players should immediately stop play when time is called.</li>
+                    <li>If a player leads in the match (has won more games than the other player) and a game is still ongoing, the player currently leading wins the match.</li>
+                    <li>If the match is tied, a screenshot of the current gamestate will determine the winner, in the same manner as the game itself: The player with the highest life total will win, then the player with more cards left in their deck, then the player who went second in the game.</li>
+                    <li>If the series is tied and players are in-between games, a third game will be immediately played with the same deck configuration used for the previous game, and after 10 turns (eg., the second player’s fifth turn) have passed, a screenshot of the game is taken and the winner is determined in the manner described above.</li>
+                </ul>
+            </li>
+            <li><strong>Late Players:</strong>
+                If a player has not been contacted by their opponent within 5 minutes of a round starting or is not ready to play their game within 5 minutes of a round starting, contact the Tournament Organizer. The opponent will have 5 minutes from contacting the Tournament Organizer to be ready to play, and a game loss will be issued to the opponent. Players will proceed directly to game two. If they do not show up at all, they will be given a match loss and be removed from the tournament</li>
+            <li><strong>Disconnects: </strong>
+                Disconnects do happen, but a stable connection is an important part of tournament play. If your opponent disconnects, please notify the Tournament Organizer. If they are able to return within 5 minutes, the game may continue as normal. Otherwise, the player who has disconnected will lose the current game and have 5 minutes from the end of the game to return and continue the match, or you will be assigned a match loss and dropped from the tournament.</li>
+        </ul>
+        <h1 id="rulesViolations">Rules Violations</h1>
+        <p>Being disqualified from a tournament invalidates all the Invitational Points you would have gained from that tournament, but does not prevent you from playing in future tournaments. Tournament bans are permanent but may be reviewed&nbsp;at a later date.</p>
+        <p>We rely on the honor system for many of the aspect of our tournament system, and ask that you respect that by behaving reasonably and respectfully. It is our goal to provide everyone with the best tournament experience possible and will do what we can to provide it.</p>
+        <p>Penalties for rule violations (as written below) are as follows. We reserve the right to increase the level of your punishment in accordance with the severity of your actions.</p>
+        <ul>
+            <li>First offense: Warning from Tournament Organizer</li>
+            <li>Second offense: Match Loss</li>
+            <li>Third offense: Disqualified from the current tournament</li>
+            <li>Frequent or flagrant offenses: Ban from the Eternal Tournament Series</li>
+        </ul>
+        <p><strong>We reserve the right to give a match loss to, disqualify, or ban any player who we feel has intentionally attempted to exploit the system, even if they have not broken any rules currently listed here. We also reserve the right to make a final ruling that is different from ones listed below, if we feel that a different ruling will better fit the specific situation.<br>
+</strong>
+        </p>
+        <ul>
+            <li><strong>Deck Registration (Illegal Deck)</strong> – If a player registers a deck with an illegal deck or market configuration (too many copies of a card, too many sideboard cards, etc) they will be contacted to alter it if the error is found before decklists become public. If the error is found after decklists become public, the error will be rectified in the simplest way possible:
+                <ul>
+                    <li><strong>Too many Market cards:</strong>
+                        The player will play the first five legal market cards they registered.</li>
+                    <li><strong>Duplicate Market Cards:</strong> The duplicate cards will be removed.</li>
+                    <li><strong>More than 4 copies of a card between main deck and Market:</strong>
+                        The main deck copies are assumed to be correct. Copies beyond 4 will be removed.</li>
+                    <li><strong>Illegal Card:</strong>
+                        If a player registers a banned card or a card that doesn’t exist, that card will be removed from their decklist.</li>
+                    <li>If any of these modifications render a player’s main deck ineligible for ranked play, the cards will be replaced with basic sigils. If the violation is serious enough, that player is disqualified from the tournament.</li>
+                </ul>
+            </li>
+            <li><strong>Unregistered Card</strong>
+                – If you play or reveal a card in your deck that is not in your registered decklist (main or sideboard), you will receive a game loss. If you notice during the Mulligan phase / first turn, contact a TO, and take a screenshot of the card, a warning will be issued and the current game will be nullified and remade.</li>
+            <li><strong>Outside assistance </strong>
+                – Discussing an ongoing match is not allowed. Getting assistance for building decks and testing is fine, but any outside assistance during a match is out.</li>
+            <li><strong>Stream Sniping</strong>
+                – Watching or otherwise receiving information from the streamed broadcast of a player you are currently playing is a violation of the rules. Watching streamers during tournament rounds you are not playing them is fine! However, once the round begins and you learn your opponent, you must immediately leave their stream until the match is over. Simply muting it is not good enough. While this is difficult to find and enforce, if a player provides plausible proof that you are Stream Sniping, you will receive a warning. This is considered a flagrant offence and you will be permanently banned for multiple offenses. Streamers are encouraged to stream on delay to discourage this tactic.</li>
+            <li><strong>Immediate Concession </strong>
+                – Any match that you play, you must actually play the match! You cannot snap concede a round without dropping from the tournament. If you do so, you will be dropped from the tournament.</li>
+            <li><strong>Collusion/Prize Splitting/Match Fixing</strong>
+                – While weekly tournaments have no cash prizes, the lure of an Invitational Qualification is strong. If it is suspected that one player intentionally threw a match to assist another player, the matter will be investigated.</li>
+            <li><strong>Multiple Accounts</strong>
+                – Registering for a single tournament using multiple accounts is not permitted. It is also prohibited to play in a tournament using multiple accounts regardless of whose account they are and who registered them. If it’s discovered that you are playing on multiple accounts, you will be disqualified from the tournament and the incident will be investigated to determine if an ETS ban is necessary.</li>
+            <li><strong>False Identity</strong>
+                – You may not play a tournament match on an account that you do not personally own, to ensure that all results are attributed to the correct player. Violaters will be disqualified and investigated.</li>
+            <li><strong>Unsportsmanlike Conduct/Abuse</strong>
+                – Sometimes you win and sometimes you lose. You are allowed (indeed encouraged) to congratulate your opponent on the win and maybe share some lighthearted salt about unlucky/lucky draws, but please do not harass your opponents or other players. If you have been asked to stop, you’ve crossed the line and need to stop complaining. <strong>Never</strong>
+                call an opponent anything demeaning or inappropriate. They engaged you in a fair contest and you should respect that. If you feel that the contest was unfair (and I don’t mean unlucky) please consult the Tournament Organizer. This is considered a flagrant offense and you will be dropped and potentially banned after your first warning. Arguing with the TO after a final ruling has been called is considered Unsportsmanlike Conduct.</li>
+            <li><strong>BM</strong>
+                – BM is not in and of itself a rules violation. In moderation, such as torching your own face before making a lethal attack, it is harmless. However, excessive BM is exceedingly disrespectful towards your opponent and will not be tolerated. If frequent complaints about BM are made, your play will be investigated.</li>
+            <li><strong>Slow Play</strong>
+                – Yes, there are some difficult decisions to make, but you slow down the rest of the tournament. Complains of frequent slow play will result in an investigation. This also includes out-of-game slow play, such as taking an excessive amount of time to accept/send challenges. Players who take 3 or more minutes between games are considered to be playing slowly.</li>
+            <li><strong>Infinite Loops </strong>– There are a few Infinite Loop cases that may occur in the ETS, due to the reduced restrictions (eg, no time limit, no free card limit) on friendly matches in Eternal.
+                <ul>
+                    <li>An Infinite Loop that will eventually end the game, but will take a significant amount of time. For example, if you can infinitely reanimate and sacrifice an Umbren Reaper, but your opponent is at a very high amount of health, you may talk to a tournament organizer about spectating the game to verify that an infinite loop has been demonstrated to get a Game win.</li>
+                    <li>An Infinite Loop that can be voluntarily ended by player choices. If you are in an Infinite Loop that does not advance the game state that can be broken by player choice, you must do so. Not doing so is considered Slow Play and may result in being given a game loss.</li>
+                    <li>An Infinite Loop that cannot be voluntarily ended by player choices. If you are in an Infinite Loop that cannot be broken by any series of player choices and does not advance the game state, you will be given a game loss for that game.</li>
+                </ul>
+            </li>
+            <li><strong>Reasonable Limits</strong>
+                – If we suspect you have broken any laws during the course of a tournament, we reserve the right to disqualify you and/or investigate.</li>
+            <li><strong>False Report</strong>
+                – If you constantly report the incorrect match results, you will be investigated and potentially disqualified and/or banned. In the event of a match dispute, a screenshot of your profiles recent match history should reveal the winner.</li>
+            <li><strong>Tournament Organizer Discretion – </strong>
+                These rules are not meant to be an exhaustive description of all occurrences that may occur during an event. Tournament Organizers may make rulings about occurrences as they see fit, as they come up. Tournament Organizer rulings are final.</li>
+        </ul>
+        <h2 class="text-center">Weekly Tournament Specific Rules</h2>
+        <p><strong>Streaming</strong>
+            – Participants are encouraged to stream their matches! It is strongly recommended, but not required, that you use a stream delay of at least five minutes and do not read your chat during matches in order to prohibit stream sniping and backseat coaching/outside assistance. If the tournament organizer has cause to believe that infractions may be occurring, they will investigate and you may be asked to turn off your stream.</p>
+        <p>The official ETS stream has a 5 minute delay.</p>
+        <p><strong>Spectating</strong>
+            – Spectating at weekly events is allowed, but discouraged. You must stop streaming if asked to do so by a participant in the match you are spectating or the tournament organizer. Players are encouraged to keep spectating off during tournament matches. If the tournament organizer has cause to believe that infractions may be occurring, they will investigate.</p>
+        <h2 class="text-center">Premiere Tournament Specific Rules</h2>
+        <p><strong>Force Play Draw is now in effect at all Premiere Tournaments</strong>
+            – The player who lost the previous game in a match will start first in the next game. Not may start first, will start first – the player does not get a choice of play/draw. In order to facilitate this, it will sometimes be necessary to concede and rechallenge until the correct configuration is reached. This should always occur before redrawing. As soon as the technology to do this in client without concessions is available, it will be gratefully adopted.</p>
+        <p><strong>Streaming</strong>
+            – In the interest of providing the most competitive environment and avoid any cheating allegations, livestreaming Premiere tournaments is banned. Players are welcome to record your tournament play and use it anytime after that day of the tournament is complete. Streaming with delay is unfortunately also banned due to issues with detection and enforcement.</p>
+        <p><strong>Spectating</strong>
+            – Spectating a Premiere tournament match is banned, with the exception of the production crew for feature matches. Players are encouraged to have spectating disabled except during a feature match, for the same integrity reasons as above.</p>
+        <h1 id="bannedPlayers">Banned Players</h1>
+        <p><strong>The following accounts are banned from all tournaments run by RNG Eternal:</strong></p>
+        <ul>
+            <li>JacksonKnorr (banned in 2016 for Multiple Accounts)</li>
+        </ul>
+    </div>
+}

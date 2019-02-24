@@ -2,6 +2,23 @@
 @(tournament: Tournament, points: List[(String, Int)], authorized: Boolean)
 
 @main(tournament, "Community championship points", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="page-title text-center">2019 Community Championship</h1>
+        <p>The Community Championship is a sixteen person invite-only tournament that takes place over two days: <strong>
+            March 23 and 24, 2019</strong>
+            . The winner will receive an invitation to the <a href="https://www.direwolfdigital.com/news/eternal-world-championship-2019/" target="_blank">
+                Eternal World Championship 2019</a>
+            , where they will be representing the entire community tournament playerbase.</p>
+        <h2 class="text-center">How do I qualify?</h2>
+        <p>You qualify for the Community Championship by doing what you’re hopefully already doing – playing in the Eternal Tournament Series! Players who do well in the ETS are awarded <a href="@routes.Application.seriesPoints()">
+            Series Points</a>
+            as a numerical indication of their success. We will be tracking all Series Points awarded between now and the Community Championship under a separate “season,” the Community Championship Series Point Leaderboard. Everyone starts at zero – it’s how you do between now and the Championship that matters. After the 2019 Season One Invitational on March 9th and 10th, 2019, <strong>
+                the top sixteen (16) players on the Community Championship Series Point Leaderboard will be invited to participate in the event.</strong>
+            Ties will be broken by Eternal matches, as usual.</p>
+        <p class="text-center"><strong>There are no direct invites to the 2019 Community Championship.</strong></p>
+        <h3><em>
+            Series Points earned from the 2018 ETS World Championships DO NOT count towards the Community Championship Series Point Leaderboard.</em></h3>
+    </div>
     <table class="table table-striped table-hover" id="communityChampionshipPointsTable">
         <thead>
             <tr>

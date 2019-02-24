@@ -2,6 +2,40 @@
 @(tournament: Tournament, points: List[(String, (Int, Int))], authorized: Boolean)
 
 @main(tournament, "Series points", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="page-title">Series Points</h1>
+        <p>Series Points are a measure of a player’s tournament success throughout the year. Unlike Invitational Points, Series Points are earned for the duration of the year and do not reset Season to Season. Series Points are tracked both on an annual and a career basis, although career series points don’t mean anything and are just tracked for fun. Series Points earned during the year are used to invite players to the ETS World Championships and Worlds Wildcard. The player with the most Series Points at the end of the Year is awarded that year’s Player of the Year Title.</p>
+        <h1>Earning Series Points</h1>
+        <h2>Weekly Tournaments</h2>
+        <ul>
+            <li><strong>Winner: 4 Series Points</strong></li>
+            <li> <strong>Finalist: 3 Series Points</strong></li>
+            <li><strong>3rd/4th: 2 Series Points</strong></li>
+            <li> <strong>5th through 8th: 1 Series Point</strong></li>
+            <li><strong>Undefeated Swiss: 1 Series Point</strong></li>
+        </ul>
+        <p>Weekly events continue to grow in size, and winning one is harder than ever. Last year, many players reasonably complained that there was no difference between losing in Top 8 and not making Top 8 at all. Additionally, there was no Series Point difference to crushing the Swiss Portion and just scraping in on tiebreakers. In order to address these complaints, reduce the top heavy nature of the Series Point system, and increase the amount of Series Points overall, every player in Top 8 now gets at least 1 Series Point, with a bonus point for any player who is undefeated in the Swiss portion of the tournament (ends the swiss X-0).</p>
+        <h3>End of a Season, based on Inviational Points</h3>
+        <p>At the end of a season, players will be awarded Series Points based on how many Invitational points they have, relative to the field that season. These series points award players for doing well in multiple tournaments and help encourage players to push for high finishes even after they’ve already qualified for an Invitational.</p>
+        <ul>
+            <li>Players with the highest, second highest, or third highest Invitational Point totals (or tied for these totals) will earn 3 Series Points.</li>
+            <li>Players with the fourth highest or fifth highest Invitational Point totals (or tied for these totals) will earn 2 Series Points.</li>
+            <li>Players with the sixth highest Invitational Point total (or tied for it) will earn 1 Series Point.</li>
+        </ul>
+        <h3>Season Invitational</h3>
+        <ul>
+            <li><strong>1st: 12 Series Points</strong></li>
+            <li><strong>2nd: 10 Series Points</strong></li>
+            <li><strong>3rd/4th: 8 Series Points</strong></li>
+            <li><strong>5th through 8th: 6 Series Points</strong></li>
+            <li><strong>8th through 16th: 4 Series Points</strong></li>
+        </ul>
+        <p>Day 2 of an Invitational is 16 players, and all 16 now get Series Points. Invitational Winners receive automatic invitations to the World Championships, so the points are mostly there to indicate their landmark achievement.</p>
+        <h3>ETS World Championships</h3>
+        <p><strong><em>
+            The ETS World Championship ruleset, including Series Points awarded, has not yet been finalized.</em></strong></p>
+        <p>The winner of the ETS World Championships is crowned that year’s World Champion. In addition, the player with the most Series Points after the World Championships will be crowned that year’s Player of the Year.</p>
+    </div>
     <table class="table table-striped table-hover" id="seriesPointsTable">
         <thead>
             <tr>

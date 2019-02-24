@@ -77,7 +77,16 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
 
   def getTournament(battlefy_uuid: String): Tournament = {
     val t = getTournamentInfo(battlefy_uuid).get
-    Tournament(t.value("_id").as[String], t.value("name").as[String], DateTime.parse(t.value("startTime").as[String]), None, None)
+    Tournament(
+      t.value("_id").as[String],
+      t.value("name").as[String],
+      DateTime.parse(t.value("startTime").as[String]),
+      None,
+      None,
+      None,
+      checkInStarted = false,
+      registrationEnabled = t.value("registrationEnabled").as[Boolean],
+      Some(DateTime.parse(t.value("checkInStartTime").as[String])))
   }
 
   def getTournamentInfo(battlefy_uuid: String): Option[JsObject] = {
@@ -104,8 +113,10 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
       val id = tournament.\("_id").as[String]
       val name = tournament.\("name").as[String]
       val date = DateTime.parse(tournament.\("startTime").as[String])
-      val checkInStarted = tournament.\("checkInStartTime").toOption.map(v => DateTime.parse(v.as[String])).exists(_.isBeforeNow)
-      Tournament(id, name, date, None, checkInStarted = checkInStarted, event_type = None)
+      val checkInStartTime = tournament.\("checkInStartTime").toOption.map(v => DateTime.parse(v.as[String]))
+      val checkInStarted = checkInStartTime.exists(_.isBeforeNow)
+      val registrationEnabled = tournament.\("registrationEnabled").as[Boolean]
+      Tournament(id, name, date, None, checkInStarted = checkInStarted, event_type = None, registrationEnabled = registrationEnabled, checkInStartTime = checkInStartTime)
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
 

@@ -1,0 +1,36 @@
+@import types.Tournament
+@(tournament: Tournament, authorized: Boolean)
+
+@main(tournament, "On the Day Of Tournament", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="page-title">On the Day Of Tournament</h1>
+
+        <h2>To participate in the event, you’ll need to join the <a href="https://discord.gg/eternal" target="_blank">Eternal Discord Server</a>
+            . There are 3 channels on the Discord server pertaining to ETS events:</h2>
+        <p><img class="rounded" src="@routes.Assets.at("images/static/tournament-channels.png")" style="height: 100px;width: auto"></p>
+        <ul>
+            <li>#tournament-info is where the decklists and bracket for the current event can always be found.</li>
+            <li>#tournament-chat is a channel for discussion of the current event, upcoming events, and general conversation with other tournament participants. Have fun and chat with your foes!</li>
+            <li>#tournament-results is strictly for reporting the winner of a match, and announcing a drop from the event. Off-topic chat here will be removed, to make it easier for Tournament Organizers to easily follow results.</li>
+        </ul>
+        <p>Please ensure that you have read over the <a href="@routes.Application.rules()">Official Tournament Rules</a>
+            prior to the event starting.</p>
+        <h1>Checking In</h1>
+        <p>Starting in 2019, you are now required to check in via Discord prior to the tournament. 30 minutes prior to the tournament, ETS Check In Bot will post a message that will say something along the lines of “react to this message to check in”. Once you react to it, you will be checked in automatically. If there is a problem with your check in or registration, the bot will PM you what it is.</p>
+        <p>How to React: Click the little smily face/plus sign in the upper right corner of the message, then choose an emoji. Alternatively, click a reaction that is already there. For more information, check out the “Reactify” section on <a href="https://support.discordapp.com/hc/en-us/articles/207619737-Adding-Emoji-Magic" target="_blank">this page</a>
+            .</p>
+        <p><strong>Starting the Event:</strong>
+            Shortly before start time of the event, the event bracket and decklists for the event will be posted. While you are encouraged to look over the decks being played in the event and send a friend request to your opponent before the event starts, please <strong>do not</strong>
+            start playing your opponent until a Tournament Organizer has announced the start of the event in #tournament-chat and/or #tournament-results, as the bracket is subject to change until this time.</p>
+        <p>If you and your opponent are having trouble adding each other as friends, you should both restart your clients. Also, make sure one of you doesn’t have 100 people on your friend list, as that is the maximum capacity.</p>
+        <p><strong>Reporting Results:</strong>
+            Once the event has started, you may play your round 1 opponent. Once your match has completed, report the result in Battlefy. If you need to report your results in Discord, report them in #tournament-results, including your Eternal name (if different than your Discord name), your opponent’s name, and the match score: eg, “rekenner won 2-1 vs LightsOutAce” or “rekenner lost 0-2 vs NeonBlonde”.</p>
+        <p>While maximum round time is <strong>45 minutes</strong>
+            , the round finishes as soon as all match results have been reported. The round being over will be announced by a Tournament Organizer and there may be a short break between rounds. Again, please <strong>do not</strong>
+            start playing your next round opponent until a Tournament Organizer has announced as players may drop during this time and cause the bracket to change. A Tournament Organizer will announce the start of the next round.</p>
+        <p><strong>Top 8:</strong>
+            For events with Swiss rounds and a playoff, a Tournament Organizer will announce the Top 8 playoff competitors and post the playoff bracket.</p>
+        <p>On average, a 6 round Swiss event with a Top 8 playoff will take around <strong>5.5-6.5 hours</strong>
+            to complete, through the Finals.</p>
+    </div>
+}

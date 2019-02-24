@@ -34,12 +34,10 @@ package authentication {
     }
   }
 
-  class SecureView(db: DB) extends Secure(db) {
-    private val guestView = Results.Ok(views.html.guest_view())
-
+  class SecureView(db: DB, defaultResult: Result) extends Secure(db) {
     def filter[A](request: Request[A]): Future[Option[Result]] = {
       val result = request.headers.get("Authorization") filter authorized
-      Future.successful(if (result.isDefined) None else Some(guestView))
+      Future.successful(if (result.isDefined) None else Some(defaultResult))
     }
   }
 

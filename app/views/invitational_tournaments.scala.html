@@ -1,0 +1,42 @@
+@import types.Tournament
+@(tournament: Tournament, authorized: Boolean)
+
+@main(tournament, "Invitational Tournaments", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="page-title text-center">Invitational Tournaments</h1>
+        <p>Invitational Tournaments are Premiere Tournaments, which means that you can only play in one by qualifying. Invitational tournaments occur once per season, and are the final tournament of the season. As of 2018, there are four seasons per year.</p>
+        <h3>Qualifying for an Invitational Tournament</h3>
+        <p>Invitational tournaments invite players based on their results during the season the tournament is held in. There are eight weekly tournaments that help players demonstrate their ability and qualify for the Invitaitonal. The primary means of qualifying is via Invitational Points. Please see <a href="@routes.Application.invitationalPoints()">this page</a>
+            for more information.</p>
+        <p>Invitational tournaments invite 32 players to compete in them. Initially, players are invited via first wave invites, and give two days to confirm their attendance at the invitational. Any players who decline their invite will be replaced by the next highest ranked players via secondary invites. Primary invites come from the following sources:</p>
+        <ul>
+            <li>Eight (8) Weekly Winners</li>
+            <li>Twenty Four (24) players with the highest IP totals who have not already qualified</li>
+        </ul>
+        <h3>Weekly Winners</h3>
+        <p>The eight players who win a weekly tournament directly qualify for that season’s Invitational tournament, regardless of how many Invitational Points they have. A player can win multiple weekly tournaments, the extra invite they win will be filled via secondary invites.</p>
+        <h3>Highest Ranked Players</h3>
+        <p>Once the winners have been removed from the pool, the sixteen remaining players with the highest Invitational Point totals are invited.</p>
+        <h3>Secondary Invites</h3>
+        <p>Once all players have been invited, the missing players will be filled via secondary invites. All the qualified players will be removed from the pool, then the remaining players players with the highest point totals will be invited (as many as necessary).</p>
+        <h3>Tiebreakers</h3>
+        <p>Quite often, two or more players will have the same point total and tie for a points based invite. All tied players are ALWAYS invited together – often, enough players will decline their invites to make tie breakers unnecessary. In the event that we end up with more than 32 invited players, tied players will play tiebreak matches with their chosen Invitational decklists in order to determine who will play in the tournament. Tiebreakers will never be based on previous statistics.</p>
+        <h1 class="text-center">Tournament Format</h1>
+        <p>Invitational Tournaments are two day events that feature two tournament formats. On the first day, a modified Swiss tournament takes place with 32 players. On the second day, a single elimination tournament takes place with 16 players to determine the winner.</p>
+        <p>Tournaments use the same basic <a href="@routes.Application.rules()">ruleset</a> as all other ETS tournaments.</p>
+        <h3>Day 1 – Modified Swiss</h3>
+        <p>Day 1 is a 32 person, 7 round Swiss tournament with a modified rulest. In a regular Swiss tournament, players will play all 7 rounds. However, in this format, players are removed from the Swiss event once they reach either 4 wins or 4 losses (ties are not possible). If a player reaches 4 wins first, they qualify for Day 2. If a player reaches 4 losses first, they are eliminated from the tournament. Otherwise, the rules (including pairings) are the same as any other Swiss event.</p>
+        <h3>Day 2 – Top 16 Single Elimination</h3>
+        <p>On the second day, its down to the wire – players play in a single elimination tournament to determine the winner. Seeding is randomized and has no basis in Day 1 results. Once a player loses, they are eliminated.</p>
+        <h3>Prizing</h3>
+        <p>Premiere events always have cash prizes, as well as Series Point payouts. Cash prizes will vary from tournament to tournament, but Top 16 will always give players Series Points based on their final standings. Please see <a href="@routes.Application.seriesPoints()">the Series Points page</a>
+            for more details.</p>
+        <ul>
+            <li><strong>1st: 12 Series Points</strong></li>
+            <li><strong>2nd: 10 Series Points</strong></li>
+            <li><strong>3rd/4th: 8 Series Points</strong></li>
+            <li> <strong>5th through 8th: 6 Series Points</strong></li>
+            <li><strong>8th through 16th: 4 Series Points</strong></li>
+        </ul>
+    </div>
+}

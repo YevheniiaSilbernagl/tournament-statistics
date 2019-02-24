@@ -1,18 +1,98 @@
-<html>
-    @head("Welcome to ETS")
-<body>
-    <div class="container">
-        <div class="jumbotron">
-            <h1 class="display-4"><img src="@routes.Assets.at("images/favicon.png")" width="100" height="100">
-                ETS Tooling</h1>
-            <hr class="my-4">
-            <p><a href="@routes.Application.invitationalPoints">Invitational points</a></p>
-            <p><a href="@routes.Application.seriesPoints">Series points</a></p>
-            <p><a href="@routes.Application.communityChampionshipPoints">Community championship points</a></p>
-            <p><a href="@routes.Application.playersStats">Statistics</a>
-            <p><a href="@routes.Application.currentPairings()">Current pairings</a></p>
-            <p><a href="@routes.Application.login()" class="btn btn-primary" id="logIn">Sign in</a></p>
+@import types.Tournament
+@(tournament: Tournament, authorized: Boolean)
+
+@main(tournament, "ETS", authorized) {
+    <div class="jumbotron lead mr-1">
+        <h1 class="display-4 text-center"><img src="@routes.Assets.at("images/favicon.png")" width="100" height="100">
+            Eternal Tournament Series</h1>
+        @if(tournament.registrationEnabled) {
+            <p>Our next event is <strong>@{
+                tournament.name
+            }</strong>. You can register <a href="@{
+                tournament.battlefyLink("info")
+            }">here</a></p>
+        } else {
+            <p>Registrations for our next event are currently closed. Standings for the <strong>@{
+                tournament.name
+            }</strong> you can find
+                <a target="_blank" href="@{
+                    tournament.battlefyLink(tournament.currentStage.map(stage => s"stage/$stage/bracket/").getOrElse("info"))
+                }">here</a></p>
+        }
+        <p>Debuting in 2016,
+            we are a community organized and run tournament series for the Eternal Card Game.
+            We run free, open-registration events regularly on Saturday with Top 2 prizing provided by our sponsor,
+            <a href="https://www.inkedgaming.com/" target="_blank">Inked Gaming</a>! </p>
+        <p>In additional to any points or invites they may win, the player who comes in first place in a weekly
+            tournament will earn a $25 Inked Gaming gift card. Additionally, one lucky viewer will be chosen at
+            the end of round 3 every week to win a $10 Inked Gaming gift card! This will also mark the beginning of
+            ETS purchasable swag supplied by Inked Gaming, which will be rolled out in the next week or so.&nbsp;
+            Premiere tournaments have even more cool prizes to win (in addition to cash prizes).</p>
+
+        <div class="text-center">
+            <a href="https://www.inkedgaming.com/" target="_blank">
+                <img class="rounded img-thumbnail" src="@routes.Assets.at("images/static/InkedDiscountCode.png")" style="width: auto;
+                    height: 120px;">
+            </a>
         </div>
+
+        <p>We’ve also been sponsored by Dire Wolf Digital and selected as the community-run tournament organization
+            that will host the <a href="@routes.Application.communityChampionshipPoints()">2019 Community Championship</a>
+            !
+            The winner of this tournament will earn an invitation to
+            <a href="https://www.direwolfdigital.com/news/eternal-world-championship-2019/" target="_blank">
+                Dire Wolf Digital’s $100000 World Championships</a>
+            !</p>
+        <p>Along the way, participate in the ETS’ $1500 Invitational tournaments and attempt to qualify
+            for our own $5000 ETS World Championships!</p>
+        <div class="text-center">
+            <a href="https://www.direwolfdigital.com/news/eternal-world-championship-2019/" target="_blank">
+                <img class="img-fluid" style="width: 700px
+                    height: auto"
+                src="@routes.Assets.at("images/static/WorldChampionship-min.png")">
+            </a>
+        </div>
+        <hr class="my-4">
+
+        <h1 class="text-center">Key Dates</h1>
+        <p>In order to ensure we’ve got everything ready to go, we’ve scheduled out the next six months in full. Here are the dates you need to know.</p>
+        <ul>
+            <li><em>September 22: Season 4 Weekly Tournaments Begin</em></li>
+            <li><em>November 10: Season 4 Weekly Tournaments End</em></li>
+            <li><strong><span style="color: #0000ff;">November 17 and 18: Season 4 Invitational</span></strong></li>
+            <li><span style="color: #ff9900;"><strong>November 24 and 25: Worlds Wildcard</strong></span></li>
+            <li><span style="color: #339966;"><strong>
+                December 8, 9, 15, and 16: ETS World Championships</strong></span></li>
+            <li>December 29: Eye of Winter Classic III (as is tradition)</li>
+            <li><em>January 5: 2019 Season 1 Weekly Tournaments Begin</em></li>
+            <li><em>March 2: 2019 Season 1 Weekly Tournaments End</em></li>
+            <li><strong><span style="color: #0000ff;">March 9 and 10: 2019 Season 1 Invitational</span></strong></li>
+            <li><span style="color: #ff0000;"><strong>March 23 and 24: 2019 Community Championship</strong></span></li>
+        </ul>
+        <hr class="my-4">
+        @if(tournament.registrationEnabled) {
+            <h1 class="text-center">Tournament Information</h1>
+            <h2 class="text-center"><a target="_blank" href="@{
+                tournament.battlefyLink("info")
+            }">Register for the @{
+                tournament.name
+            }</a></h2>
+            <p>The registration deadline is 10 AM Eastern / 7 AM Pacific / 2 PM GMT on the day of, and the actual event starts at Noon Eastern / 9 AM Pacific / 4 PM GMT.</p>
+            <p>Being on the Discord ( <a href="https://discord.gg/eternal" target="_blank" rel="noopener">
+                https://discord.gg/eternal</a>
+                ) is required to participate in events!</p>
+            <p>If this will be your first ETS, please review the <a href="@routes.Application.rules">Rules</a>
+                and our guides on <a href="@routes.Application.howToRegister">How to Register</a>
+                and what to expect <a href="@routes.Application.dayOfTournament">On The Day of the Event</a>
+                .</p>
+            <p>And if you can’t participate, we broadcast our events on our <a href="https://www.twitch.tv/eternaltournamentseries" target="_blank">
+                Twitch channel, https://www.twitch.tv/eternaltournamentseries</a></p>
+        } else {
+            <h2 class="text-center">Latest tournament results <a target="_blank" href="@{
+                tournament.battlefyLink(tournament.currentStage.map(stage => s"stage/$stage/bracket/").getOrElse("info"))
+            }">@{
+                tournament.name
+            }</a></h2>
+        }
     </div>
-</body>
-</html>
+}

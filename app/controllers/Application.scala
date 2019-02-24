@@ -25,12 +25,15 @@ class Application @Inject()(
                              discord: Discord,
                              cache: Cache
                            ) extends Controller {
-  private val SecureView = new SecureView(db)
+  def guestView = views.html.guest_view(battlefy.getCurrentTournament.copy(currentStage = battlefy.currentStageId), authorized = false)
+
+  private val SecureView = new SecureView(db, Results.Ok(guestView))
   private val SecureBackEnd = new SecureBackEnd(db)
 
   def login = Action { request: Request[AnyContent] =>
     if (SecureBackEnd.isAuthorized(request)) Redirect("/")
-    else Unauthorized(views.html.guest_view()).withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized")
+    else Unauthorized(guestView)
+      .withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized")
   }
 
   def invalidateCache: Action[AnyContent] = Action {
@@ -38,9 +41,12 @@ class Application @Inject()(
     Ok("")
   }
 
-  def logout = Action(Unauthorized(views.html.guest_view()).withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized"))
+  def logout = Action(Unauthorized(guestView)
+    .withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized"))
 
-  def index = SecureView(Ok(views.html.index(battlefy.getCurrentTournament, authorized = true)))
+  def index = SecureView {
+    Ok(views.html.index(battlefy.getCurrentTournament, authorized = true))
+  }
 
   def validateDeck(url: String) = SecureBackEnd {
     try {
@@ -67,21 +73,25 @@ class Application @Inject()(
 
   def currentPairings = Action { request =>
     val tournament = battlefy.getCurrentTournament
-    val players = battlefy.listOfPlayers(tournament.battlefy_id)
-    val games = battlefy.games(tournament.battlefy_id).map { r =>
-      val participant_a_id = db.getPlayerId(r._1).getOrElse(-1)
-      val participant_b_id = db.getPlayerId(r._2).getOrElse(-1)
-      Score(if (r._3 > r._4) participant_a_id else participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
-    }
-    val opponents = battlefy.currentOpponents.map(oo =>
-      (oo._1.map(o => (o,
-        games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
-        players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))),
-        oo._2.map(o => (o,
+    if (db.existsTournament(tournament.battlefy_id)) {
+      Ok(views.html.current_pairings(tournament, List(), SecureView.isAuthorized(request)))
+    } else {
+      val players = battlefy.listOfPlayers(tournament.battlefy_id)
+      val games = battlefy.games(tournament.battlefy_id).map { r =>
+        val participant_a_id = db.getPlayerId(r._1).getOrElse(-1)
+        val participant_b_id = db.getPlayerId(r._2).getOrElse(-1)
+        Score(if (r._3 > r._4) participant_a_id else participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
+      }
+      val opponents = battlefy.currentOpponents.map(oo =>
+        (oo._1.map(o => (o,
           games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
-          players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse("")))))
-      .sortBy(oo => oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0)).reverse
-    Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
+          players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))),
+          oo._2.map(o => (o,
+            games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
+            players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse("")))))
+        .sortBy(oo => oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0)).reverse
+      Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
+    }
   }
 
   def sendMessageToAllPlayers(message: String) = SecureBackEnd {
@@ -334,7 +344,7 @@ class Application @Inject()(
     val currentRound = battlefy.currentRound
     val currentRoundGames = games
       .filter(game => currentRound.map(_._1).contains(game.round))
-      .filter(game =>currentRound.map(_._2).contains(game.bracket_name))
+      .filter(game => currentRound.map(_._2).contains(game.bracket_name))
 
     def updatePoints(res: (String, Int)): (String, Int, Int) = {
       if (games.nonEmpty || currentPlayers.contains(res._1)) {
@@ -343,7 +353,7 @@ class Application @Inject()(
         val previouslyPlayed = gamesPlayed.filter { score =>
           currentRound match {
             case None => false
-            case Some((round, bracket)) if round == 1 && bracket == "elimination" => score.bracket_name == "swiss"//todo  && currentRoundGames.isEmpty
+            case Some((round, bracket)) if round == 1 && bracket == "elimination" => score.bracket_name == "swiss" //todo  && currentRoundGames.isEmpty
             case Some((round, bracket)) if round == 1 && bracket == "swiss" => false
             case Some((round, bracket)) => score.bracket_name == bracket && score.round == round - 1
           }
@@ -506,11 +516,31 @@ class Application @Inject()(
       Ok(views.html.invitational_points(battlefy.getCurrentTournament, points, SecureView.isAuthorized(request)))
   }
 
-  def customListOfCards = Action {
+  def customListOfCards = SecureView {
     Ok(views.html.custom_card_list(battlefy.getCurrentTournament))
   }
 
-  def tournamentImport = Action {
+  def tournamentImport = SecureView {
     Ok(views.html.tournament_import(battlefy.getCurrentTournament))
+  }
+
+  def howToRegister = Action {
+    request => Ok(views.html.how_to_register(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+  }
+
+  def dayOfTournament = Action {
+    request => Ok(views.html.day_of_tournament(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+  }
+
+  def tournamentCalendar = Action {
+    request => Ok(views.html.tournament_calendar(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+  }
+
+  def rules = Action {
+    request => Ok(views.html.rules(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+  }
+
+  def invitationalTournaments = Action {
+    request => Ok(views.html.invitational_tournaments(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
   }
 }

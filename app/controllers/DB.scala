@@ -53,10 +53,21 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
            |  JOIN match m ON (part.id = m.participant_a_id OR part.id = m.participant_b_id)
            |ORDER BY tournament_date""".stripMargin)
       while (rs.next()) {
+        val tournamentDate = DateTime.parse(rs.getString("tournament_date"))
         tournaments.+=((
           rs.getInt("player_id"),
           rs.getString("player_name"),
-          Tournament(rs.getString("battlefy_uuid"), rs.getString("tournament_name"), DateTime.parse(rs.getString("tournament_date")), Option(rs.getInt("tournament_season")), Option(rs.getString("tournament_type")), Some(rs.getInt("tournament_id"))),
+          Tournament(
+            rs.getString("battlefy_uuid"),
+            rs.getString("tournament_name"),
+            tournamentDate,
+            Option(rs.getInt("tournament_season")),
+            Option(rs.getString("tournament_type")),
+            Some(rs.getInt("tournament_id")),
+            checkInStarted = false,
+            registrationEnabled = false,
+            Some(tournamentDate)
+          ),
           Score(
             rs.getInt("participant_id"),
             rs.getInt("participant_a_id"),
@@ -474,8 +485,19 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
            |ORDER BY tournament_date""".stripMargin)
       while (rs.next()) {
         name = rs.getString("player_name")
+        val tournamentDate = DateTime.parse(rs.getString("tournament_date"))
         tournaments.+=((
-          Tournament(rs.getString("battlefy_uuid"), rs.getString("tournament_name"), DateTime.parse(rs.getString("tournament_date")), Option(rs.getInt("tournament_season")), Option(rs.getString("tournament_type")), Some(rs.getInt("tournament_id"))),
+          Tournament(
+            rs.getString("battlefy_uuid"),
+            rs.getString("tournament_name"),
+            tournamentDate,
+            Option(rs.getInt("tournament_season")),
+            Option(rs.getString("tournament_type")),
+            Some(rs.getInt("tournament_id")),
+            checkInStarted = false,
+            registrationEnabled = false,
+            Some(tournamentDate)
+          ),
           Score(
             rs.getInt("participant_id"),
             rs.getInt("participant_a_id"),
