@@ -19,38 +19,53 @@
                     tournament.battlefyLink(tournament.currentStage.map(stage => s"stage/$stage/bracket/").getOrElse("info"))
                 }">here</a></p>
         }
-        <p>Debuting in 2016,
-            we are a community organized and run tournament series for the Eternal Card Game.
-            We run free, open-registration events regularly on Saturday with Top 2 prizing provided by our sponsor,
-            <a href="https://www.inkedgaming.com/" target="_blank">Inked Gaming</a>! </p>
-        <p>In additional to any points or invites they may win, the player who comes in first place in a weekly
-            tournament will earn a $25 Inked Gaming gift card. Additionally, one lucky viewer will be chosen at
-            the end of round 3 every week to win a $10 Inked Gaming gift card! This will also mark the beginning of
-            ETS purchasable swag supplied by Inked Gaming, which will be rolled out in the next week or so.&nbsp;
-            Premiere tournaments have even more cool prizes to win (in addition to cash prizes).</p>
-
-        <div class="text-center">
-            <a href="https://www.inkedgaming.com/" target="_blank">
-                <img class="rounded img-thumbnail" src="@routes.Assets.at("images/static/InkedDiscountCode.png")" style="width: auto;
-                    height: 120px;">
-            </a>
+        <div class="row">
+            <div class="col-lg">
+                <div class="card">
+                    <div class="card-body">
+                        <p><a href="https://www.inkedgaming.com/" target="_blank">
+                            <img class="rounded img-thumbnail" src="@routes.Assets.at("images/static/InkedDiscountCode.png")" style="float: right;width: auto; height: 120px;">
+                        </a>Debuting in 2016,
+                            we are a community organized and run tournament series for the Eternal Card Game.
+                            We run free, open-registration events regularly on Saturday with Top 2 prizing provided by our sponsor,
+                            <a href="https://www.inkedgaming.com/" target="_blank">Inked Gaming</a>! </p>
+                        <p>In additional to any points or invites they may win, the player who comes in first place in a weekly
+                            tournament will earn a $25 Inked Gaming gift card. Additionally, one lucky viewer will be chosen at
+                            the end of round 3 every week to win a $10 Inked Gaming gift card! This will also mark the beginning of
+                            ETS purchasable swag supplied by Inked Gaming, which will be rolled out in the next week or so.&nbsp;
+                            Premiere tournaments have even more cool prizes to win (in addition to cash prizes).</p>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <p>We’ve also been sponsored by Dire Wolf Digital and selected as the community-run tournament organization
-            that will host the <a href="@routes.Application.communityChampionshipPoints()">2019 Community Championship</a>
-            !
-            The winner of this tournament will earn an invitation to
-            <a href="https://www.direwolfdigital.com/news/eternal-world-championship-2019/" target="_blank">
-                Dire Wolf Digital’s $100000 World Championships</a>
-            !</p>
-        <p>Along the way, participate in the ETS’ $1500 Invitational tournaments and attempt to qualify
-            for our own $5000 ETS World Championships!</p>
-        <div class="text-center">
-            <a href="https://www.direwolfdigital.com/news/eternal-world-championship-2019/" target="_blank">
-                <img class="img-fluid" style="width: 700px
-                    height: auto"
-                src="@routes.Assets.at("images/static/WorldChampionship-min.png")">
-            </a>
+        <hr class="my-4">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <p>We’ve also been sponsored by Dire Wolf Digital and selected as the community-run tournament organization
+                            that will host the <a href="@routes.Application.communityChampionshipPoints()">2019 Community Championship</a>
+                            !
+                            The winner of this tournament will earn an invitation to
+                            <a href="https://www.direwolfdigital.com/news/eternal-world-championship-2019/" target="_blank">
+                                Dire Wolf Digital’s $100000 World Championships</a>
+                            !</p>
+                        <p>Along the way, participate in the ETS’ $1500 Invitational tournaments and attempt to qualify
+                            for our own $5000 ETS World Championships!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <a href="https://www.direwolfdigital.com/news/eternal-world-championship-2019/" target="_blank">
+                            <img class="img-fluid" style="width: 700px
+                                height: auto"
+                            src="@routes.Assets.at("images/static/WorldChampionship-min.png")">
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
         <hr class="my-4">
 
