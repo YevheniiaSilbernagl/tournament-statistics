@@ -1,5 +1,5 @@
 @import types.Tournament
-@(tournament: Tournament, tournamentId: String, opponents: List[(Option[String], Option[String])])
+@(tournament: Tournament, opponents: List[(Option[String], Option[String])])
 
 @main(tournament, "Current round streaming resources", authorized = true) {
     <div class="container content">

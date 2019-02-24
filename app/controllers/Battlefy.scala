@@ -126,13 +126,13 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
       (tournament \ "stages").as[JsArray].value.toList.par.flatMap { stage =>
         val s_id = (stage \ "_id").as[String]
         val stageType = (stage \ "bracket" \ "type").as[String]
-        stageInfo(s_id).value.toList.map { game =>
+        stageInfo(s_id).value.toList.filter(game => (game \ "top" \ "team").toOption.isDefined).map { game =>
           val roundNumber = (game \ "roundNumber").as[JsNumber].value.intValue()
           val player1Name = (game \ "top" \ "team" \ "name").as[String]
           val (player1Score, player2Name, player2Score) = if ((game \ "isBye").as[Boolean]) (2, Battlefy.BYE, 0) else (
-            (game \ "top" \ "score").as[JsNumber].value.intValue(),
+            (game \ "top" \ "score").toOption.map(_.as[JsNumber].value.intValue()).getOrElse(0),
             (game \ "bottom" \ "team" \ "name").as[String],
-            (game \ "bottom" \ "score").as[JsNumber].value.intValue()
+            (game \ "bottom" \ "score").toOption.map(_.as[JsNumber].value.intValue()).getOrElse(0)
           )
           (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
         }

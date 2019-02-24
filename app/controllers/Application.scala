@@ -10,7 +10,8 @@ import play.api.libs.json._
 import play.api.mvc._
 import types.{Deck, Score}
 
-import scala.language.implicitConversions
+import scala.concurrent.duration._
+import scala.language.{implicitConversions, postfixOps}
 import scala.util.control.NonFatal
 
 class Application @Inject()(
@@ -48,6 +49,39 @@ class Application @Inject()(
     } catch {
       case NonFatal(e) => Ok(Json.obj("valid" -> false, "messages" -> Json.arr(e.getMessage)))
     }
+  }
+
+  def cacheDeckName: Action[AnyContent] = Action {
+    request =>
+      request.body.asJson match {
+        case Some((json: JsObject)) =>
+          try {
+            cache.put(json.value("link").as[String] + "_deck_name", json.value("name").as[String], 30 days)
+          } catch {
+            case NonFatal(e) =>
+          }
+          Ok("")
+        case _ => BadRequest("not a json")
+      }
+  }
+
+  def currentPairings = Action { request =>
+    val tournament = battlefy.getCurrentTournament
+    val players = battlefy.listOfPlayers(tournament.battlefy_id)
+    val games = battlefy.games(tournament.battlefy_id).map { r =>
+      val participant_a_id = db.getPlayerId(r._1).getOrElse(-1)
+      val participant_b_id = db.getPlayerId(r._2).getOrElse(-1)
+      Score(if (r._3 > r._4) participant_a_id else participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
+    }
+    val opponents = battlefy.currentOpponents.map(oo =>
+      (oo._1.map(o => (o,
+        games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
+        players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))),
+        oo._2.map(o => (o,
+          games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
+          players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse("")))))
+      .sortBy(oo => oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0)).reverse
+    Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
   }
 
   def sendMessageToAllPlayers(message: String) = SecureBackEnd {
@@ -160,8 +194,7 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
-  def streaming = SecureView(Ok(views.html.streaming(battlefy.getCurrentTournament,
-    battlefy.getCurrentTournament.battlefy_id, battlefy.currentOpponents)))
+  def streaming = SecureView(Ok(views.html.streaming(battlefy.getCurrentTournament, battlefy.currentOpponents)))
 
   def casters = SecureView(Ok(views.html.casters_panel(battlefy.getCurrentTournament)))
 
@@ -229,7 +262,7 @@ class Application @Inject()(
       val participant_a_id = db.getPlayerId(r._1).getOrElse(-1)
       val participant_b_id = db.getPlayerId(r._2).getOrElse(-1)
       Score(if (r._3 > r._4) participant_a_id else participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
-    }
+    }.filterNot(s => s.participant_a_score == 0 && s.participant_b_score == 0)
     val currentPlayers = listOfGames.flatMap(g => List(g._1, g._2)).distinct
     val currentRound = battlefy.currentRound
 
@@ -251,15 +284,15 @@ class Application @Inject()(
       }
     }
 
-    val points = db.invitationalPointsForCurrentSeason.map(updatePoints).sortBy(r => r._2 + r._3).reverse
+    val points = db.invitationalPointsForCurrentSeason.map(updatePoints).sortBy(r => (r._2 + r._3, r._1.toLowerCase)).reverse
 
-    val winners = points.filter(_._4.nonEmpty).sortBy(_._1.toLowerCase)
+    val winners = points.filter(_._4.nonEmpty)
     val qualified = points.filter(_._4.isEmpty)
     val top = qualified.take(32 - winners.size)
     val alsoQualify = points
       .filterNot(p => winners.contains(p) || top.contains(p))
-      .filter(p => p._2 == top.last._2)
-    val allQualified = (top ++ alsoQualify).sortBy(p => (top.head._2 - p._2, p._1.toLowerCase))
+      .filter(p => (p._2 + p._3) == (top.last._2 + top.last._3))
+    val allQualified = top ++ alsoQualify
     val havePotential = qualified.drop(allQualified.size)
       .filter(r => (r._2 + r._3) >= (top.map(r1 => r1._2 + r1._3).min - 2)).filter(p => currentPlayers.contains(p._1))
     val file = graphics.invitationalPoints(winners ++ allQualified, currentPlayers, havePotential)
@@ -296,9 +329,12 @@ class Application @Inject()(
       val participant_a_id = db.getPlayerId(r._1).getOrElse(-1)
       val participant_b_id = db.getPlayerId(r._2).getOrElse(-1)
       Score(if (r._3 > r._4) participant_a_id else participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
-    }
+    }.filterNot(s => s.participant_a_score == 0 && s.participant_b_score == 0)
     val currentPlayers = listOfGames.flatMap(g => List(g._1, g._2)).distinct
     val currentRound = battlefy.currentRound
+    val currentRoundGames = games
+      .filter(game => currentRound.map(_._1).contains(game.round))
+      .filter(game =>currentRound.map(_._2).contains(game.bracket_name))
 
     def updatePoints(res: (String, Int)): (String, Int, Int) = {
       if (games.nonEmpty || currentPlayers.contains(res._1)) {
@@ -307,7 +343,7 @@ class Application @Inject()(
         val previouslyPlayed = gamesPlayed.filter { score =>
           currentRound match {
             case None => false
-            case Some((round, bracket)) if round == 1 && bracket == "elimination" => score.bracket_name == "swiss"
+            case Some((round, bracket)) if round == 1 && bracket == "elimination" => score.bracket_name == "swiss"//todo  && currentRoundGames.isEmpty
             case Some((round, bracket)) if round == 1 && bracket == "swiss" => false
             case Some((round, bracket)) => score.bracket_name == bracket && score.round == round - 1
           }
@@ -321,16 +357,15 @@ class Application @Inject()(
       }
     }
 
-    val points = db.communityChampionshipPointsResults.map(updatePoints).sortBy(r => r._2 + r._3).reverse
+    val points = db.communityChampionshipPointsResults.map(updatePoints).sortBy(r => (r._2 + r._3, r._1.toLowerCase)).reverse
 
     val qualified = points.take(16)
-    val alsoQualified = points.filterNot(p => qualified.contains(p)).filter(r => (r._2 + r._3) == (qualified.last._2 + qualified.last._3))
+    val alsoQualified = points.filterNot(p => qualified.contains(p))
+      .filter(r => (r._2 + r._3) == (qualified.last._2 + qualified.last._3))
     val allQualified = qualified ++ alsoQualified
     val havePotential = points.drop(allQualified.size)
       .filter(r => (r._2 + r._3) >= ((allQualified.last._2 + allQualified.last._3) - 2))
       .filter(p => currentPlayers.contains(p._1))
-      .sortBy(r => ((qualified.last._2 + qualified.last._3) - (r._2 + r._3), r._1.toLowerCase))
-
 
     val file = graphics.communityChampionshipPoints(
       allQualified,
@@ -351,7 +386,7 @@ class Application @Inject()(
     Ok(Json.obj("opponents" -> info.flatten.map(
       player =>
         if (player._2.isDefined)
-          Json.obj("name" -> player._1, "deck" -> player._2.map(deck => Json.obj("name" -> deck.archetype, "url" -> deck.link, "list" -> deck.eternalFormat.mkString("\n"))).get)
+          Json.obj("name" -> player._1, "deck" -> player._2.map(deck => Json.obj("name" -> deck.name, "url" -> deck.link, "list" -> deck.eternalFormat.mkString("\n"))).get)
         else Json.obj("name" -> player._1)
     )))
   }

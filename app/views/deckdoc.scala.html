@@ -12,9 +12,9 @@
                     <nav class="navbar navbar-light bg-light">
                         <div class="row container-fluid">
                             <div class="col-lg-10 justify-content-start">
-                                <div class="player-name">
+                                <div class="player-name"  deck-link="@{deck.link}">
                                     <p class="h5 p-header">
-                                        <a target="_blank" href="@routes.Application.playerStats(None, Option(player._1))">@{if(player._1.contains("+")) player._1.substring(0, player._1.indexOf("+"))else player._1}</a> - @{deck.archetype.getOrElse(deck.name)}
+        <a target="_blank" href="@routes.Application.playerStats(None, Option(player._1))">@{if(player._1.contains("+")) player._1.substring(0, player._1.indexOf("+"))else player._1}</a> - <p class="p-header deck-name">@{deck.name}</p>
                                     </p>
                                 </div>
                             </div>

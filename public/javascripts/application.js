@@ -196,7 +196,7 @@ jQuery(window).ready(function () {
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-right?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-dark generate-right noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Handcam(right)</a>\n' +
                         '                               <input type="radio" name="maincam" class="' + opponent.name.replace("+", "_").replace(" ", "_") + '"> Main cam' +
                         '                           </div>\n' +
-                        '                           <div><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
+                        '                           <div deck-link="' + opponent.deck.url + '"><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
                         '                           <pre data-spy="scroll" style="height: 15pc">' + opponent.deck.list + '</pre>\n' +
                         '                        </div>\n' +
                         '                    </td>\n';
@@ -231,6 +231,8 @@ jQuery(window).ready(function () {
             $(editField).remove();
             $(parent).append('<p class="p-header deck-name">' + currentText + '</p>');
             refresh_links();
+            var dn = $(deckDiv).find(".deck-name");
+            cache_deck_name(dn.text(), dn.parent().attr("deck-link"));
         }
     }
 
@@ -253,6 +255,19 @@ jQuery(window).ready(function () {
             opponentId += 1;
         });
         $('#generate-panel').attr("href", generatedUrl);
+    }
+
+    function cache_deck_name(deckName, deckLink) {
+        $.ajax({
+            type: "POST",
+            url: "/cache/deck/name",
+            data: JSON.stringify({
+                link: deckLink,
+                name: deckName
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json"
+        });
     }
 
     function refresh_links() {

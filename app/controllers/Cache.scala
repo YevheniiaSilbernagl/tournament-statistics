@@ -35,14 +35,16 @@ class Cache @Inject()(config: Configuration) extends Controller {
 
   def get[T](key: String): Option[T] =
     try {
-      Option(mc.get[T](key))
+      Option(mc.get[T](normalize(key)))
     }
     catch {
       case NonFatal(e) => None
     }
 
+  def normalize(key: String): String = key.replaceAll("\\/:", "_")
+
   def put(key: String, value: AnyRef, duration: FiniteDuration): Unit = {
-    mc.set(key, duration.toSeconds.intValue(), value)
+    mc.set(normalize(key), duration.toSeconds.intValue(), value)
   }
 
   def delete(key: String): Unit = {
