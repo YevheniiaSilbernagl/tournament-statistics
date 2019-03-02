@@ -89,7 +89,7 @@ class Application @Inject()(
           oo._2.map(o => (o,
             games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
             players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse("")))))
-        .sortBy(oo => oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0)).reverse
+        .sortBy(oo => (oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0), oo._2.isDefined)).reverse
       Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
     }
   }
