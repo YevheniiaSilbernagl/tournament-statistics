@@ -10,7 +10,7 @@
                 <tr>
                     @if(opponent._1.isDefined) {
                         <td class="text-right">@opponent._1.get._3</td>
-                        <td class="text-right">@opponent._1.get._1</td>
+                        <td class="text-right font-weight-bold">@opponent._1.get._1</td>
                     } else {
                         <td></td>
                         <td></td>
@@ -22,7 +22,7 @@
                         opponent._2.map(_._2).getOrElse("")
                     }</td>
                     @if(opponent._2.isDefined) {
-                        <td>@opponent._2.get._1</td>
+                        <td class="font-weight-bold">@opponent._2.get._1</td>
                         <td>@opponent._2.get._3</td>
                     } else {
                         <td>Bye</td>
