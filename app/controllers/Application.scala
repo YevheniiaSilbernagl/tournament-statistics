@@ -8,7 +8,7 @@ import javax.inject.Inject
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
-import types.{Deck, Score}
+import types.{Deck, Score, Score_}
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
@@ -78,19 +78,17 @@ class Application @Inject()(
     } else {
       val players = battlefy.listOfPlayers(tournament.battlefy_id)
       val games = battlefy.games(tournament.battlefy_id).flatMap { r =>
-        val participant_a_id = db.getPlayerId(r._1).getOrElse(-1)
-        val participant_b_id = db.getPlayerId(r._2).getOrElse(-1)
         List(
-          Score(participant_a_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6),
-          Score(participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
+          Score_(r._1, r._1, r._2, r._3, r._4, r._5, r._6),
+          Score_(r._2, r._1, r._2, r._3, r._4, r._5, r._6)
         )
       }
       val opponents = battlefy.currentOpponents.map(oo =>
         (oo._1.map(o => (o,
-          games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
+          games.filter(p => o == p.current_player_name).count(_.isWinner),
           players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))),
           oo._2.map(o => (o,
-            games.filter(p => db.getPlayerId(o).contains(p.current_player_id)).count(_.isWinner),
+            games.filter(p => o == p.current_player_name).count(_.isWinner),
             players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse("")))))
         .sortBy(oo => (oo._2.isDefined, oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0))).reverse
       Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
@@ -268,6 +266,7 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
+  @Deprecated
   def invitationalPointsSceneOnlineUpdate: Action[AnyContent] = SecureBackEnd {
     val battlefyUuid = battlefy.getCurrentTournament.battlefy_id
     val listOfGames = if (db.existsTournament(battlefyUuid)) List.empty else battlefy.games(battlefyUuid)
@@ -335,6 +334,7 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
+  @Deprecated
   def communityChampionshipPointsSceneOnlineUpdate: Action[AnyContent] = SecureBackEnd {
     val battlefyUuid = battlefy.getCurrentTournament.battlefy_id
     val listOfGames = if (db.existsTournament(battlefyUuid)) List.empty else battlefy.games(battlefyUuid)
