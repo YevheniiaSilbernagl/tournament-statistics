@@ -77,10 +77,13 @@ class Application @Inject()(
       Ok(views.html.current_pairings(tournament, List(), SecureView.isAuthorized(request)))
     } else {
       val players = battlefy.listOfPlayers(tournament.battlefy_id)
-      val games = battlefy.games(tournament.battlefy_id).map { r =>
+      val games = battlefy.games(tournament.battlefy_id).flatMap { r =>
         val participant_a_id = db.getPlayerId(r._1).getOrElse(-1)
         val participant_b_id = db.getPlayerId(r._2).getOrElse(-1)
-        Score(if (r._3 > r._4) participant_a_id else participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
+        List(
+          Score(participant_a_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6),
+          Score(participant_b_id, participant_a_id, participant_b_id, r._3, r._4, r._5, r._6)
+        )
       }
       val opponents = battlefy.currentOpponents.map(oo =>
         (oo._1.map(o => (o,
