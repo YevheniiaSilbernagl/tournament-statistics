@@ -142,7 +142,7 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
           val player1Name = (game \ "top" \ "team" \ "name").as[String]
           val (player1Score, player2Name, player2Score) = if ((game \ "isBye").as[Boolean]) (2, Battlefy.BYE, 0) else (
             (game \ "top" \ "score").toOption.map(_.as[JsNumber].value.intValue()).getOrElse(0),
-            (game \ "bottom" \ "team" \ "name").as[String],
+            (game \ "bottom" \\ "team").headOption.map( o => (o \ "name").as[String]).getOrElse(""),
             (game \ "bottom" \ "score").toOption.map(_.as[JsNumber].value.intValue()).getOrElse(0)
           )
           (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
