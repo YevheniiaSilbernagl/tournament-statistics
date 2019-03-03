@@ -5,6 +5,7 @@ import java.sql.{Connection, Statement}
 import javax.inject.Inject
 import org.joda.time.DateTime
 import org.joda.time.DateTime._
+import play.api.Configuration
 import play.api.db.Database
 import play.api.mvc.Controller
 import types.{Deck, Score, Tournament}
@@ -13,7 +14,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class DB @Inject()(database: Database, cache: Cache) extends Controller {
+class DB @Inject()(database: Database, cache: Cache, config: Configuration) extends Controller {
   val scorePointsCacheDuration: FiniteDuration = 1.day
 
   def communityChampionshipPointsCacheKey = s"communityChampionshipPoints"
@@ -725,15 +726,16 @@ class DB @Inject()(database: Database, cache: Cache) extends Controller {
   }
 
   def grantPrivileges(): Unit = {
-    insert(
-      s"""   GRANT ALL PRIVILEGES ON TABLE account TO xpvqdfkohdwdvj;
-             GRANT ALL PRIVILEGES ON TABLE card TO xpvqdfkohdwdvj;
-             GRANT ALL PRIVILEGES ON TABLE deck TO xpvqdfkohdwdvj;
-             GRANT ALL PRIVILEGES ON TABLE match TO xpvqdfkohdwdvj;
-             GRANT ALL PRIVILEGES ON TABLE participant TO xpvqdfkohdwdvj;
-             GRANT ALL PRIVILEGES ON TABLE pick TO xpvqdfkohdwdvj;
-             GRANT ALL PRIVILEGES ON TABLE player TO xpvqdfkohdwdvj;
-             GRANT ALL PRIVILEGES ON TABLE tournament TO xpvqdfkohdwdvj;""")
+    config.getString("db.default.username").foreach(username => insert(
+      s"""   GRANT ALL PRIVILEGES ON TABLE account TO $username;
+             GRANT ALL PRIVILEGES ON TABLE card TO $username;
+             GRANT ALL PRIVILEGES ON TABLE deck TO $username;
+             GRANT ALL PRIVILEGES ON TABLE match TO $username;
+             GRANT ALL PRIVILEGES ON TABLE participant TO $username;
+             GRANT ALL PRIVILEGES ON TABLE pick TO $username;
+             GRANT ALL PRIVILEGES ON TABLE player TO $username;
+             GRANT ALL PRIVILEGES ON TABLE tournament TO $username;"""))
+
   }
 
   def addTournament(tournamentName: String,
