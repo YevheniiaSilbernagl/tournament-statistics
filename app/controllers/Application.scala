@@ -137,7 +137,7 @@ class Application @Inject()(
         discord.notifyAdmin(_.sendFile(file))
         discord.notifyStreamers(_.sendFile(file))
 
-        val statsMessage = s"STATS: <https://eternal-tournaments.herokuapp.com/player?playerName=${playersName.split("[\\s\\+]")(0)}>"
+        val statsMessage = s"STATS: <https://www.ets.to/player?playerName=${playersName.split("[\\s\\+]")(0)}>"
         discord.notifyAdmin(_.sendMessage(statsMessage))
         discord.notifyStreamers(_.sendMessage(statsMessage))
 
