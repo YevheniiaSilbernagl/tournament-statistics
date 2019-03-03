@@ -539,7 +539,7 @@ class Application @Inject()(
 
   def invitationalPoints: Action[AnyContent] = Action {
     request =>
-      val points = db.invitationalPointsForCurrentSeason
+      val points = db.invitationalPointsForCurrentSeason.sortBy(p => (-p._2, p._1.toLowerCase))
       Ok(views.html.invitational_points(battlefy.getCurrentTournament, points, SecureView.isAuthorized(request)))
   }
 
