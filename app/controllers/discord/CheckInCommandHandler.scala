@@ -53,7 +53,8 @@ case class CheckInCommandHandler(battlefy: Battlefy) {
         case reaction if is_ok_hand(reaction) && event.getAuthor == event.getUser =>
           val checkIns: List[IUser] = get_check_in_emoji.map(_.getUsers.toList).getOrElse(List[IUser]())
           val players = battlefy.listOfPlayers(battlefy.getCurrentTournament.battlefy_id)
-          val checkedInPlayers = players.filter(player => player._3.isDefined && checkIns.map(ci => ci.getName + "#" + ci.getDiscriminator).contains(player._3.get)).map(_._4)
+          val checkedInPlayers = players.filter(player => player._3.isDefined && checkIns
+            .map(ci => ci.getName + "#" + ci.getDiscriminator).contains(player._3.get)).map(_._4)
           if (checkedInPlayers.nonEmpty) {
             event.getMessage.getAuthor.getOrCreatePMChannel().sendMessage(checkedInPlayers.mkString("\n"))
           }

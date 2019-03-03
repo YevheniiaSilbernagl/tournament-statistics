@@ -131,7 +131,26 @@ class Application @Inject()(
   def side(side: String, link: String, name: String, player: String) = SecureBackEnd {
     eternalWarcry.changeDeckName(link, name)
     val playersName = player.trim
-    graphics.generateImage((playersName, None), side, eternalWarcry.getDeck(link), Some(name)) match {
+    graphics.deckImage((playersName, None), side, eternalWarcry.getDeck(link), Some(name)) match {
+      case Right(file) =>
+
+        discord.notifyAdmin(_.sendFile(file))
+        discord.notifyStreamers(_.sendFile(file))
+
+        val statsMessage = s"STATS: <https://www.ets.to/player?playerName=${playersName.split("[\\s\\+]")(0)}>"
+        discord.notifyAdmin(_.sendMessage(statsMessage))
+        discord.notifyStreamers(_.sendMessage(statsMessage))
+
+        Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+          "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+      case Left(error) => NotFound(error.getMessage)
+    }
+  }
+
+  def oneDeckScene(link: String, name: String, player: String): Action[AnyContent] = SecureBackEnd {
+    eternalWarcry.changeDeckName(link, name)
+    val playersName = player.trim
+    graphics.oneDeckImage((playersName, None), eternalWarcry.getDeck(link), Some(name)) match {
       case Right(file) =>
 
         discord.notifyAdmin(_.sendFile(file))

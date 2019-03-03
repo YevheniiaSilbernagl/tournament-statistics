@@ -194,6 +194,7 @@ jQuery(window).ready(function () {
                         '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-secondary generate-left noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Main(left)</a>\n' +
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-right?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-dark generate-right noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Handcam(right)</a>\n' +
+                        '                               <a link="' + opponent.deck.url + '" href="/download/deck?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-dark generate-full-screen noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Full screen</a>\n' +
                         '                               <input type="radio" name="maincam" class="' + opponent.name.replace("+", "_").replace(" ", "_") + '"> Main cam' +
                         '                           </div>\n' +
                         '                           <div deck-link="' + opponent.deck.url + '"><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
@@ -279,6 +280,7 @@ jQuery(window).ready(function () {
             var playerName = encodeURIComponent($(deckDiv).find('.player-name').find("p").text());
             $(deckDiv).find('.generate-left').attr("href", "/download/tourney-left?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
             $(deckDiv).find('.generate-right').attr("href", "/download/tourney-right?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
+            $(deckDiv).find('.generate-full-screen').attr("href", "/download/deck?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
         });
         refresh_generate_side_panel_link();
     }

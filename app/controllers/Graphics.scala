@@ -360,11 +360,11 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     }
   }
 
-  def generateImage(player: (String, Option[String]),
-                    side: String,
-                    deck: Deck,
-                    deckName: Option[String] = None
-                   ): Either[Exception, File] = {
+  def deckImage(player: (String, Option[String]),
+                side: String,
+                deck: Deck,
+                deckName: Option[String] = None
+               ): Either[Exception, File] = {
 
     val playersName = Option(player._1.trim).map(s => if (s.contains("+")) s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#"))) else s).getOrElse(player._1)
     fs.file(s"/images/background-$side.png") match {
@@ -516,6 +516,164 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         Right(saveFile(g, image, s"tourney-$side.png"))
       case _ =>
         Left(new Exception(s"${side.capitalize} background image not found"))
+    }
+  }
+
+  def oneDeckImage(player: (String, Option[String]),
+                   deck: Deck,
+                   deckName: Option[String] = None
+                  ): Either[Exception, File] = {
+
+    val playersName = Option(player._1.trim).map(s => if (s.contains("+")) s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#"))) else s).getOrElse(player._1)
+    fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+
+        FONT.foreach(f => g.setFont(f.deriveFont(48f)))
+        val title = s"$playersName - ${deckName.getOrElse(if (deck.name.length > 30) s"${deck.name.substring(0, 20)}..." else deck.name)}"
+        val titleWidth = g.getFontMetrics.stringWidth(title)
+
+        g.drawString(title, (image.getWidth() - titleWidth) / 2, 80)
+        FONT.foreach(f => g.setFont(f.deriveFont(36f)))
+        var column = 0
+        val max_column = 4
+        val max_cards = 10
+        val cardHeight = 60
+        val cardWidth = 375
+        var counter = 0
+        var hadToShift = false
+        val yDistanceToHeaders = 200
+
+        def block(i: Int) = 160 + i * 20 + column * cardWidth
+
+        def drawCard(blockN: Int, cq: (Card, Int)) = {
+          val (card, quantity) = cq
+          val cardBGFile = (card match {
+            case c if card.influences.isEmpty => fs.file(s"/images/cards/nofaction${if (c.isPower) "-power" else ""}.png")
+            case c if card.influences.size == 1 => fs.file(s"/images/cards/${card.influences.head.toString.toLowerCase}${if (c.isPower) "-power" else ""}.png")
+            case c => fs.file(s"/images/cards/multifaction${if (c.isPower) "-power" else ""}.png")
+          }).getOrElse(fs.file(s"/images/cards/MISSING.png").get)
+          val cardBGImage = scale(ImageIO.read(cardBGFile), cardWidth - cardHeight, cardHeight)
+          val qImage = ImageIO.read(fs.file(s"/images/quantity-blank.png").get)
+          val quantityImage = scale(qImage, cardHeight, cardHeight)
+
+          val dest = new BufferedImage(cardBGImage.getWidth + quantityImage.getWidth, cardBGImage.getHeight, BufferedImage.TYPE_INT_ARGB)
+          val renderedGraphics = graphicsSettings(dest.createGraphics())
+
+          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+          renderedGraphics.drawImage(cardBGImage, 0, 0, null)
+          renderedGraphics.drawImage(quantityImage, cardBGImage.getWidth, 0, null)
+
+          val icon = scale(eternalWarcry.cardIcon(card.name), cardHeight - 10, cardHeight - 10)
+          renderedGraphics.drawImage(icon, cardHeight - 5, 7, null)
+
+
+          //QUANTITY
+          val qString = quantity.toString
+          renderedGraphics.drawString(qString,
+            cardBGImage.getWidth + (quantityImage.getWidth() - renderedGraphics.getFontMetrics.stringWidth(qString)) / 2,
+            (quantityImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
+
+          //COST
+          if (!card.isPower) {
+            val cString = card.cost.toString
+            renderedGraphics.drawString(cString,
+              if (cString.length == 1) {
+                FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
+                20
+              } else {
+                FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(25f)))
+                16
+              },
+              (cardBGImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 7)
+          }
+
+          //NAME
+          FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(adjustFontSize(renderedGraphics, card.name, 150, 14f, 24f))))
+          val nString = card.name.toString
+          renderedGraphics.setColor(new Color(244, 206, 109))
+          renderedGraphics.drawString(nString, cardHeight * 2,
+            (cardBGImage.getHeight() + renderedGraphics.getFontMetrics.getHeight) / 2 - 3)
+          g.drawImage(dest, block(blockN), yDistanceToHeaders + dest.getHeight * counter, null)
+
+        }
+
+        if (deck.mainDeck.nonEmpty) {
+          val md = "Main deck:"
+          g.drawString(md, block(1) + 15, yDistanceToHeaders - 5)
+          for (card <- deck.mainDeck) {
+            if (counter >= max_cards) {
+              counter = 0
+              column = column + 1
+            }
+            drawCard(1, card)
+            counter = counter + 1
+          }
+        }
+        if (deck.market.nonEmpty) {
+          if (column < max_column - 1) {
+            column = column + 1
+            counter = 0
+          }
+          val md = if (deck.hasBlackMarket) "Black market:" else "Market:"
+          if (counter > 0) {
+            g.drawString(md, block(2) + 15, yDistanceToHeaders - 5 + ((counter * cardHeight) + 50))
+            counter += 1
+            hadToShift = true
+          } else {
+            g.drawString(md, block(2) + 15, yDistanceToHeaders - 5)
+          }
+
+          for (card <- deck.market) {
+            if (counter >= max_cards) {
+              counter = 0
+              column = column + 1
+            }
+            drawCard(2, card)
+            counter = counter + 1
+          }
+        }
+
+        if (!hadToShift) {
+          //stats block
+          column = 3
+          val margin_value = 220
+          val margin_name = 40
+          val margin_block_name1 = 100
+          val margin_block_name2 = 90
+          val spacing = 30
+          val start = 570
+          val underline_spacing = 3
+          FONT.foreach(f => g.setFont(f.deriveFont(24f)))
+
+          database.playerId(playersName).map(id => database.playerStats(id)).foreach {
+            stats =>
+              stats._2.find(_._1 == "Rounds: Win-Loss").foreach(record => {
+                g.drawString("Win - Loss", block(2) + margin_name, start + spacing)
+                g.drawString(record._3, block(2) + margin_value, start + spacing)
+                g.drawString("Win - Loss", block(2) + margin_name, start + 5 * spacing)
+                g.drawString(record._4, block(2) + margin_value, start + 5 * spacing)
+              })
+              stats._2.find(_._1 == "Rounds: Win-Loss %").foreach(record => {
+                g.drawString("Win Rate", block(2) + margin_name, start + 2 * spacing)
+                g.drawString(record._3.substring(0, record._3.indexOf("-")).trim, block(2) + margin_value, start + 2 * spacing)
+                g.drawString("Win Rate", block(2) + margin_name, start + 6 * spacing)
+                g.drawString(record._4.substring(0, record._4.indexOf("-")).trim, block(2) + margin_value, start + 6 * spacing)
+              })
+              val yr_str = s"${new DateTime().getYear} Record"
+              g.drawString(yr_str, block(2) + margin_block_name1, start)
+              g.drawLine(block(2) + margin_block_name1, start + underline_spacing, block(2) + margin_block_name1 + g.getFontMetrics.stringWidth(yr_str), start + underline_spacing)
+
+              val cr_str = "ETS Career Stats"
+              g.drawString(cr_str, block(2) + margin_block_name2, start + 4 * spacing)
+              g.drawLine(block(2) + margin_block_name2, start + 4 * spacing + underline_spacing, block(2) + margin_block_name2 + g.getFontMetrics.stringWidth(cr_str), start + 4 * spacing + underline_spacing)
+          }
+        }
+
+        Right(saveFile(g, image, s"deck-image.png"))
+      case _ =>
+        Left(new Exception(s"Background image not found"))
     }
   }
 
