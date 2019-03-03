@@ -13,6 +13,8 @@ case class Tournament(
                        registrationEnabled:Boolean,
                        checkInStartTime: Option[DateTime],
                        currentStage: Option[String] = None) {
+  def bracketInfo: String = battlefyLink(currentStage.map(stage => s"stage/$stage/bracket/").getOrElse("info"))
+
   val premiere_event_types = List("invitational", "world_championship", "midseason_major")
   val include_in_series_points_event_types = List("invitational", "world_championship", "weekly")
 

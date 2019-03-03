@@ -16,7 +16,7 @@
                 tournament.name
             }</strong> you can find
                 <a target="_blank" href="@{
-                    tournament.battlefyLink(tournament.currentStage.map(stage => s"stage/$stage/bracket/").getOrElse("info"))
+                    tournament.bracketInfo
                 }">here</a></p>
         }
         <br>

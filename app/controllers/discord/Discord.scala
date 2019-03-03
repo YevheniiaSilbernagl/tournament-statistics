@@ -33,9 +33,9 @@ class Discord @Inject()(config: Configuration,
       .withToken(token)
       .withRecommendedShardCount()
       .build()
-        client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
-        client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
-        client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
+    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
+    client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
+    client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
     client.login()
     client
   }
@@ -44,8 +44,24 @@ class Discord @Inject()(config: Configuration,
     bot.foreach(discordBot => dropMe.notifyTO(discordBot))
   }
 
+  actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = 1.minute) {
+    val bracketCacheKey = "currentBracket"
+    battlefy.currentRound.foreach {
+      round =>
+        val tournament = battlefy.getCurrentTournament
+        val currentBracket = tournament.bracketInfo
+        cache.get[String](bracketCacheKey) match {
+          case Some(bracket) if bracket.equals(currentBracket) =>
+          case _ =>
+            talkToNightBot(s"!commands edit !bracket $currentBracket")
+            talkToNightBot(s"!title ${tournament.name} Round ${round._1} ${round._2}")
+            cache.put(bracketCacheKey, currentBracket, 2 hours)
+        }
+    }
+  }
+
   def notifyStreamers(operation: IPrivateChannel => IMessage): Unit = {
-        bot.foreach(client => resources.notifyStreamers(client, operation))
+    bot.foreach(client => resources.notifyStreamers(client, operation))
   }
 
   def notifyAdmin(operation: IPrivateChannel => IMessage): Unit = {
@@ -56,6 +72,15 @@ class Discord @Inject()(config: Configuration,
     bot.flatMap { channel =>
       channel.getUsers.find(_.getName == user).map(u => u.getOrCreatePMChannel().sendMessage(message))
     }
+  }
+
+  def talkToNightBot(message: String): Unit = {
+    bot.foreach(_.getChannels.toList
+      .filter(_.getGuild.getName == "Eternal Tournament Series")
+      .filter(_.getName == "tournament_chat").foreach {
+      channel => channel.sendMessage(message)
+    }
+    )
   }
 
   def allPlayers: List[String] = bot.map(_.getGuilds.toList).getOrElse(List[IGuild]())

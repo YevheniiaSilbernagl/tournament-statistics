@@ -5,6 +5,7 @@ import java.nio.file.Files
 import controllers.authentication.{SecureBackEnd, SecureView}
 import controllers.discord.Discord
 import javax.inject.Inject
+import org.joda.time.LocalDate
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
@@ -113,6 +114,10 @@ class Application @Inject()(
   }
 
   def expandedDeckDoc(tournament_id: String): Action[AnyContent] = SecureBackEnd {
+    if (battlefy.getCurrentTournament.checkInStartTime
+      .exists(checkInTime => checkInTime.toLocalDate.equals(LocalDate.now()))) {
+      discord.talkToNightBot("@here Please update **decklists**")
+    }
     val tournament = battlefy.getTournament(tournament_id)
     val exportFile = docs.expandedDeckDoc(tournament, battlefy.listOfPlayers(tournament.battlefy_id).map(i => (i._1, i._2.map(eternalWarcry.getDeck).getOrElse(Deck.empty))))
     Ok(Files.readAllBytes(exportFile.toPath))
