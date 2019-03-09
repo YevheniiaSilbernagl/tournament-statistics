@@ -1,6 +1,5 @@
-@import types.Deck
-@import types.Tournament
 @import org.joda.time.DateTime
+@import types.{Deck, Tournament}
 @(tournament: Tournament,
         name: String,
         deck: Option[Deck],
@@ -16,86 +15,139 @@
 
 @main(tournament, s"Stats for $name", authorized) {
     <div class="container content">
-        <h1>@{name.split("\\+")(0)}
+        <h1>@{
+            name.split("\\+")(0)
+        }
             @if(isRookie) {
                 <div class="badge badge-warning">Rookie</div>
             }
         </h1>
         <div class="btn-group">
-            <a class="btn btn-outline-primary" href="@routes.Application.playerLifetimeWinRate(name)">Lifetime Win Rate</a>
-            <a class="btn btn-outline-primary" href="@routes.Application.playerTrendingWinRate(name)">Trending Win Rate</a>
-            <a class="btn btn-outline-dark" href="#">@{seriesPoints._1} - Series points this year</a>
-            @if(invitationalPoints._2.isEmpty){
-                <a class="btn btn-outline-dark" href="#">@{invitationalPoints._1} - Invitational points</a>
+            <a class="btn btn-outline-primary" href="@routes.Application.playerLifetimeWinRate(name)">
+                Lifetime Win Rate</a>
+            <a class="btn btn-outline-primary" href="@routes.Application.playerTrendingWinRate(name)">
+                Trending Win Rate</a>
+            <a class="btn btn-outline-dark" href="#">@{
+                seriesPoints._1
+            } - Series points this year</a>
+            @if(invitationalPoints._2.isEmpty) {
+                <a class="btn btn-outline-dark" href="#">@{
+                    invitationalPoints._1
+                } - Invitational points</a>
             } else {
                 <div class="btn-group">
                     <button type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        @{invitationalPoints._1} - Invitational points
+                        @{
+                            invitationalPoints._1
+                        } - Invitational points
                     </button>
                     <div class="dropdown-menu">
                     @for(points <- invitationalPoints._2) {
-                        <button class="dropdown-item" type="button"><b>@{points._2}</b> - @{points._1}</button>
+                        <button class="dropdown-item" type="button"><b>@{
+                            points._2
+                        }</b>
+                            - @{
+                                points._1
+                            }
+                        </button>
                     }
                     </div>
                 </div>
             }
-            @if(communityChampionshipPoints._2.isEmpty){
-                <a class="btn btn-outline-dark" href="#">@{communityChampionshipPoints._1} - Community championship points</a>
+            @if(communityChampionshipPoints._2.isEmpty) {
+                <a class="btn btn-outline-dark" href="#">@{
+                    communityChampionshipPoints._1
+                } - Community championship points</a>
             } else {
                 <div class="btn-group">
                     <button type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        @{communityChampionshipPoints._1} - Community championship points
+                        @{
+                            communityChampionshipPoints._1
+                        } - Community championship points
                     </button>
                     <div class="dropdown-menu">
                     @for(points <- communityChampionshipPoints._2) {
-                        <button class="dropdown-item" type="button"><b>@{points._2}</b> - @{points._1}</button>
+                        <button class="dropdown-item" type="button"><b>@{
+                            points._2
+                        }</b>
+                            - @{
+                                points._1
+                            }
+                        </button>
                     }
                     </div>
                 </div>
             }
         </div>
-        @if(tournament.checkInStartTime.exists(_.isBefore(DateTime.now().minusMinutes(30))) && opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
-            <table>
-                <tr><td>
-                    <a href="@routes.Application.compareLifetimeWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">Compare lifetime win rates</span></a>
-                    <a href="@routes.Application.compareTrendingWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">Compare trending win rates</span></a>
-                </td></tr>
-                <tr><td>
-                    <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
-                    <a target="_blank" href="https://eternalwarcry.com/decks/compare?decks=@{deck.get.eternalWarCryId}&decks=@{opponent.get._3.get.eternalWarCryId}">Compare decks</a>
-                </td></tr>
-                <tr><td>
-                    <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
-                    <a target="_blank" href="@{deck.get.link}">@name's deck</a>
-                </td></tr>
-                <tr><td>
-                    <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
-                    <a target="_blank" href="@{opponent.get._3.get.link}">@{opponent.get._2}'s deck</a>
-                </td></tr>
-            </table>
-        } else {
-            @if(deck.isDefined){
+        @if(tournament.checkInStartTime.exists(_.isBefore(DateTime.now().minusMinutes(30)))) {
+            @if(opponent.isDefined && deck.isDefined && opponent.get._3.isDefined) {
                 <table>
-                    <tr>
-                        <td>
-                            <img style="width: 20px; height: 20px" src="https://eternalwarcry.com/images/logo.png">
-                            <a target="_blank" href="@{deck.get.link}"> Current deck</a>
-                        </td>
-                    </tr>
+                    <tr><td>
+                        <a href="@routes.Application.compareLifetimeWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">
+                            Compare lifetime win rates</span></a>
+                        <a href="@routes.Application.compareTrendingWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">
+                            Compare trending win rates</span></a>
+                    </td></tr>
+                    <tr><td>
+                        <img style="width: 20px;
+                            height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                        <a target="_blank" href="https://eternalwarcry.com/decks/compare?decks=@{
+                            deck.get.eternalWarCryId
+                        }&decks=@{
+                            opponent.get._3.get.eternalWarCryId
+                        }">Compare decks</a>
+                    </td></tr>
+                    <tr><td>
+                        <img style="width: 20px;
+                            height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                        <a target="_blank" href="@{
+                            deck.get.link
+                        }">@name's deck</a>
+                    </td></tr>
+                    <tr><td>
+                        <img style="width: 20px;
+                            height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                        <a target="_blank" href="@{
+                            opponent.get._3.get.link
+                        }">@{
+                            opponent.get._2
+                        }'s deck</a>
+                    </td></tr>
                 </table>
+            } else {
+                @if(deck.isDefined) {
+                    <table>
+                        <tr>
+                            <td>
+                                <img style="width: 20px;
+                                    height: 20px" src="https://eternalwarcry.com/images/logo.png">
+                                <a target="_blank" href="@{
+                                    deck.get.link
+                                }"> Current deck</a>
+                            </td>
+                        </tr>
+                    </table>
+                }
             }
         }
         <table class="table table-success">
         @if(previousGames.isEmpty && opponent.isDefined) {
-            <a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{opponent.get._2}</a>
+            <a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{
+                opponent.get._2
+            }</a>
         } else {
             @if(previousGames.isEmpty && opponent.isDefined && opponent.get._1.isDefined) {
                 <div>No games played with <b>
-                    <a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{opponent.get._2}</a>
+                    <a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{
+                        opponent.get._2
+                    }</a>
                 </b></div>
             } else {
                 @if(opponent.isDefined && opponent.get._1.isDefined) {
-                    <div>Games played with <b><a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{opponent.get._2}</a></b>:</div>
+                    <div>
+                        Games played with <b><a target="_blank" href="@routes.Application.playerStats(opponent.get._1, None)">@{
+                        opponent.get._2
+                    }</a></b>:</div>
                 }
                 @for(i <- previousGames) {
                     <tr>
@@ -125,7 +177,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for(i <- info) {
+            @for(i <- info) {
                 <tr>
                     <td class="active font-weight-bold p-1 m-1">@i._1</td>
                     <td class="p-1 m-1">
