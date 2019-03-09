@@ -48,7 +48,7 @@ class Discord @Inject()(config: Configuration,
     val bracketCacheKey = "currentBracket"
     battlefy.currentRound.foreach {
       round =>
-        val tournament = battlefy.getCurrentTournament
+        val tournament = battlefy.getCurrentTournament.copy(currentStage = battlefy.currentStageId)
         val currentBracket = tournament.bracketInfo
         val title = s"!title ${tournament.name} Round ${round._1} ${round._2.capitalize}"
         cache.get[String](bracketCacheKey) match {
