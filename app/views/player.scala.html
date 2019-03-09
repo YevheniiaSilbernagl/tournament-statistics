@@ -1,5 +1,6 @@
 @import types.Deck
 @import types.Tournament
+@import org.joda.time.DateTime
 @(tournament: Tournament,
         name: String,
         deck: Option[Deck],
@@ -53,7 +54,7 @@
                 </div>
             }
         </div>
-        @if(opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
+        @if(tournament.checkInStartTime.exists(_.isBefore(DateTime.now().minusMinutes(30))) && opponent.isDefined && deck.isDefined && opponent.get._3.isDefined){
             <table>
                 <tr><td>
                     <a href="@routes.Application.compareLifetimeWinRates(name, opponent.get._2)"><span class="badge-pill badge-primary">Compare lifetime win rates</span></a>
