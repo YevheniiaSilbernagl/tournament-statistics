@@ -1,11 +1,12 @@
 @import types.Tournament
+@import org.joda.time.DateTime
 @(tournament: Tournament, authorized: Boolean)
 
 @main(tournament, "ETS", authorized) {
     <div class="jumbotron lead mr-1">
         <h1 class="display-4 text-center"><img src="@routes.Assets.at("images/favicon.png")" width="100" height="100">
             Eternal Tournament Series</h1>
-        @if(tournament.registrationEnabled) {
+        @if(tournament.registrationEnabled && tournament.checkInStartTime.exists(_.isAfter(DateTime.now()))) {
             <p>Our next event is <strong>@{
                 tournament.name
             }</strong>. You can register <a href="@{
