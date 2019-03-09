@@ -44,7 +44,7 @@ class Discord @Inject()(config: Configuration,
     bot.foreach(discordBot => dropMe.notifyTO(discordBot))
   }
 
-  actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = 1.minute) {
+  actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = 5.minutes) {
     val bracketCacheKey = "currentBracket"
     battlefy.currentRound.foreach {
       round =>
