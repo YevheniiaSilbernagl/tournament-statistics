@@ -50,12 +50,13 @@ class Discord @Inject()(config: Configuration,
       round =>
         val tournament = battlefy.getCurrentTournament
         val currentBracket = tournament.bracketInfo
+        val title = s"!title ${tournament.name} Round ${round._1} ${round._2.capitalize}"
         cache.get[String](bracketCacheKey) match {
-          case Some(bracket) if bracket.equals(currentBracket) =>
+          case Some(bracket) if bracket.equals(title) =>
           case _ =>
             talkToNightBot(s"!commands edit !bracket $currentBracket")
-            talkToNightBot(s"!title ${tournament.name} Round ${round._1} ${round._2}")
-            cache.put(bracketCacheKey, currentBracket, 2 hours)
+            talkToNightBot(title)
+            cache.put(bracketCacheKey, title, 2 hours)
         }
     }
   }
