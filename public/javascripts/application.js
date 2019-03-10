@@ -189,7 +189,7 @@ jQuery(window).ready(function () {
                         '                        <div class="deck">\n' +
                         '                           <div class="player-name">\n' +
                         '                               <p class="p-header">\n' +
-                        '                                   <a target="_blank" href="/player?playerName=' + opponent.name + '">' + opponent.name + '</a>\n' +
+                        '                                   <a target="_blank" href="/player?playerName=' +  encodeURIComponent(opponent.name) + '">' + opponent.name + '</a>\n' +
                         '                               </p>\n' +
                         '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-secondary generate-left noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Main(left)</a>\n' +
