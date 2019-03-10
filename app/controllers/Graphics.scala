@@ -549,32 +549,27 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
               val top2 = stats._2.find(_._1 == "Top 2").map(_._4.split(":")(0)).filterNot(_ == "-\n ")
               val top4 = stats._2.find(_._1 == "Top 4").map(_._4.split(":")(0)).filterNot(_ == "-\n ")
               var length = block(2) + margin_name
-              wins.foreach(win => {
-                val gold: Option[BufferedImage] = fs.file("/images/gold.png").map(ImageIO.read)
-                gold.foreach { image =>
-                  g.drawImage(scale(image, 20, 20), length, start - 2 + 7 * spacing, null)
-                  length = length + 21
-                  g.drawString(win, length, start + 15 + 7 * spacing)
-                  length = length + g.getFontMetrics.stringWidth(win) + 10
-                }
-              })
-              top2.foreach(win => {
-                val silver: Option[BufferedImage] = fs.file("/images/silver.png").map(ImageIO.read)
-                silver.foreach { image =>
-                  g.drawImage(scale(image, 20, 20), length, start + 7 * spacing, null)
-                  length = length + 21
-                  g.drawString(win, length, start + 15 + 7 * spacing)
-                  length = length + g.getFontMetrics.stringWidth(win) + 10
-                }
-              })
-              top4.foreach(win => {
-                val silver: Option[BufferedImage] = fs.file("/images/bronze.png").map(ImageIO.read)
-                silver.foreach { image =>
-                  g.drawImage(scale(image, 20, 20), length, start + 7 * spacing, null)
-                  length = length + 21
-                  g.drawString(win, length, start + 15 + 7 * spacing)
-                }
-              })
+
+              FONT.foreach(f => g.setFont(f.deriveFont(30f)))
+              def draw(list: Option[String], imageName: String): Unit = {
+                list.foreach(win => {
+                  val gold: Option[BufferedImage] = fs.file(s"/images/$imageName").map(ImageIO.read)
+                  gold.foreach { image =>
+                    val str = win match {
+                      case "once" => "1"
+                      case "twice" => "2"
+                      case s => s.split("\\s")(0)
+                    }
+                    g.drawImage(scale(image, 40, 40), length, start + 7 * spacing, null)
+                    length = length + 40
+                    g.drawString(s"x $str", length, start + 30 + 7 * spacing)
+                    length = length + 50
+                  }
+                })
+              }
+              draw(wins, "gold.png")
+              draw(top2, "silver.png")
+              draw(top4, "bronze.png")
           }
         }
 
