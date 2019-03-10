@@ -134,33 +134,6 @@ jQuery(window).ready(function () {
         });
     });
 
-    $(document).on('click', "#generate-stats-scene", function (e) {
-        $("#info").each(function () {
-            this.remove();
-        });
-        var players = encodeURIComponent($("#players").val());
-
-        $.get("/players/stats?players=" + players, function (response) {
-            var block = "<table id='info' class=\"table table-striped\">" +
-                "<tr><th>Player</th><th>This Year</th><th>Career</th></tr>";
-            $.each(response.players, function (player) {
-                block += "<tr>";
-                block += "<td>" + player + "</td>";
-
-                $.each(this, function (tournament_type, stats) {
-                    block += "<td><table class=\"table-bordered\">";
-                    $.each(stats, function (name, value) {
-                        block += "<tr><td>" + name + "</td><td>" + value + "</td></tr>";
-                    });
-                    block += "</table></td>";
-                });
-                block += "</tr>";
-            });
-            block += "</table>";
-            $(".content").append(block);
-        });
-    });
-
     $(document).on('click', 'input[name=maincam]', function (e) {
         var currentTargetName = "." + e.currentTarget.className;
         $(currentTargetName + ".generate-right").css('visibility', 'hidden');
