@@ -98,8 +98,8 @@ class Application @Inject()(
           }).getOrElse(0),
           currentRound.map(round => {
             val (roundNumber, roundName) = round
-            games.filter(_.round == roundNumber)
-              .filter(s => s.round == roundNumber && s.bracket_name == roundName)
+            games.filter(s => s.round == roundNumber && s.bracket_name == roundName)
+              .filter(_.current_player_name == playerName)
               .map(s => if (s.participant_a_name == s.current_player_name) s.participant_a_score else s.participant_b_score).sum
           }).getOrElse(0),
           players.filter(_._1 == playerName).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))
