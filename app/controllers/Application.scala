@@ -84,13 +84,30 @@ class Application @Inject()(
           Score_(r._2, r._1, r._2, r._3, r._4, r._5, r._6)
         )
       }
-      val opponents = battlefy.currentOpponents.map(oo =>
-        (oo._1.map(o => (o,
-          games.filter(p => o == p.current_player_name).count(_.isWinner),
-          players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))),
-          oo._2.map(o => (o,
-            games.filter(p => o == p.current_player_name).count(_.isWinner),
-            players.filter(_._1 == o).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse("")))))
+
+      val currentRound = battlefy.currentRound
+
+      def mapping(playerName: String): (String, Int, Int, String) = {
+        (playerName,
+          currentRound.map(round => {
+            val (roundNumber, roundName) = round
+            games
+              .filter(p => playerName == p.current_player_name)
+              .filterNot(_.round == roundNumber)
+              .filterNot(_.bracket_name == roundName)
+              .count(_.isWinner)
+          }).getOrElse(0),
+          currentRound.map(round => {
+            val (roundNumber, roundName) = round
+            games.filter(_.round == roundNumber)
+              .filter(_.bracket_name == roundName)
+              .filter(_.current_player_name == playerName)
+              .map(s => if (s.participant_a_name == s.current_player_name) s.participant_a_score else s.participant_b_score).sum
+          }).getOrElse(0),
+          players.filter(_._1 == playerName).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))
+      }
+
+      val opponents = battlefy.currentOpponents.map(oo => (oo._1.map(mapping), oo._2.map(mapping)))
         .sortBy(oo => (oo._2.isDefined, oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0))).reverse
       Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
     }
@@ -260,7 +277,19 @@ class Application @Inject()(
     val players = battlefy.listOfPlayers(tournamentId)
     val totalStats = players.map(_._1).flatMap(db.playerId).map(db.playerStats)
     val top10 = totalStats.map(p => (p._1, p._2(2)._4)).sortBy(_._2).reverse.take(10)
-    val file = graphics.topPlayers(top10)
+    val file = graphics.topPlayers(s"The Desk - Top ${top10.size} players this week", top10)
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def customListOfPlayers(header: String, players: List[String]): Action[AnyContent] = SecureBackEnd {
+    val totalStats = players.flatMap(db.playerId).map(db.playerStats)
+      .sortBy(s => s._2(4)._4.split("-")(0)).reverse
+    val file = graphics.statsList(s"The Desk - $header", totalStats)
 
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))

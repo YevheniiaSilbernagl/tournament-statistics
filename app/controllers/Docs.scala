@@ -13,7 +13,7 @@ import types.{Deck, Tournament}
 
 class Docs @Inject()(fs: FileSystem) extends Controller {
   def expandedDeckDoc(tournament: Tournament, info: List[(String, Deck)]): File = {
-    val exportFile = new File(s"${fs.parent}/${tournament.name}.docx")
+    val exportFile = new File(s"${fs.parent}/${tournament.normalizedName}.docx")
     val wordPackage = WordprocessingMLPackage.createPackage
     val mainDocumentPart = wordPackage.getMainDocumentPart
     val factory = Context.getWmlObjectFactory
@@ -56,7 +56,7 @@ class Docs @Inject()(fs: FileSystem) extends Controller {
   }
 
   def conciseDeckDoc(tournament: Tournament, info: List[(String, Option[String], Option[String], String)]): File = {
-    val exportFile = new File(s"${fs.parent}/${tournament.name}.csv")
+    val exportFile = new File(s"${fs.parent}/${tournament.normalizedName}.csv")
     val lines = List(s""""eternal name","discord name", "deck link"""") ++
       info.map(i => s""""${i._1}","${i._3.getOrElse("")}","${i._2.getOrElse("")}"""")
     Files.write(exportFile.toPath, lines.mkString("\n").getBytes(UTF_8))

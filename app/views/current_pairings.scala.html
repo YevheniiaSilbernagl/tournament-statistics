@@ -1,5 +1,6 @@
 @import types.Tournament
-@(tournament: Tournament, opponents: List[(Option[(String, Int, String)], Option[(String, Int, String)])], authorized: Boolean)
+@(tournament: Tournament, opponents:
+List[(Option[(String, Int, Int, String)], Option[(String, Int, Int, String)])], authorized: Boolean)
 
 @main(tournament, "Current round standings", authorized) {
     <div class="container content">
@@ -9,24 +10,23 @@
             @if(opponent._1.isDefined) {
                 <tr>
                     @if(opponent._1.isDefined) {
-                        <td class="text-right">@opponent._1.get._3</td>
-                        <td class="text-right font-weight-bold">@opponent._1.get._1</td>
+                        <td class="text-right">@opponent._1.get._4</td>
+                        <td class="text-right font-weight-bold" width="200px">@opponent._1.get._1</td>
                     } else {
                         <td></td>
-                        <td></td>
-                        <td></td>
+                        <td  width="200px"></td>
                     }
-                    <td class="text-center">@{
-                        opponent._1.map(_._2).getOrElse("")
-                    }-:-@{
-                        opponent._2.map(_._2).getOrElse("")
-                    }</td>
+                    <td class="text-center" width="40px">
+                        @{opponent._1.map(_._2).getOrElse("X")}-:-@{opponent._2.map(_._2).getOrElse("X")}
+                        <div class="badge badge-info">
+                            @{opponent._1.map(_._3).getOrElse("X")}-:-@{opponent._2.map(_._3).getOrElse("X")}
+                        </div>
+                    </td>
                     @if(opponent._2.isDefined) {
-                        <td class="font-weight-bold">@opponent._2.get._1</td>
-                        <td>@opponent._2.get._3</td>
+                        <td class="font-weight-bold" width="200px">@opponent._2.get._1</td>
+                        <td>@opponent._2.get._4</td>
                     } else {
-                        <td>Bye</td>
-                        <td></td>
+                        <td  width="200px">Bye</td>
                         <td></td>
                     }
                 </tr>

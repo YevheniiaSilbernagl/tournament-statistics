@@ -19,6 +19,7 @@ GET         /download/doc/expanded                                 controllers.A
 GET         /download/doc/concise                                  controllers.Application.conciseDeckDoc(tournamentId: String)
 GET         /download/top/cards                                    controllers.Application.topCards(tournamentId: String)
 GET         /download/list/cards                                   controllers.Application.customCardList(header:String, cards: List[String])
+GET         /download/list/player/stats                            controllers.Application.customListOfPlayers(header:String, players: List[String])
 GET         /download/top/players                                  controllers.Application.topPlayers(tournamentId: String)
 GET         /download/top/players/invitationalpoints               controllers.Application.invitationalPointsScene
 GET         /download/top/players/invitationalpoints/online        controllers.Application.invitationalPointsSceneOnlineUpdate

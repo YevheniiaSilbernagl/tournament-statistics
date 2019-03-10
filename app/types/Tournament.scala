@@ -13,6 +13,8 @@ case class Tournament(
                        registrationEnabled:Boolean,
                        checkInStartTime: Option[DateTime],
                        currentStage: Option[String] = None) {
+  def normalizedName:String = name.replaceAll("[/]","-")
+
   def bracketInfo: String = battlefyLink(currentStage.map(stage => s"stage/$stage/bracket/").getOrElse("info"))
 
   val premiere_event_types = List("invitational", "world_championship", "midseason_major")

@@ -90,7 +90,42 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     resultFile
   }
 
-  def topPlayers(top10: scala.List[(String, String)]): File = {
+  def statsList(header: String, top10: scala.List[(String, scala.List[(String, String, String, String)], Boolean)]): File = {
+    def column(players: scala.List[(String, scala.List[(String, String, String, String)], Boolean)], fontSize: Float): BufferedImage = {
+      val dest = new BufferedImage(350, 880, BufferedImage.TYPE_INT_ARGB)
+      val renderedGraphics = graphicsSettings(dest.createGraphics())
+      FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(fontSize)))
+      for (i <- players.indices) {
+        val player = players(i)
+        renderedGraphics.setColor(defaultYellow)
+        renderedGraphics.drawString(s"${player._1.split("\\+")(0)}", 0, (3 * i + 1) * 40 + i * 40)
+        renderedGraphics.setColor(defaultColor)
+        renderedGraphics.drawString(s"${player._2(4)._2.split("-")(0).trim} [${player._2(3)._2}]", 0, (3 * i + 2) * 40+ i * 40)
+        renderedGraphics.drawString(s"${player._2(4)._4.split("-")(0).trim} [${player._2(3)._4}]", 0, (3 * i + 3) * 40+ i * 40)
+      }
+      dest
+    }
+
+    fs.file(s"/images/background.png") match {
+      case Some(bg) =>
+        val image = ImageIO.read(bg)
+        val g = graphicsSettings(image.createGraphics())
+        FONT.foreach(f => g.setFont(f.deriveFont(110f)))
+        g.drawString(header, 220, 105)
+
+        val longestLine = top10.map(_._1).sortBy(_.length).reverse.head + " - 100.00%[100%]"
+        val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
+        g.drawImage(column(top10.take(4), fontSize), 250, 200, null)
+        g.drawImage(column(top10.slice(4, 8), fontSize), 630, 200, null)
+        g.drawImage(column(top10.slice(8, 12), fontSize), 1030, 200, null)
+        g.drawImage(column(top10.slice(12, 16), fontSize), 1420, 200, null)
+
+        saveFile(g, image, "top-players.png")
+      case _ => throw new Exception(s"background image not found")
+    }
+  }
+
+  def topPlayers(header: String, top10: scala.List[(String, String)]): File = {
 
     def column(players: scala.List[(String, String)], fontSize: Float): BufferedImage = {
       val dest = new BufferedImage(600, 480, BufferedImage.TYPE_INT_ARGB)
@@ -106,7 +141,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
         FONT.foreach(f => g.setFont(f.deriveFont(110f)))
-        g.drawString(s"The Desk - Top ${top10.size} players this week", 220, 105)
+        g.drawString(header, 220, 105)
 
         val longestLine = top10.map(_._1).sortBy(_.length).reverse.head + " - 100.00%"
         val fontSize = adjustFontSize(g, longestLine, 600, 34f, 60f)
