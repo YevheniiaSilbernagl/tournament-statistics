@@ -100,8 +100,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         renderedGraphics.setColor(defaultYellow)
         renderedGraphics.drawString(s"${player._1.split("\\+")(0)}", 0, (3 * i + 1) * 40 + i * 40)
         renderedGraphics.setColor(defaultColor)
-        renderedGraphics.drawString(s"${player._2(4)._2.split("-")(0).trim} [${player._2(3)._2}]", 0, (3 * i + 2) * 40+ i * 40)
-        renderedGraphics.drawString(s"${player._2(4)._4.split("-")(0).trim} [${player._2(3)._4}]", 0, (3 * i + 3) * 40+ i * 40)
+        renderedGraphics.drawString(s"${player._2(4)._2.split("-")(0).trim} [${player._2(3)._2}]", 0, (3 * i + 2) * 40 + i * 40)
+        renderedGraphics.drawString(s"${player._2(4)._4.split("-")(0).trim} [${player._2(3)._4}]", 0, (3 * i + 3) * 40 + i * 40)
       }
       dest
     }
@@ -545,6 +545,36 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
               val cr_str = "ETS Career Stats"
               g.drawString(cr_str, block(2) + margin_block_name2, start + 4 * spacing)
               g.drawLine(block(2) + margin_block_name2, start + 4 * spacing + underline_spacing, block(2) + margin_block_name2 + g.getFontMetrics.stringWidth(cr_str), start + 4 * spacing + underline_spacing)
+              val wins = stats._2.find(_._1 == "Winner").map(_._4.split(":")(0)).filterNot(_ == "-\n ")
+              val top2 = stats._2.find(_._1 == "Top 2").map(_._4.split(":")(0)).filterNot(_ == "-\n ")
+              val top4 = stats._2.find(_._1 == "Top 4").map(_._4.split(":")(0)).filterNot(_ == "-\n ")
+              var length = block(2) + margin_name
+              wins.foreach(win => {
+                val gold: Option[BufferedImage] = fs.file("/images/gold.png").map(ImageIO.read)
+                gold.foreach { image =>
+                  g.drawImage(scale(image, 20, 20), length, start - 2 + 7 * spacing, null)
+                  length = length + 21
+                  g.drawString(win, length, start + 15 + 7 * spacing)
+                  length = length + g.getFontMetrics.stringWidth(win) + 10
+                }
+              })
+              top2.foreach(win => {
+                val silver: Option[BufferedImage] = fs.file("/images/silver.png").map(ImageIO.read)
+                silver.foreach { image =>
+                  g.drawImage(scale(image, 20, 20), length, start + 7 * spacing, null)
+                  length = length + 21
+                  g.drawString(win, length, start + 15 + 7 * spacing)
+                  length = length + g.getFontMetrics.stringWidth(win) + 10
+                }
+              })
+              top4.foreach(win => {
+                val silver: Option[BufferedImage] = fs.file("/images/bronze.png").map(ImageIO.read)
+                silver.foreach { image =>
+                  g.drawImage(scale(image, 20, 20), length, start + 7 * spacing, null)
+                  length = length + 21
+                  g.drawString(win, length, start + 15 + 7 * spacing)
+                }
+              })
           }
         }
 
