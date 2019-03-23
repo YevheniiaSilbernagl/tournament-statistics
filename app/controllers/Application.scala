@@ -80,8 +80,8 @@ class Application @Inject()(
       val players = battlefy.listOfPlayers(tournament.battlefy_id)
       val games = battlefy.games(tournament.battlefy_id).flatMap { r =>
         List(
-          Score_(r._1, r._1, r._2, r._3, r._4, r._5, r._6),
-          Score_(r._2, r._1, r._2, r._3, r._4, r._5, r._6)
+          Score_(r._1, r._1, r._2, r._3, r._4, r._5, r._6, r._7),
+          Score_(r._2, r._1, r._2, r._3, r._4, r._5, r._6, r._7)
         )
       }
 
@@ -105,8 +105,17 @@ class Application @Inject()(
           players.filter(_._1 == playerName).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))
       }
 
-      val opponents = battlefy.currentOpponents.map(oo => (oo._1.map(mapping), oo._2.map(mapping)))
-        .sortBy(oo => (oo._2.isDefined, oo._1.map(_._2).getOrElse(0) + oo._2.map(_._2).getOrElse(0))).reverse
+      def finished(playerName: Option[String]):Boolean = {
+        currentRound.exists(round => {
+          val (roundNumber, roundName) = round
+          games.filter(s => s.round == roundNumber && s.bracket_name == roundName)
+            .filter(s => playerName.contains(s.current_player_name))
+            .map(_.complete).headOption.getOrElse(false)
+        })
+      }
+
+      val opponents = battlefy.currentOpponents.map(oo => (oo._1.map(mapping), finished(oo._1), oo._2.map(mapping)))
+        .sortBy(oo => (oo._3.isDefined, oo._1.map(_._2).getOrElse(0) + oo._3.map(_._2).getOrElse(0))).reverse
       Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
     }
   }
@@ -499,7 +508,7 @@ class Application @Inject()(
           db.addPlayer(tournamentId, eternalName, discordName, battlefyNames, deck.link)
         }
         battlefy.games(battlefyUuid).par.foreach { game =>
-          val (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType) = game
+          val (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType, complete) = game
           db.importGame(tournamentId, player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
         }
         Ok(s"Tournament $battlefyUuid has been successfully imported")

@@ -18,7 +18,9 @@ case class Score_(
                   participant_b_name: String,
                   participant_a_score: Int,
                   participant_b_score: Int,
-                  round: Int, bracket_name: String
+                  round: Int,
+                  bracket_name: String,
+                  complete: Boolean
                 ) {
   def isWinner: Boolean =
     if (current_player_name == participant_a_name) participant_a_score > participant_b_score

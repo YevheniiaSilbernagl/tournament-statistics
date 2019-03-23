@@ -132,7 +132,7 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
     }), Duration.apply(30, TimeUnit.SECONDS))
   }
 
-  def games(battlefy_id: String): List[(String, String, Int, Int, Int, String)] = getTournamentInfo(battlefy_id) match {
+  def games(battlefy_id: String): List[(String, String, Int, Int, Int, String, Boolean)] = getTournamentInfo(battlefy_id) match {
     case Some(tournament) =>
       (tournament \ "stages").as[JsArray].value.toList.par.flatMap { stage =>
         val s_id = (stage \ "_id").as[String]
@@ -145,7 +145,8 @@ class Battlefy @Inject()(ws: WSClient) extends Controller {
             (game \ "bottom" \\ "team").headOption.map( o => (o \ "name").as[String]).getOrElse(""),
             (game \ "bottom" \ "score").toOption.map(_.as[JsNumber].value.intValue()).getOrElse(0)
           )
-          (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType)
+          val complete = (game \ "isComplete").toOption.exists(_.as[JsBoolean].value)
+          (player1Name, player2Name, player1Score, player2Score, roundNumber, stageType, complete)
         }
       }.toList
     case _ => List.empty

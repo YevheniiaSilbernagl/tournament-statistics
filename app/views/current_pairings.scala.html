@@ -1,6 +1,6 @@
 @import types.Tournament
 @(tournament: Tournament, opponents:
-List[(Option[(String, Int, Int, String)], Option[(String, Int, Int, String)])], authorized: Boolean)
+List[(Option[(String, Int, Int, String)], Boolean, Option[(String, Int, Int, String)])], authorized: Boolean)
 
 @main(tournament, "Current round standings", authorized) {
     <div class="container content">
@@ -17,14 +17,14 @@ List[(Option[(String, Int, Int, String)], Option[(String, Int, Int, String)])], 
                         <td  width="200px"></td>
                     }
                     <td class="text-center" width="40px">
-                        @{opponent._1.map(_._2).getOrElse("X")}-:-@{opponent._2.map(_._2).getOrElse("X")}
-                        <div class="badge badge-info">
-                            @{opponent._1.map(_._3).getOrElse("X")}-:-@{opponent._2.map(_._3).getOrElse("X")}
+                        @{opponent._1.map(_._2).getOrElse("X")}-:-@{opponent._3.map(_._2).getOrElse("X")}
+                        <div class="badge @{if(opponent._2) "badge-warning" else "badge-info"}">
+                            @{opponent._1.map(_._3).getOrElse("X")}-:-@{opponent._3.map(_._3).getOrElse("X")}
                         </div>
                     </td>
-                    @if(opponent._2.isDefined) {
-                        <td class="font-weight-bold" width="200px">@opponent._2.get._1</td>
-                        <td>@opponent._2.get._4</td>
+                    @if(opponent._3.isDefined) {
+                        <td class="font-weight-bold" width="200px">@opponent._3.get._1</td>
+                        <td>@opponent._3.get._4</td>
                     } else {
                         <td  width="200px">Bye</td>
                         <td></td>
