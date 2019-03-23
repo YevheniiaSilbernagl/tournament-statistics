@@ -8,7 +8,7 @@ List[(Option[(String, Int, Int, String)], Boolean, Option[(String, Int, Int, Str
         <table class="table table-striped table-hover">
         @for(opponent <- opponents) {
             @if(opponent._1.isDefined) {
-                <tr>
+                <tr class="@{if(opponent._2) "table-warning" else ""}">
                     @if(opponent._1.isDefined) {
                         <td class="text-right">@opponent._1.get._4</td>
                         <td class="text-right font-weight-bold" width="200px">@opponent._1.get._1</td>
@@ -18,7 +18,7 @@ List[(Option[(String, Int, Int, String)], Boolean, Option[(String, Int, Int, Str
                     }
                     <td class="text-center" width="40px">
                         @{opponent._1.map(_._2).getOrElse("X")}-:-@{opponent._3.map(_._2).getOrElse("X")}
-                        <div class="badge @{if(opponent._2) "badge-warning" else "badge-info"}">
+                        <div class="badge @{if(opponent._2) "badge-danger" else "badge-info"}">
                             @{opponent._1.map(_._3).getOrElse("X")}-:-@{opponent._3.map(_._3).getOrElse("X")}
                         </div>
                     </td>
