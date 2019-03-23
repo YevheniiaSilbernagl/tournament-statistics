@@ -100,8 +100,16 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
         renderedGraphics.setColor(defaultYellow)
         renderedGraphics.drawString(s"${player._1.split("\\+")(0)}", 0, (3 * i + 1) * 40 + i * 40)
         renderedGraphics.setColor(defaultColor)
-        renderedGraphics.drawString(s"${player._2(4)._2.split("-")(0).trim} [${player._2(3)._2}]", 0, (3 * i + 2) * 40 + i * 40)
-        renderedGraphics.drawString(s"${player._2(4)._4.split("-")(0).trim} [${player._2(3)._4}]", 0, (3 * i + 3) * 40 + i * 40)
+        if (player._2(3)._2 == "-") {
+          renderedGraphics.drawString(s"No games [0 - 0]", 0, (3 * i + 2) * 40 + i * 40)
+        } else {
+          renderedGraphics.drawString(s"${player._2(4)._2.split("-")(0).trim} [${player._2(3)._2}]", 0, (3 * i + 2) * 40 + i * 40)
+        }
+        if (player._2(4)._4 == "-") {
+          renderedGraphics.drawString(s"No games [0 - 0]", 0, (3 * i + 3) * 40 + i * 40)
+        } else {
+          renderedGraphics.drawString(s"${player._2(4)._4.split("-")(0).trim} [${player._2(3)._4}]", 0, (3 * i + 3) * 40 + i * 40)
+        }
       }
       dest
     }
@@ -551,6 +559,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
               var length = block(2) + margin_name
 
               FONT.foreach(f => g.setFont(f.deriveFont(30f)))
+
               def draw(list: Option[String], imageName: String): Unit = {
                 list.foreach(win => {
                   val gold: Option[BufferedImage] = fs.file(s"/images/$imageName").map(ImageIO.read)
@@ -567,6 +576,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
                   }
                 })
               }
+
               draw(wins, "gold.png")
               draw(top2, "silver.png")
               draw(top4, "bronze.png")
