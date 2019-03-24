@@ -226,9 +226,8 @@ class Application @Inject()(
         val seriesPoints = db.seriesPoints(id)
         val opponent = opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined)
           .map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
-        val communityChampionshipPoints = db.communityChampionshipPoints(id)
         Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie,
-          invitationalPoints, seriesPoints, communityChampionshipPoints, SecureView.isAuthorized(request)))
+          invitationalPoints, seriesPoints, SecureView.isAuthorized(request)))
       }
 
       playerId match {
@@ -374,6 +373,7 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
+  @Deprecated
   def communityChampionshipPointsScene: Action[AnyContent] = SecureBackEnd {
     val points = db.communityChampionshipPointsResults.map(r => (r._1, r._2, 0))
     val qualified = points.sortBy(_._2).reverse.take(16)

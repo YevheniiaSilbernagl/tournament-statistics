@@ -9,7 +9,6 @@
         isRookie: Boolean,
         invitationalPoints: (Int, Map[String, Int]),
         seriesPoints: (Int, Int),
-        communityChampionshipPoints: (Int, Map[String, Int]),
         authorized: Boolean
 )
 
@@ -43,30 +42,6 @@
                     </button>
                     <div class="dropdown-menu">
                     @for(points <- invitationalPoints._2) {
-                        <button class="dropdown-item" type="button"><b>@{
-                            points._2
-                        }</b>
-                            - @{
-                                points._1
-                            }
-                        </button>
-                    }
-                    </div>
-                </div>
-            }
-            @if(communityChampionshipPoints._2.isEmpty) {
-                <a class="btn btn-outline-dark" href="#">@{
-                    communityChampionshipPoints._1
-                } - Community championship points</a>
-            } else {
-                <div class="btn-group">
-                    <button type="button" class="btn btn-outline-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        @{
-                            communityChampionshipPoints._1
-                        } - Community championship points
-                    </button>
-                    <div class="dropdown-menu">
-                    @for(points <- communityChampionshipPoints._2) {
                         <button class="dropdown-item" type="button"><b>@{
                             points._2
                         }</b>
