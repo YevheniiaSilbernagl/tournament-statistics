@@ -51,8 +51,12 @@ class Application @Inject()(
 
   def validateDeck(url: String) = SecureBackEnd {
     try {
-      val result = eternalWarcry.getDeck(url).validate
-      Ok(Json.obj("valid" -> result.isEmpty, "messages" -> result))
+      if(!url.trim.startsWith("http"))
+        Ok(Json.obj("valid" -> false, "messages" -> Json.arr("Not a link")))
+      else {
+        val result = eternalWarcry.getDeck(url).validate
+        Ok(Json.obj("valid" -> result.isEmpty, "messages" -> result))
+      }
     } catch {
       case NonFatal(e) => Ok(Json.obj("valid" -> false, "messages" -> Json.arr(e.getMessage)))
     }
@@ -105,7 +109,7 @@ class Application @Inject()(
           players.filter(_._1 == playerName).flatMap(_._2).headOption.map(eternalWarcry.getDeck).map(_.name).getOrElse(""))
       }
 
-      def finished(playerName: Option[String]):Boolean = {
+      def finished(playerName: Option[String]): Boolean = {
         currentRound.exists(round => {
           val (roundNumber, roundName) = round
           games.filter(s => s.round == roundNumber && s.bracket_name == roundName)
@@ -129,6 +133,10 @@ class Application @Inject()(
 
   def validateDecks(tournamentId: String) = SecureView {
     Ok(views.html.validation(battlefy.getCurrentTournament, battlefy.listOfPlayers(tournamentId), discord.allPlayers))
+  }
+
+  def userAdmin = SecureView {
+    Ok(views.html.user_management(battlefy.getCurrentTournament))
   }
 
   def generateDeckDoc(tournamentId: String) = SecureView {
@@ -605,5 +613,20 @@ class Application @Inject()(
 
   def invitationalTournaments = Action {
     request => Ok(views.html.invitational_tournaments(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+  }
+
+  def createUser = SecureBackEnd {
+    request =>
+      request.body.asJson match {
+        case Some(body) if (body \\ "login").nonEmpty && (body \\ "password").nonEmpty =>
+          try {
+            db.grantPrivileges()
+            db.createUser((body \ "login").as[String], (body \ "password").as[String])
+            Ok("User has been successfully created")
+          } catch {
+            case NonFatal(e) => BadRequest(e.getLocalizedMessage)
+          }
+        case _ => BadRequest("Invalid request")
+      }
   }
 }

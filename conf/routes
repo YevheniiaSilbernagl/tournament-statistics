@@ -44,10 +44,12 @@ GET         /players/stats                                         controllers.A
 GET         /message                                               controllers.Application.sendMessage(player: String, message: String)
 GET         /checkin                                               controllers.Application.checkInPage
 GET         /admin/import/tournament                               controllers.Application.tournamentImport
+GET         /admin/create/user                                     controllers.Application.userAdmin
 POST        /message                                               controllers.Application.sendMessageToAllPlayers(message: String)
 POST        /import/tournament                                     controllers.Application.importTournament(battlefyUuid: String, season: Int, tournamentType: String)
 POST        /invalidate/cache                                      controllers.Application.invalidateCache
 POST        /cache/deck/name                                       controllers.Application.cacheDeckName
+POST        /create/user                                           controllers.Application.createUser
 
 GET         /how-to-register                                       controllers.Application.howToRegister
 GET         /day-of-tournament                                     controllers.Application.dayOfTournament

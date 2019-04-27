@@ -81,6 +81,33 @@ jQuery(window).ready(function () {
         $("#generate-cards-list").attr("href", url);
     }
 
+    $(document).on('click', "#create-user", function (e) {
+        var login = $("#login").val();
+        var password = $("#password").val();
+        var status = $("#status");
+        status.text("");
+        if (login && password) {
+            var request = "{\"login\": \"" + login + "\", \"password\": \"" + password + "\"}";
+            $.ajax({
+                type: "POST",
+                url: "/create/user",
+                data: request,
+                contentType: "application/json; charset=utf-8",
+                success: function (r) {
+                    status.addClass("alert-success");
+                    status.text(r)
+                },
+                error: function (r) {
+                    status.addClass("alert-danger");
+                    status.text(r.responseText)
+                }
+            });
+        } else {
+            status.addClass("alert-danger");
+            status.text("Login and password cannot be empty")
+        }
+    });
+
     $(document).on('click', "#import-tournament", function (e) {
         var status = $("#status");
         var season = $("#season").val();
@@ -189,7 +216,7 @@ jQuery(window).ready(function () {
                         '                        <div class="deck">\n' +
                         '                           <div class="player-name">\n' +
                         '                               <p class="p-header">\n' +
-                        '                                   <a target="_blank" href="/player?playerName=' +  encodeURIComponent(opponent.name) + '">' + opponent.name + '</a>\n' +
+                        '                                   <a target="_blank" href="/player?playerName=' + encodeURIComponent(opponent.name) + '">' + opponent.name + '</a>\n' +
                         '                               </p>\n' +
                         '                               <label><input class="score" type="text" placeholder="' + opponent.name + '\'s score" value="0"></label>' +
                         '                               <a link="' + opponent.deck.url + '" href="/download/tourney-left?link=' + encodeURIComponent(opponent.deck.url) + '&name=' + encodeURIComponent(opponent.deck.name) + '&player=' + encodeURIComponent(opponent.name) + '" class="badge badge-secondary generate-left noprint ' + opponent.name.replace("+", "_").replace(" ", "_") + '" download>Main(left)</a>\n' +
@@ -199,6 +226,17 @@ jQuery(window).ready(function () {
                         '                           </div>\n' +
                         '                           <div deck-link="' + opponent.deck.url + '"><p class="p-header deck-name">' + opponent.deck.name + '</p></div>\n' +
                         '                           <pre data-spy="scroll" style="height: 15pc">' + opponent.deck.list + '</pre>\n' +
+                        '                        </div>\n' +
+                        '                    </td>\n';
+                } else {
+                    generated += '                    <td style="padding: 25px">\n' +
+                        '                        <div class="deck">\n' +
+                        '                           <div class="player-name">\n' +
+                        '                               <p class="p-header">\n' +
+                        '                                   <a target="_blank" href="/player?playerName=' + encodeURIComponent(opponent.name) + '">' + opponent.name + '</a>\n' +
+                        '                               </p>\n' +
+                        '                           </div>\n' +
+                        '                           <pre data-spy="scroll" style="height: 15pc">Deck cannot be parsed</pre>\n' +
                         '                        </div>\n' +
                         '                    </td>\n';
                 }

@@ -2,6 +2,7 @@ package controllers
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 import javax.imageio.ImageIO

@@ -3,6 +3,7 @@ package controllers
 import java.sql.{Connection, Statement}
 
 import javax.inject.Inject
+import org.apache.commons.codec.digest.DigestUtils._
 import org.joda.time.DateTime
 import org.joda.time.DateTime._
 import play.api.Configuration
@@ -734,7 +735,8 @@ class DB @Inject()(database: Database, cache: Cache, config: Configuration) exte
              GRANT ALL PRIVILEGES ON TABLE participant TO $username;
              GRANT ALL PRIVILEGES ON TABLE pick TO $username;
              GRANT ALL PRIVILEGES ON TABLE player TO $username;
-             GRANT ALL PRIVILEGES ON TABLE tournament TO $username;"""))
+             GRANT ALL PRIVILEGES ON TABLE tournament TO $username;
+             GRANT ALL PRIVILEGES ON TABLE user_ TO $username;"""))
 
   }
 
@@ -781,5 +783,10 @@ class DB @Inject()(database: Database, cache: Cache, config: Configuration) exte
           conn.close()
         }
     }
+  }
+
+  def createUser(login: String, password: String): Unit = {
+    val hash = sha1Hex(password)
+    insert(s"INSERT INTO user_ (username, password_hash) VALUES ('$login', '$hash')")
   }
 }
