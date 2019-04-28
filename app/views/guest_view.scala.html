@@ -1,8 +1,8 @@
 @import types.Tournament
 @import org.joda.time.DateTime
-@(tournament: Tournament, authorized: Boolean)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "ETS", authorized) {
+@main(tournament, "ETS", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="display-4 text-center"><img src="@routes.Assets.at("images/favicon.png")" width="100" height="100">
             Eternal Tournament Series</h1>

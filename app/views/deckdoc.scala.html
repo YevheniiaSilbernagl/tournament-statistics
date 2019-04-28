@@ -1,7 +1,7 @@
 @import types.{Deck, Tournament}
-@(tournament:Tournament, players: List[(String, Option[Deck])])
+@(role: Option[String], tournament:Tournament, players: List[(String, Option[Deck])])
 
-@main(tournament, s"DeckDoc:${tournament.name}", authorized = true) {
+@main(tournament, s"DeckDoc:${tournament.name}", role) {
     <div class="container content">
         <h1 class="tournament-name">@{tournament.name}</h1>
     @for(player <- players) {

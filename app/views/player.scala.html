@@ -1,6 +1,7 @@
 @import org.joda.time.DateTime
 @import types.{Deck, Tournament}
-@(tournament: Tournament,
+@(role: Option[String],
+        tournament: Tournament,
         name: String,
         deck: Option[Deck],
         opponent: Option[(Option[Int], String, Option[Deck])],
@@ -8,11 +9,10 @@
         info: List[(String, String, String, String)],
         isRookie: Boolean,
         invitationalPoints: (Int, Map[String, Int]),
-        seriesPoints: (Int, Int),
-        authorized: Boolean
+        seriesPoints: (Int, Int)
 )
 
-@main(tournament, s"Stats for $name", authorized) {
+@main(tournament, s"Stats for $name", role) {
     <div class="container content">
         <h1>@{
             name.split("\\+")(0)

@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, authorized: Boolean)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "Invitational Tournaments", authorized) {
+@main(tournament, "Invitational Tournaments", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="page-title text-center">Invitational Tournaments</h1>
         <p>Invitational Tournaments are Premiere Tournaments, which means that you can only play in one by qualifying. Invitational tournaments occur once per season, and are the final tournament of the season. As of 2018, there are four seasons per year.</p>

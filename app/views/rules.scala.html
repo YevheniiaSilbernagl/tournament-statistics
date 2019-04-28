@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, authorized: Boolean)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "Official ETS Rules", authorized) {
+@main(tournament, "Official ETS Rules", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="page-title" id="officialTournamentRules">Official Tournament Rules</h1>
         <h2>Deck Registration</h2>

@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, authorized: Boolean)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "Tournaments Calendar", authorized) {
+@main(tournament, "Tournaments Calendar", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="page-title">Tournament Calendar</h1>
         <p>All weekly events begin at: Noon Eastern / 9 AM Pacific / 5 PM UTC, with registration closing 2 hours beforehand. (For players outside the United States, please check your time zone against Eastern, as Daylight Savings Time can affect these times)</p>

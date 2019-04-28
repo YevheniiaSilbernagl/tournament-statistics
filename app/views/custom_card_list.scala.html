@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "Generate custom list of cards", authorized = true) {
+@main(tournament, "Generate custom list of cards", role) {
     <div class="container content">
         <textarea id="scene-name" placeholder="Name of the scene" rows="1" cols="50"></textarea><br>
         <textarea id="cards-list" placeholder="List of cards exported as a deck[main] from eternal" rows="20" cols="50"></textarea><br>

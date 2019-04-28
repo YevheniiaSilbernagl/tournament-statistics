@@ -1,5 +1,5 @@
 @import types.Tournament
-@(tournament: Tournament, title: String, authorized: Boolean)(content: Html)
+@(tournament: Tournament, title: String, role: Option[String])(content: Html)
 
 <!DOCTYPE html>
 
@@ -7,7 +7,7 @@
     @head(title)
 <body>
     <div class="container">
-        @if(authorized) {
+        @if(role.isDefined) {
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
                 <a class="navbar-brand" href="@routes.Application.index">
                     <img src="@routes.Assets.at("images/favicon.png")" width="30" height="30" alt="">
@@ -64,7 +64,9 @@
                             <a class="dropdown-item" href="@routes.Application.checkInPage">Check In</a>
                             <a class="dropdown-item" href="@routes.Application.tournamentImport">Import tournament</a>
                             <a class="dropdown-item" href="@routes.Application.currentPairings()">Current pairings</a>
-                            <a class="dropdown-item" href="@routes.Application.userAdmin()">WIP:User management</a>
+                            @if(role.contains("ADMIN")){
+                                <a class="dropdown-item" href="@routes.Application.userAdmin()">User management</a>
+                            }
                         </div>
                     </li>
                     <li class="nav-item dropdown">

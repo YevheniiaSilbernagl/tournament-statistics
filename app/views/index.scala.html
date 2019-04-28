@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, authorized: Boolean)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "ETS Tools", authorized) {
+@main(tournament, "ETS Tools", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="display-4"><img src="@routes.Assets.at("images/favicon.png")" width="100" height="100">ETS Tooling</h1>
         <hr class="my-4">

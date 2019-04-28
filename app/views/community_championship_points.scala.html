@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, points: List[(String, Int)], authorized: Boolean)
+@(role: Option[String], tournament: Tournament, points: List[(String, Int)])
 
-@main(tournament, "Community championship points", authorized) {
+@main(tournament, "Community championship points", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="page-title text-center">2019 Community Championship</h1>
         <p>The Community Championship is a sixteen person invite-only tournament that takes place over two days: <strong>

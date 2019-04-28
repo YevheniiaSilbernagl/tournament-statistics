@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, players: List[(String, Option[String], Option[String], String)], discordUsers: Seq[String])
+@(role: Option[String], tournament: Tournament, players: List[(String, Option[String], Option[String], String)], discordUsers: Seq[String])
 
-    @main(tournament, "Validate decks", authorized = true) {
+    @main(tournament, "Validate decks", role) {
         <div class="container-fluid content">
            @if(players.isEmpty) {
                <div class="alert alert-warning" role="alert">

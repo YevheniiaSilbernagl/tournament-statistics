@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, players: List[(String, Option[String], Option[String], String)], authToken: Option[String])
+@(role: Option[String], tournament: Tournament, players: List[(String, Option[String], Option[String], String)], authToken: Option[String])
 
-@main(tournament, "Check In", authorized = true) {
+@main(tournament, "Check In", role) {
     <span class="container content">
         <div style="display: none">
             @for(player <- players){

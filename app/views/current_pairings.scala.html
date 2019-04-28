@@ -1,8 +1,8 @@
 @import types.Tournament
-@(tournament: Tournament, opponents:
-List[(Option[(String, Int, Int, String)], Boolean, Option[(String, Int, Int, String)])], authorized: Boolean)
+@(role: Option[String], tournament: Tournament, opponents:
+List[(Option[(String, Int, Int, String)], Boolean, Option[(String, Int, Int, String)])])
 
-@main(tournament, "Current round standings", authorized) {
+@main(tournament, "Current round standings", role) {
     <div class="container content">
     @if(opponents.nonEmpty) {
         <table class="table table-striped table-hover">

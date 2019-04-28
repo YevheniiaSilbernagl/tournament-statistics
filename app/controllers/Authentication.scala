@@ -14,13 +14,15 @@ package authentication {
       db.pass(user).contains(DigestUtils.sha1Hex(pass))
     }
 
-    def isAuthorized[A](token: String): Boolean = {
-      authorized(token)
+    def getRole[A](request: Request[A]): Option[String] = {
+      token(request).flatMap {
+        t =>
+          val (user, _) = decodeBasicAuth(t)
+          db.getUserRole(user)
+      }
     }
 
-    def isAuthorized[A](request: Request[A]): Boolean = {
-      request.headers.get("Authorization").exists(authorized)
-    }
+    private[this] def token[A](request: Request[A]): Option[String] = request.headers.get("Authorization")
 
     private[this] def decodeBasicAuth(authHeader: String): (String, String) = {
       val baStr = authHeader.replaceFirst("Basic ", "")

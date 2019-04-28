@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, points: List[(String, Int, List[String])], authorized: Boolean)
+@(role: Option[String], tournament: Tournament, points: List[(String, Int, List[String])])
 
-@main(tournament, "Invitational points", authorized) {
+@main(tournament, "Invitational points", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="page-title">Invitational Points</h1>
         <p>Invitational Points are a representation of how many tournament matches a player has won in the course of a given Season. They last only for the duration of the season, and are not tracked beyond that season. Record setting Invitational Point values are tracked as part of the Hall of Fame.</p>

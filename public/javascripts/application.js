@@ -42,14 +42,22 @@ jQuery(window).ready(function () {
     });
 
     $(document).click(function (e) {
-        if (e.target.tagName.toLowerCase() !== 'input') {
+        var tagName = e.target.tagName.toLowerCase();
+        if (tagName !== 'input' && tagName !== 'select') {
             apply_name();
+            apply_role();
         }
     });
 
     $(document).on('keyup', ".deck-name-edit", function (e) {
         if (e.keyCode === 13) {
             apply_name();
+        }
+    });
+
+    $(document).on('keyup', ".user-role-edit", function (e) {
+        if (e.keyCode === 13) {
+            apply_role();
         }
     });
 
@@ -84,10 +92,15 @@ jQuery(window).ready(function () {
     $(document).on('click', "#create-user", function (e) {
         var login = $("#login").val();
         var password = $("#password").val();
+        var role = $('#role').val();
         var status = $("#status");
         status.text("");
-        if (login && password) {
-            var request = "{\"login\": \"" + login + "\", \"password\": \"" + password + "\"}";
+        if (login && password && role) {
+            var request = JSON.stringify({
+                login: login,
+                role: role,
+                password: password
+            });
             $.ajax({
                 type: "POST",
                 url: "/create/user",
@@ -104,7 +117,7 @@ jQuery(window).ready(function () {
             });
         } else {
             status.addClass("alert-danger");
-            status.text("Login and password cannot be empty")
+            status.text("Login/password/role cannot be empty")
         }
     });
 
@@ -274,6 +287,57 @@ jQuery(window).ready(function () {
             cache_deck_name(dn.text(), dn.parent().attr("deck-link"));
         }
     }
+
+    function apply_role() {
+        var editField = $('.user-role-edit');
+        if (editField.val()) {
+            var newRole = editField.val();
+            var parent = $(editField).parent();
+            var username = parent.parent().find('.username').text();
+            $(editField).remove();
+            $(parent).append('<div class="user-role">' + newRole + '</div>');
+            save_role(username, newRole);
+        }
+    }
+
+    function save_role(username, role) {
+        $.ajax({
+            type: "POST",
+            url: "/edit/user/role",
+            data: JSON.stringify({
+                login: username,
+                role: role
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json"
+        });
+    }
+
+    $(document).on('click', ".user-delete", function (e) {
+        var tr = $(e.currentTarget).parent().parent();
+        var username = tr.find('.username').text();
+        $.ajax({
+            type: "DELETE",
+            url: "/user/delete/" + username,
+            success: function (msg) {
+                tr.remove();
+            }
+        });
+    });
+
+    $(document).on('dblclick', ".user-role", function (e) {
+        apply_role();
+        var currentText = $(e.currentTarget).text();
+        var parent = $(e.currentTarget).parent();
+        $(e.currentTarget).remove();
+        $(parent).append('<select class="user-role-edit">' +
+            '<option>ADMIN</option>' +
+            '<option>TO</option>' +
+            '<option>PRODUCER</option>' +
+            '</select>');
+        $('.user-role-edit').focus()
+    });
+
 
     function apply_score() {
         refresh_generate_side_panel_link()

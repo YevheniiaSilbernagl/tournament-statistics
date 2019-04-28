@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, points: List[(String, (Int, Int))], authorized: Boolean)
+@(role: Option[String], tournament: Tournament, points: List[(String, (Int, Int))])
 
-@main(tournament, "Series points", authorized) {
+@main(tournament, "Series points", role) {
     <div class="jumbotron lead mr-1">
         <h1 class="page-title">Series Points</h1>
         <p>Series Points are a measure of a player’s tournament success throughout the year. Unlike Invitational Points, Series Points are earned for the duration of the year and do not reset Season to Season. Series Points are tracked both on an annual and a career basis, although career series points don’t mean anything and are just tracked for fun. Series Points earned during the year are used to invite players to the ETS World Championships and Worlds Wildcard. The player with the most Series Points at the end of the Year is awarded that year’s Player of the Year Title.</p>

@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, opponents: List[(Option[String], Option[String])])
+@(role: Option[String], tournament: Tournament, opponents: List[(Option[String], Option[String])])
 
-@main(tournament, "Current round streaming resources", authorized = true) {
+@main(tournament, "Current round streaming resources", role) {
     <div class="container content">
         @if(opponents.nonEmpty){
         <div class="dropdown dropright">

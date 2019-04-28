@@ -1,22 +1,46 @@
-@import types.Tournament
-@(tournament: Tournament)
+@import types.{Tournament, User}
+@(role: Option[String], tournament: Tournament, users: List[User])
 
-@main(tournament, "Create a user", authorized = true) {
+@main(tournament, "Create a user", role) {
     <div class="container content">
-        <form>
-            <div class="form-group">
-                <input id="login" placeholder="Login"><br>
-            </div>
-            <div class="form-group">
-                <input id="password" placeholder="Password" type="password"><br>
-            </div>
-            <div class="form-group">
-                <a class="btn btn-primary" id="create-user" href="#">Create</a>
-            </div>
-            <div class="row">
-                <div id="status"></div>
-            </div>
-        </form>
+        <table  class="table table-striped">
+            <tbody>
+                <tr><td><form>
+                    <input id="login" placeholder="Login"><br>
+                    <input id="password" placeholder="Password" type="password"><br>
+                    <select id="role">
+                        <option disabled selected value> -- Select a role -- </option>
+                        <option>ADMIN</option>
+                        <option>TO</option>
+                        <option>PRODUCER</option>
+                    </select><br>
+                    <a class="btn btn-primary" id="create-user" href="#">Create</a>
+                    <div id="status"></div>
+                </form></td></tr>
+            </tbody>
+        </table>
+        <table class="table table-striped table-hover" id="invitationalPointsTable">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @for(i <- users.indices) {
+                    <tr>
+                        <td class="username">@{
+                            users(i).login
+                        }</td>
+                        <td><div class="user-role">@{
+                           users(i).role.getOrElse("-")
+                        }</div></td>
+                        <td width="10px"><div class="small badge-pill badge-danger user-delete">X</div></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 
 }

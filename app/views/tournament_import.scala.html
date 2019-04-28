@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "Import tournament", authorized = true) {
+@main(tournament, "Import tournament", role) {
     <div class="container content">
         <form>
             <div class="form-group">

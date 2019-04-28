@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament, players: List[(Int, String)], authorized: Boolean)
+@(role: Option[String], tournament: Tournament, players: List[(Int, String)])
 
-@main(tournament, "Stats", authorized) {
+@main(tournament, "Stats", role) {
     <table id="players" class="table table-striped table-hover table-responsive-sm">
     @for(player <- players) {
         <tr id="@{

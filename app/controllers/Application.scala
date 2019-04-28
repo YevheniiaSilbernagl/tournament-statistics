@@ -9,7 +9,7 @@ import org.joda.time.LocalDate
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
-import types.{Deck, Score, Score_}
+import types.{Deck, Score, Score_, User}
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
@@ -26,13 +26,13 @@ class Application @Inject()(
                              discord: Discord,
                              cache: Cache
                            ) extends Controller {
-  def guestView = views.html.guest_view(battlefy.getCurrentTournament.copy(currentStage = battlefy.currentStageId), authorized = false)
+  def guestView = views.html.guest_view(None, battlefy.getCurrentTournament.copy(currentStage = battlefy.currentStageId))
 
   private val SecureView = new SecureView(db, Results.Ok(guestView))
   private val SecureBackEnd = new SecureBackEnd(db)
 
   def login = Action { request: Request[AnyContent] =>
-    if (SecureBackEnd.isAuthorized(request)) Redirect("/")
+    if (SecureBackEnd.getRole(request).isDefined) Redirect("/")
     else Unauthorized(guestView)
       .withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized")
   }
@@ -45,13 +45,13 @@ class Application @Inject()(
   def logout = Action(Unauthorized(guestView)
     .withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized"))
 
-  def index = SecureView {
-    Ok(views.html.index(battlefy.getCurrentTournament, authorized = true))
+  def index = Action { request =>
+    Ok(views.html.index(SecureView.getRole(request), battlefy.getCurrentTournament))
   }
 
   def validateDeck(url: String) = SecureBackEnd {
     try {
-      if(!url.trim.startsWith("http"))
+      if (!url.trim.startsWith("http"))
         Ok(Json.obj("valid" -> false, "messages" -> Json.arr("Not a link")))
       else {
         val result = eternalWarcry.getDeck(url).validate
@@ -79,7 +79,7 @@ class Application @Inject()(
   def currentPairings = Action { request =>
     val tournament = battlefy.getCurrentTournament
     if (db.existsTournament(tournament.battlefy_id)) {
-      Ok(views.html.current_pairings(tournament, List(), SecureView.isAuthorized(request)))
+      Ok(views.html.current_pairings(SecureView.getRole(request), tournament, List()))
     } else {
       val players = battlefy.listOfPlayers(tournament.battlefy_id)
       val games = battlefy.games(tournament.battlefy_id).flatMap { r =>
@@ -120,7 +120,7 @@ class Application @Inject()(
 
       val opponents = battlefy.currentOpponents.map(oo => (oo._1.map(mapping), finished(oo._1), oo._2.map(mapping)))
         .sortBy(oo => (oo._3.isDefined, oo._1.map(_._2).getOrElse(0) + oo._3.map(_._2).getOrElse(0))).reverse
-      Ok(views.html.current_pairings(tournament, opponents, SecureView.isAuthorized(request)))
+      Ok(views.html.current_pairings(SecureView.getRole(request), tournament, opponents))
     }
   }
 
@@ -131,18 +131,19 @@ class Application @Inject()(
     Ok("Messages have been sent")
   }
 
-  def validateDecks(tournamentId: String) = SecureView {
-    Ok(views.html.validation(battlefy.getCurrentTournament, battlefy.listOfPlayers(tournamentId), discord.allPlayers))
+  def validateDecks(tournamentId: String) = Action { request =>
+    Ok(views.html.validation(SecureView.getRole(request), battlefy.getCurrentTournament, battlefy.listOfPlayers(tournamentId), discord.allPlayers))
   }
 
-  def userAdmin = SecureView {
-    Ok(views.html.user_management(battlefy.getCurrentTournament))
+  def userAdmin = Action { request =>
+    Ok(views.html.user_management(SecureView.getRole(request), battlefy.getCurrentTournament, db.getUsers))
   }
 
-  def generateDeckDoc(tournamentId: String) = SecureView {
-    Ok(views.html.deckdoc(battlefy.getTournament(tournamentId), battlefy.listOfPlayers(tournamentId).map { le =>
-      (le._1, le._2.map(eternalWarcry.getDeck))
-    }))
+  def generateDeckDoc(tournamentId: String) = Action { request =>
+    Ok(views.html.deckdoc(SecureView.getRole(request),
+      battlefy.getTournament(tournamentId), battlefy.listOfPlayers(tournamentId).map { le =>
+        (le._1, le._2.map(eternalWarcry.getDeck))
+      }))
   }
 
   def expandedDeckDoc(tournament_id: String): Action[AnyContent] = SecureBackEnd {
@@ -209,17 +210,19 @@ class Application @Inject()(
 
   def playersStats = Action {
     request =>
-      statsPage(SecureView.isAuthorized(request))
+      statsPage(SecureView.getRole(request))
   }
 
-  def generateStats = SecureView(Ok(views.html.mass_stats(battlefy.getCurrentTournament)))
+  def generateStats = Action {
+    request => Ok(views.html.mass_stats(SecureView.getRole(request), battlefy.getCurrentTournament))
+  }
 
   def generateStatsForPlayers(players: String) = SecureBackEnd {
     val stats = players.split("\\n").map(_.trim).filterNot(_.isEmpty).distinct.map(p => p -> db.worldsStats(p)).toMap
     Ok(Json.obj("players" -> stats))
   }
 
-  def statsPage(authorized: Boolean) = Ok(views.html.stats(battlefy.getCurrentTournament, db.getPlayers.toList.sortBy(_._2.toLowerCase), authorized))
+  def statsPage(role: Option[String]) = Ok(views.html.stats(role, battlefy.getCurrentTournament, db.getPlayers.toList.sortBy(_._2.toLowerCase)))
 
   def playerStats(playerId: Option[Int], playerName: Option[String] = None) = Action {
     request =>
@@ -234,14 +237,15 @@ class Application @Inject()(
         val seriesPoints = db.seriesPoints(id)
         val opponent = opponentName.map(n => (opponentId, n, list_of_players.filter(_._1 == n).filter(_._2.isDefined)
           .map(_._2.get).map(link => eternalWarcry.getDeck(link)).headOption))
-        Ok(views.html.player(battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie,
-          invitationalPoints, seriesPoints, SecureView.isAuthorized(request)))
+        Ok(views.html.player(SecureView.getRole(request),
+          battlefy.getCurrentTournament, name, deck, opponent, previousGames, stats, isRookie,
+          invitationalPoints, seriesPoints))
       }
 
       playerId match {
         case Some(id) => stat(id)
-        case _ if playerName.isDefined => db.playerId(playerName.get).map(stat).getOrElse(statsPage(SecureView.isAuthorized(request)))
-        case _ => statsPage(SecureView.isAuthorized(request))
+        case _ if playerName.isDefined => db.playerId(playerName.get).map(stat).getOrElse(statsPage(SecureView.getRole(request)))
+        case _ => statsPage(SecureView.getRole(request))
       }
   }
 
@@ -260,9 +264,9 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
-  def streaming = SecureView(Ok(views.html.streaming(battlefy.getCurrentTournament, battlefy.currentOpponents)))
+  def streaming = Action { request => Ok(views.html.streaming(SecureView.getRole(request), battlefy.getCurrentTournament, battlefy.currentOpponents)) }
 
-  def casters = SecureView(Ok(views.html.casters_panel(battlefy.getCurrentTournament)))
+  def casters = Action { request => Ok(views.html.casters_panel(SecureView.getRole(request), battlefy.getCurrentTournament)) }
 
   def topCards(tournamentId: String): Action[AnyContent] = SecureBackEnd {
     val players = battlefy.listOfPlayers(tournamentId)
@@ -485,10 +489,10 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
-  def checkInPage: Action[AnyContent] = Action {
+  def checkInPage: Action[AnyContent] = Action { request =>
     val tournament = battlefy.getCurrentTournament
     val authToken = config.getString("battlefy.client.id").flatMap(battlefy.getAuthToken)
-    Ok(views.html.checkin(tournament, battlefy.listOfPlayers(tournament.battlefy_id), authToken))
+    Ok(views.html.checkin(SecureView.getRole(request), tournament, battlefy.listOfPlayers(tournament.battlefy_id), authToken))
   }
 
   def importTournament(battlefyUuid: String, season: Int, tournamentType: String) = SecureBackEnd {
@@ -566,66 +570,102 @@ class Application @Inject()(
   def seriesPoints = Action {
     request =>
       val points = db.seriesPointsResults
-      Ok(views.html.series_points(battlefy.getCurrentTournament, points.filter(p => p._2._1 != 0 || p._2._2 != 0), SecureView.isAuthorized(request)))
+      Ok(views.html.series_points(SecureView.getRole(request), battlefy.getCurrentTournament, points.filter(p => p._2._1 != 0 || p._2._2 != 0)))
   }
 
   def communityChampionshipPoints = Action {
     request =>
       val points = db.communityChampionshipPointsResults
-      Ok(views.html.community_championship_points(battlefy.getCurrentTournament, points.filter(p => p._2 != 0), SecureView.isAuthorized(request)))
+      Ok(views.html.community_championship_points(SecureView.getRole(request), battlefy.getCurrentTournament, points.filter(p => p._2 != 0)))
   }
 
   def invitationalPointsBreakDown(year: Int, season: Int) = Action {
     request =>
       val points = db.invitationalPoints(year, season).toList.sortBy(p => (p._2._2.values.sum, p._2._1)).reverse
-      Ok(views.html.invitational_points_breakdown(battlefy.getCurrentTournament, points, SecureView.isAuthorized(request)))
+      Ok(views.html.invitational_points_breakdown(SecureView.getRole(request), battlefy.getCurrentTournament, points))
   }
 
   def invitationalPoints: Action[AnyContent] = Action {
     request =>
       val points = db.invitationalPointsForCurrentSeason.sortBy(p => (-p._2, p._1.toLowerCase))
-      Ok(views.html.invitational_points(battlefy.getCurrentTournament, points, SecureView.isAuthorized(request)))
+      Ok(views.html.invitational_points(SecureView.getRole(request), battlefy.getCurrentTournament, points))
   }
 
-  def customListOfCards = SecureView {
-    Ok(views.html.custom_card_list(battlefy.getCurrentTournament))
+  def customListOfCards = Action { request =>
+    Ok(views.html.custom_card_list(SecureView.getRole(request), battlefy.getCurrentTournament))
   }
 
-  def tournamentImport = SecureView {
-    Ok(views.html.tournament_import(battlefy.getCurrentTournament))
+  def tournamentImport = Action { request =>
+    Ok(views.html.tournament_import(SecureView.getRole(request), battlefy.getCurrentTournament))
   }
 
   def howToRegister = Action {
-    request => Ok(views.html.how_to_register(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+    request => Ok(views.html.how_to_register(SecureView.getRole(request), battlefy.getCurrentTournament))
   }
 
   def dayOfTournament = Action {
-    request => Ok(views.html.day_of_tournament(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+    request => Ok(views.html.day_of_tournament(SecureView.getRole(request), battlefy.getCurrentTournament))
   }
 
   def tournamentCalendar = Action {
-    request => Ok(views.html.tournament_calendar(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+    request => Ok(views.html.tournament_calendar(SecureView.getRole(request), battlefy.getCurrentTournament))
   }
 
   def rules = Action {
-    request => Ok(views.html.rules(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+    request => Ok(views.html.rules(SecureView.getRole(request), battlefy.getCurrentTournament))
   }
 
   def invitationalTournaments = Action {
-    request => Ok(views.html.invitational_tournaments(battlefy.getCurrentTournament, SecureView.isAuthorized(request)))
+    request => Ok(views.html.invitational_tournaments(SecureView.getRole(request), battlefy.getCurrentTournament))
+  }
+
+  def deleteUser(username: String) = SecureBackEnd {
+    db.grantPrivileges()
+    db.deleteUser(username)
+    Ok("User has been successfully deleted")
   }
 
   def createUser = SecureBackEnd {
     request =>
       request.body.asJson match {
-        case Some(body) if (body \\ "login").nonEmpty && (body \\ "password").nonEmpty =>
+        case Some(body)
+          if (body \\ "login").nonEmpty &&
+            (body \\ "password").nonEmpty &&
+            (body \\ "role").nonEmpty =>
           try {
             db.grantPrivileges()
-            db.createUser((body \ "login").as[String], (body \ "password").as[String])
+            db.createUser(User(
+              (body \ "login").as[String],
+              Option((body \ "password").as[String]),
+              Option((body \ "role").as[String])
+            ))
             Ok("User has been successfully created")
           } catch {
             case NonFatal(e) => BadRequest(e.getLocalizedMessage)
           }
+        case Some(body) if (body \\ "role").isEmpty => BadRequest("Role is not defined")
+        case _ => BadRequest("Invalid request")
+      }
+  }
+
+  def editUserRole = SecureBackEnd {
+    request =>
+      request.body.asJson match {
+        case Some(body)
+          if (body \\ "login").nonEmpty &&
+            (body \\ "role").nonEmpty =>
+          try {
+            db.grantPrivileges()
+            db.editUserRole(User(
+              (body \ "login").as[String],
+              None,
+              Option((body \ "role").as[String])
+            ))
+            Ok("User has been successfully created")
+          } catch {
+            case NonFatal(e) => BadRequest(e.getLocalizedMessage)
+          }
+        case Some(body) if (body \\ "role").isEmpty => BadRequest("Role is not defined")
         case _ => BadRequest("Invalid request")
       }
   }

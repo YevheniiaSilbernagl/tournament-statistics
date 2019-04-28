@@ -1,7 +1,7 @@
 @import types.Tournament
-@(tournament: Tournament)
+@(role: Option[String], tournament: Tournament)
 
-@main(tournament, "Generate stats for a list of players", authorized = true) {
+@main(tournament, "Generate stats for a list of players", role) {
     <div class="container content">
         <label for="players">Players:</label><br>
         <textarea id="players" cols="40" rows="10"></textarea><br>

@@ -50,6 +50,8 @@ POST        /import/tournament                                     controllers.A
 POST        /invalidate/cache                                      controllers.Application.invalidateCache
 POST        /cache/deck/name                                       controllers.Application.cacheDeckName
 POST        /create/user                                           controllers.Application.createUser
+POST        /edit/user/role                                        controllers.Application.editUserRole
+DELETE      /user/delete/:username                                 controllers.Application.deleteUser(username)
 
 GET         /how-to-register                                       controllers.Application.howToRegister
 GET         /day-of-tournament                                     controllers.Application.dayOfTournament

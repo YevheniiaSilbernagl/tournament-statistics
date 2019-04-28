@@ -3,13 +3,12 @@ package controllers
 import java.sql.{Connection, Statement}
 
 import javax.inject.Inject
-import org.apache.commons.codec.digest.DigestUtils._
 import org.joda.time.DateTime
 import org.joda.time.DateTime._
 import play.api.Configuration
 import play.api.db.Database
 import play.api.mvc.Controller
-import types.{Deck, Score, Tournament}
+import types.{Deck, Score, Tournament, User}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -736,6 +735,8 @@ class DB @Inject()(database: Database, cache: Cache, config: Configuration) exte
              GRANT ALL PRIVILEGES ON TABLE pick TO $username;
              GRANT ALL PRIVILEGES ON TABLE player TO $username;
              GRANT ALL PRIVILEGES ON TABLE tournament TO $username;
+             GRANT ALL PRIVILEGES ON TABLE role TO $username;
+             GRANT ALL PRIVILEGES ON TABLE user_role TO $username;
              GRANT ALL PRIVILEGES ON TABLE user_ TO $username;"""))
 
   }
@@ -751,6 +752,8 @@ class DB @Inject()(database: Database, cache: Cache, config: Configuration) exte
          |VALUES ('$tournamentName', '$tournamentStartDate', '$tournamentId', $season, '$tournamentType')""".stripMargin)
     cache.invalidate()
   }
+
+  private def delete(sql: String): Unit = insert(sql)
 
   private def insert(sql: String): Unit = {
     var conn: Connection = null
@@ -785,8 +788,115 @@ class DB @Inject()(database: Database, cache: Cache, config: Configuration) exte
     }
   }
 
-  def createUser(login: String, password: String): Unit = {
-    val hash = sha1Hex(password)
-    insert(s"INSERT INTO user_ (username, password_hash) VALUES ('$login', '$hash')")
+  def deleteUser(username: String): Unit = {
+    cache.delete(s"role-$username")
+    delete(
+      s"""
+         |DELETE FROM user_role
+         |WHERE user_id IN (SELECT id
+         |                  FROM user_
+         |                  WHERE username = '$username')
+           """.stripMargin)
+    delete(
+      s"""
+         |DELETE FROM user_
+         |WHERE username = '$username'
+           """.stripMargin)
+  }
+
+  def createUser(user: User): Unit = {
+    user match {
+      case _ if user.password.isDefined && user.role.isDefined =>
+        insert(s"INSERT INTO user_ (username, password_hash) VALUES ('${user.login}', '${user.passwordHash.get}')")
+        insert(
+          s"""
+             |INSERT INTO user_role (role_id, user_id) VALUES ((SELECT id
+             |                                                  FROM role
+             |                                                  WHERE role.role = '${user.role.get}'
+             |                                                  LIMIT 1), (SELECT id
+             |                                                             FROM user_
+             |                                                             WHERE username = '${user.login}'))
+           """.stripMargin)
+      case _ if user.password.isEmpty => throw new Exception("Password is not defined")
+      case _ if user.role.isEmpty => throw new Exception("Role is not defined")
+      case _ => throw new Exception("Invalid user")
+    }
+  }
+
+  def editUserRole(user: User): Unit = {
+    cache.delete(s"role-${user.login}")
+    user match {
+      case _ if user.role.isDefined =>
+        delete(
+          s"""
+             |DELETE FROM user_role
+             |WHERE user_id IN (SELECT id
+             |                  FROM user_
+             |                  WHERE username = '${user.login}')
+           """.stripMargin)
+        insert(
+          s"""
+             |INSERT INTO user_role (role_id, user_id) VALUES ((SELECT id
+             |                                                  FROM role
+             |                                                  WHERE role.role = '${user.role.get}'
+             |                                                  LIMIT 1), (SELECT id
+             |                                                             FROM user_
+             |                                                             WHERE username = '${user.login}'))
+           """.stripMargin)
+      case _ if user.password.isEmpty => throw new Exception("Password is not defined")
+      case _ if user.role.isEmpty => throw new Exception("Role is not defined")
+      case _ => throw new Exception("Invalid user")
+    }
+  }
+
+
+  def getUserRole(username: String): Option[String] = {
+    val cacheKey = s"role-$username"
+    cache.get[String](cacheKey) match {
+      case v if v.isDefined => v
+      case _ =>
+        val conn: Connection = database.getConnection()
+        try {
+          val stmt = conn.createStatement
+          val rs = stmt.executeQuery(
+            s"""
+               |SELECT
+               |  r.role
+               |FROM user_ u
+               |  LEFT OUTER JOIN user_role ur ON u.id = ur.user_id
+               |  LEFT OUTER JOIN role r ON r.id = ur.role_id
+               |  WHERE u.username = '$username'
+               """.stripMargin)
+          rs.next()
+          val role = rs.getString("role")
+          cache.put(cacheKey, role, 30 days)
+          Option(role)
+        } finally {
+          conn.close()
+        }
+    }
+  }
+
+  def getUsers: List[User] = {
+    val conn: Connection = database.getConnection()
+    val users: mutable.MutableList[User] = new mutable.MutableList[User]()
+    try {
+      val stmt = conn.createStatement
+      val rs = stmt.executeQuery(
+        s"""
+           |SELECT
+           |  u.username,
+           |  r.role
+           |FROM user_ u
+           |  LEFT OUTER JOIN user_role ur ON u.id = ur.user_id
+           |  LEFT OUTER JOIN role r ON r.id = ur.role_id
+               """.stripMargin)
+      while (rs.next()) {
+        users.+=(User(rs.getString("username"), None, Option(rs.getString("role"))))
+      }
+      users.toList
+    } finally {
+      conn.close()
+    }
   }
 }
