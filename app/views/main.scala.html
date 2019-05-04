@@ -62,9 +62,9 @@
                             <a class="dropdown-item" href="@routes.Application.validateDecks(tournament.battlefy_id)">
                                 Validate decks</a>
                             <a class="dropdown-item" href="@routes.Application.checkInPage">Check In</a>
-                            <a class="dropdown-item" href="@routes.Application.tournamentImport">Import tournament</a>
                             <a class="dropdown-item" href="@routes.Application.currentPairings()">Current pairings</a>
                             @if(role.contains("ADMIN")){
+                                <a class="dropdown-item" href="@routes.Application.tournamentImport">Import tournament</a>
                                 <a class="dropdown-item" href="@routes.Application.userAdmin()">User management</a>
                             }
                         </div>

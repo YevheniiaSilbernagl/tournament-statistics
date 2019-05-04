@@ -496,7 +496,10 @@ class Application @Inject()(
   }
 
   def importTournament(battlefyUuid: String, season: Int, tournamentType: String) = SecureBackEnd {
-    if (!db.existsTournament(battlefyUuid)) {
+    if (db.existsTournament(battlefyUuid)) Conflict(s"Tournament $battlefyUuid exists")
+    else if (battlefy.currentStageId.isEmpty) NotAcceptable(s"Tournament $battlefyUuid doesn't have stages")
+    else if (battlefy.currentRound.isDefined) NotAcceptable(s"Tournament $battlefyUuid is in progress")
+    else {
       val tournament_ = battlefy.getTournamentInfo(battlefyUuid)
       if (tournament_.isEmpty) {
         BadRequest(s"Tournament $battlefyUuid not found")
@@ -525,7 +528,7 @@ class Application @Inject()(
         }
         Ok(s"Tournament $battlefyUuid has been successfully imported")
       }
-    } else Conflict(s"Tournament $battlefyUuid exists")
+    }
   }
 
   def playerLifetimeWinRate(playerName: String) = SecureBackEnd {
