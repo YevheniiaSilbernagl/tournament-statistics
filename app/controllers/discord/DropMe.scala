@@ -10,6 +10,7 @@ import sx.blah.discord.api.IDiscordClient
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent
 import sx.blah.discord.handle.obj.{IMessage, IUser}
 
+import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
@@ -60,6 +61,12 @@ class DropMe @Inject()(cache: Cache) extends Controller {
     s"""User potentially wants to drop but hasn't confirmed:
        |>${drop._3} #${discord.getUserByID(drop._1).getName} - ${drop._2}""".stripMargin
 
+  def isSubscribePerson(message: IMessage): Boolean = {
+    val content = message.getContent
+    val name = content.replace(subscribeCommand, "").trim
+    getUser(message.getClient, name).isDefined
+  }
+
   def isSubscribeCommand(message: IMessage): Boolean = message.getContent == subscribeCommand
 
   def isDropMeMessage(message: IMessage): Boolean = {
@@ -78,6 +85,17 @@ class DropMe @Inject()(cache: Cache) extends Controller {
     val currentlySubscribed = cache.get[List[Long]](subscriptionCacheKey).getOrElse(List())
     cache.put(subscriptionCacheKey, (currentlySubscribed :+ user.getLongID).distinct, cacheDuration)
     user.getOrCreatePMChannel().sendMessage(messageForSubscribedAdmin)
+  }
+
+  def getUser(client: IDiscordClient, name: String): Option[IUser] = {
+    client.getChannels.toList.flatMap(channel => channel.getUsersHere.toList)
+      .filter(user => name == (user.getName + "#" + user.getDiscriminator)).distinct.headOption
+  }
+
+  def subscribeOnBehalfOfTO(message: IMessage): Unit = {
+    val name = message.getContent.replace(subscribeCommand, "").trim
+    getUser(message.getClient, name).foreach(subscribeTO)
+    message.getAuthor.getOrCreatePMChannel().sendMessage(s"$name has been successfully subscribed")
   }
 
   def scheduleToDrop(event: MessageReceivedEvent): Unit = {

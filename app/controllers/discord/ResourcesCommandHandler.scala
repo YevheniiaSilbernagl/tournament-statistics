@@ -12,6 +12,9 @@ case class ResourcesCommandHandler @Inject()(resources: StreamingResources) {
 
     if (privateMessageToBot) {
       event.getMessage match {
+        case message if resources.isSubscribeStreamer(message) =>
+          resources.subscribeOnBehalfOfStreamer(message)
+
         case message if resources.isSubscribeCommand(message) =>
           resources.subscribeStreamer(event.getAuthor)
 

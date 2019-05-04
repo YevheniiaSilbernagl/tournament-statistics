@@ -18,6 +18,9 @@ case class DropMeCommandHandler @Inject()(battlefy: Battlefy, dropMe: DropMe) {
         case message if dropMe.isSubscribeCommand(message) =>
           dropMe.subscribeTO(event.getAuthor)
 
+        case message if dropMe.isSubscribePerson(message) =>
+          dropMe.subscribeOnBehalfOfTO(message)
+
         case message if event.getAuthor.isParticipant(battlefy) && (dropMe.isConfirmationToDrop(message) || dropMe.isRequestToDrop(message)) =>
           dropMe.confirmToDrop(event)
 

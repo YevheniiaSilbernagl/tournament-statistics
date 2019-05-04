@@ -18,6 +18,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.language.implicitConversions
+import scala.util.Try
 import scala.util.control.NonFatal
 
 class Discord @Inject()(config: Configuration,
@@ -28,16 +29,32 @@ class Discord @Inject()(config: Configuration,
                         cache: Cache,
                         ws: WSClient)
                        (implicit executionContext: ExecutionContext) extends Controller {
-  private val bot: Option[IDiscordClient] = config.getString("discord.bot.token").map { token =>
-    val client = new ClientBuilder()
-      .withToken(token)
-      .withRecommendedShardCount()
-      .build()
-    client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
-    client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
-    client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
-    client.login()
-    client
+  private var botConnection: Option[IDiscordClient] = None
+
+  private def connect: Option[IDiscordClient] = config.getString("discord.bot.token").flatMap { token =>
+    try {
+      val client = new ClientBuilder()
+        .withToken(token)
+        .withRecommendedShardCount()
+        .build()
+      client.getDispatcher.registerListener(CheckInCommandHandler(battlefy))
+      client.getDispatcher.registerListener(DropMeCommandHandler(battlefy, dropMe))
+      client.getDispatcher.registerListener(ResourcesCommandHandler(resources))
+      client.login()
+      Some(client)
+    }
+    catch {
+      case NonFatal(e) =>
+        None
+    }
+  }
+
+  private def bot: Option[IDiscordClient] = {
+    botConnection match {
+      case Some(connection) if Try(connection.getApplicationName).toOption.isDefined =>
+      case _ => botConnection = connect
+    }
+    botConnection
   }
 
   actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = 1.minute) {

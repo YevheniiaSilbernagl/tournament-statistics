@@ -8,6 +8,7 @@ import sx.blah.discord.api.IDiscordClient
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent
 import sx.blah.discord.handle.obj.{IMessage, IPrivateChannel, IUser}
 
+import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
@@ -32,6 +33,12 @@ class StreamingResources @Inject()(cache: Cache) extends Controller {
 
   def isSubscribeCommand(message: IMessage): Boolean = message.getContent == subscribeCommand
 
+  def isSubscribeStreamer(message: IMessage): Boolean = {
+    val content = message.getContent
+    val name = content.replace(subscribeCommand, "").trim
+    getUser(message.getClient, name).isDefined
+  }
+
   def isHelpMeComand(message: IMessage): Boolean = message.getContent == helpCommand
 
   def subscribeStreamer(user: IUser): Unit = {
@@ -40,8 +47,19 @@ class StreamingResources @Inject()(cache: Cache) extends Controller {
     user.getOrCreatePMChannel().sendMessage(messageForSubscribedStreamer)
   }
 
+  def subscribeOnBehalfOfStreamer(message: IMessage): Unit = {
+    val name = message.getContent.replace(subscribeCommand, "").trim
+    getUser(message.getClient, name).foreach(subscribeStreamer)
+    message.getAuthor.getOrCreatePMChannel().sendMessage(s"$name has been successfully subscribed")
+  }
+
   def help(event: MessageReceivedEvent): IMessage = {
     event.getAuthor.getOrCreatePMChannel().sendMessage(instructions)
+  }
+
+  def getUser(client: IDiscordClient, name: String): Option[IUser] = {
+    client.getChannels.toList.flatMap(channel => channel.getUsersHere.toList)
+      .filter(user => name == (user.getName + "#" + user.getDiscriminator)).distinct.headOption
   }
 
   def listOfStreamers: List[Long] = cache.get[List[Long]](subscriptionCacheKey).getOrElse(List())
