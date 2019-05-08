@@ -46,7 +46,10 @@ class Application @Inject()(
     .withHeaders("WWW-Authenticate" -> "Basic realm=Unauthorized"))
 
   def index = Action { request =>
-    Ok(views.html.index(SecureView.getRole(request), battlefy.getCurrentTournament))
+    val role = SecureView.getRole(request)
+    if (role.isDefined)
+      Ok(views.html.index(SecureView.getRole(request), battlefy.getCurrentTournament))
+    else Ok(guestView)
   }
 
   def validateDeck(url: String) = SecureBackEnd {
