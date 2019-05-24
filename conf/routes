@@ -51,7 +51,14 @@ POST        /invalidate/cache                                      controllers.A
 POST        /cache/deck/name                                       controllers.Application.cacheDeckName
 POST        /create/user                                           controllers.Application.createUser
 POST        /edit/user/role                                        controllers.Application.editUserRole
-POST        /generate/ecq/deck/image                               controllers.Application.ecqImage
+POST        /generate/deck/image                                   controllers.Application.deckImage
+
+POST        /add/ecq/player                                        controllers.Application.addEcqPlayer
+DELETE      /delete/ecq/player/:playername                         controllers.Application.deleteEcqPlayer(playername)
+GET         /ecq/scenes                                            controllers.Application.getECQScenes
+GET         /ecq/players                                           controllers.Application.ecqPlayerManagement
+GET         /generate/ecq/side/panel                               controllers.Application.ecqSidePanel(player1Name: String, player1Score: Int, player2Name:String, player2Score: Int, maincam: String)
+GET         /generate/ecq/deck                                     controllers.Application.ecqDeckImage(playerName: String, side: String)
 DELETE      /user/delete/:username                                 controllers.Application.deleteUser(username)
 
 GET         /how-to-register                                       controllers.Application.howToRegister

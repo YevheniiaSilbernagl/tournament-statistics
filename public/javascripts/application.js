@@ -89,6 +89,28 @@ jQuery(window).ready(function () {
         $("#generate-cards-list").attr("href", url);
     }
 
+    $(document).on('click', "#add-ecq-player", function (e) {
+        var playerName = $('#playerName').val();
+        var deckName = $('#deckName').val();
+        var deckList = $('#deckList').val();
+        var status = $("#status");
+        status.text("");
+        $.ajax({
+            type: "POST",
+            url: "/add/ecq/player?playerName=" + encodeURIComponent(playerName) + "&deckName=" + encodeURIComponent(deckName),
+            data: deckList,
+            contentType: "text/plain; charset=utf-8",
+            success: function (r) {
+                status.addClass("alert-success");
+                status.text(r)
+            },
+            error: function (r) {
+                status.addClass("alert-danger");
+                status.text(r.responseText)
+            }
+        });
+    });
+
     $(document).on('click', "#create-user", function (e) {
         var login = $("#login").val();
         var password = $("#password").val();
@@ -325,6 +347,97 @@ jQuery(window).ready(function () {
         });
     });
 
+    $(document).on('click', ".player-delete", function (e) {
+        var tr = $(e.currentTarget).parent().parent();
+        var playername = tr.find('.playername').text();
+        $.ajax({
+            type: "DELETE",
+            url: "/delete/ecq/player/" + playername,
+            success: function (msg) {
+                tr.remove();
+            }
+        });
+    });
+
+    $(document).on('click', 'input[name=maincam-ecq]', function (e) {
+        update_generate_ecq_side_panel();
+        update_player1_deck_link();
+        update_player2_deck_link();
+    });
+
+    $(document).on('change', '#playerName1', function (e) {
+        update_generate_ecq_side_panel();
+        update_player1_deck_link();
+    });
+
+    $(document).on('change', '#playerName2', function (e) {
+        update_generate_ecq_side_panel();
+        update_player2_deck_link();
+    });
+
+    $(document).on('keyup', "#score1", function (e) {
+        if (e.keyCode === 13) {
+            update_generate_ecq_side_panel();
+        }
+    });
+
+    $(document).on('keyup', "#score2", function (e) {
+        if (e.keyCode === 13) {
+            update_generate_ecq_side_panel();
+        }
+    });
+
+    function update_player1_deck_link() {
+        var playerInfo = $("#playerName1").val();
+        if (playerInfo) {
+            var player1Name = playerInfo.split(" - ")[0];
+            var maincam = $('input[name=maincam-ecq]:checked').attr('id');
+            var side = "";
+            if (maincam === "player1") {
+                side = "left";
+            } else {
+                side = "right";
+            }
+            var generatedUrl = "/generate/ecq/deck" +
+                "?playerName=" + encodeURIComponent(player1Name) +
+                "&side=" + encodeURIComponent(side);
+            $('#player1Deck').attr("href", generatedUrl);
+        }
+    }
+
+    function update_player2_deck_link() {
+        var playerInfo = $("#playerName2").val();
+        if (playerInfo) {
+            var player2Name = playerInfo.split(" - ")[0];
+            var maincam = $('input[name=maincam-ecq]:checked').attr('id');
+            var side = "";
+            if (maincam === "player2") {
+                side = "left";
+            } else {
+                side = "right";
+            }
+            var generatedUrl = "/generate/ecq/deck" +
+                "?playerName=" + encodeURIComponent(player2Name) +
+                "&side=" + encodeURIComponent(side);
+            $('#player2Deck').attr("href", generatedUrl);
+        }
+    }
+
+    function update_generate_ecq_side_panel() {
+        var player1Name = $("#playerName1").val();
+        var player1Score = $("#score1").val();
+        var player2Name = $("#playerName2").val();
+        var player2Score = $("#score2").val();
+        var maincam = $('input[name=maincam-ecq]:checked').attr('id');
+        var generatedUrl = "/generate/ecq/side/panel" +
+            "?player1Name=" + encodeURIComponent(player1Name) +
+            "&player1Score=" + encodeURIComponent(player1Score) +
+            "&player2Name=" + encodeURIComponent(player2Name) +
+            "&player2Score=" + encodeURIComponent(player2Score) +
+            "&maincam=" + encodeURIComponent(maincam);
+        $('#generate-ecq-panel').attr("href", generatedUrl);
+    }
+
     $(document).on('dblclick', ".user-role", function (e) {
         apply_role();
         var currentText = $(e.currentTarget).text();
@@ -385,6 +498,9 @@ jQuery(window).ready(function () {
             $(deckDiv).find('.generate-full-screen').attr("href", "/download/deck?link=" + deckLink + "&name=" + currentText + "&player=" + playerName);
         });
         refresh_generate_side_panel_link();
+        update_player1_deck_link();
+        update_player2_deck_link();
+        update_generate_ecq_side_panel();
     }
 
     function generate_resources() {
@@ -450,4 +566,5 @@ jQuery(window).ready(function () {
             });
         }
     )
-});
+})
+;

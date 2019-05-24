@@ -1,0 +1,57 @@
+@import types.Tournament
+@(role: Option[String], tournament: Tournament, opponents: Set[(String, String)])
+
+@main(tournament, "ECQ scenes", role) {
+    <div class="container content">
+    @if(opponents.nonEmpty) {
+        <table class="table table-striped table-hover">
+            <tr>
+                <td>
+                    <label>Opponent 1:
+                        <select id="playerName1">
+                        @for(opponent <- opponents) {
+                            <option>@{opponent._1} - @{opponent._2}</option>
+                        }
+                        </select>
+                    </label>
+                </td>
+                <td>
+                    <label>Opponent 2:
+                        <select id="playerName2">
+                        @for(opponent <- opponents) {
+                            <option class="player">@{opponent._1} - @{opponent._2}</option>
+                        }
+                        </select>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td><input type="text" placeholder="score" id="score1" value="0"></td>
+                <td><input type="text" placeholder="score" id="score2" value="0"></td>
+            </tr>
+            <tr>
+                <td>
+                    <label>main:
+                        <input type="radio" name = "maincam-ecq" id="player1" checked>
+                    </label>
+                </td>
+                <td>
+                    <label>main:
+                        <input type="radio" name = "maincam-ecq" id="player2">
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td><a id="player1Deck" class="btn btn-secondary btn-lg btn-block" href="#" download>Deck image</a></td>
+                <td><a id="player2Deck" class="btn btn-secondary btn-lg btn-block" href="#" download>Deck image</a></td>
+            </tr>
+        </table>
+       <a id="generate-ecq-panel" class="btn btn-primary btn-lg btn-block" href="#" download>Generate side panel</a>
+    } else {
+        <div class="alert alert-warning" role="alert">
+            There are no players
+        </div>
+    }
+    </div>
+
+}

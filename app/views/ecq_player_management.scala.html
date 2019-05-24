@@ -1,0 +1,42 @@
+@import types.{Tournament, User}
+@(role: Option[String], tournament: Tournament, opponents: Set[(String, String)])
+
+@main(tournament, "ECQ player management", role) {
+    <div class="container content">
+        <table  class="table table-striped">
+            <tbody>
+                <tr><td><form>
+                    <input id="playerName" placeholder="Player"><br>
+                    <input id="deckName" placeholder="Deck name" type="text"><br>
+                    <label for="deckList">Deck list: </label><br>
+                    <textarea colls="40" rows="10" id="deckList"></textarea><br>
+                    <a class="btn btn-primary" id="add-ecq-player" href="#">Add player</a>
+                    <div id="status"></div>
+                </form></td></tr>
+            </tbody>
+        </table>
+        <table class="table table-striped table-hover" id="ecqPlayersTable">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Deck</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @for(opponent <- opponents) {
+                    <tr>
+                        <td class="playername">@{
+                            opponent._1
+                        }</td>
+                        <td><div class="deck">@{
+                            opponent._2
+                        }</div></td>
+                        <td width="10px"><div class="small badge-pill badge-danger player-delete">X</div></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+}

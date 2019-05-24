@@ -676,7 +676,7 @@ class Application @Inject()(
       }
   }
 
-  def ecqImage = SecureBackEnd {
+  def deckImage = SecureBackEnd {
     request =>
       request.body.asText match {
         case Some(text) =>
@@ -701,5 +701,67 @@ class Application @Inject()(
           }
         case _ => BadRequest("Invalid request")
       }
+  }
+
+  def addEcqPlayer() = SecureBackEnd {
+    request =>
+      val playerName = request.getQueryString("playerName")
+      val deckName = request.getQueryString("deckName")
+      val deckList = request.body.asText
+      if (playerName.isEmpty || deckName.isEmpty || deckList.isEmpty) {
+        BadRequest("Invalid request")
+      } else {
+        val playersCacheKey = "ecq-players"
+        val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+        cache.put(playersCacheKey, players ++ List((playerName.get, deckName.get)), 30.days)
+        cache.put(playerName.get, deckList.get, 30.days)
+        val newPlayers: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+        Ok(s"Player has been added: ${newPlayers.mkString(",")}")
+      }
+  }
+
+  def deleteEcqPlayer(playerName: String) = SecureBackEnd {
+    cache.delete(playerName)
+    val playersCacheKey = "ecq-players"
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+    cache.put(playersCacheKey, players.filter(_._1 != playerName), 30.days)
+    Ok(s"Player $playerName has been deleted")
+  }
+
+  def getECQScenes = Action { request =>
+    val playersCacheKey = "ecq-players"
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+    Ok(views.html.ecq(SecureView.getRole(request), battlefy.getCurrentTournament, players))
+  }
+
+  def ecqSidePanel(player1Name: String, player1Score: Int, player2Name: String, player2Score: Int, maincam: String) = SecureBackEnd {
+    NotFound("Implementation required")
+  }
+  def ecqPlayerManagement =  Action { request =>
+    val playersCacheKey = "ecq-players"
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+    Ok(views.html.ecq_player_management(SecureView.getRole(request), battlefy.getCurrentTournament, players))
+  }
+
+  def ecqDeckImage(playerName: String, side: String) = SecureBackEnd {
+    val playersCacheKey = "ecq-players"
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+    val deckName :String = players.filter(_._1 == playerName).map(_._2).head
+    val deckText: String = cache.get[String](playerName).getOrElse("")
+    val (mainDeck, market): (List[String], List[String]) = Deck.parse(deckText)
+    graphics.deckImage((playerName, None), side, eternalWarcry.getDeck(mainDeck, market), Some(deckName), ecq = true) match {
+      case Right(file) =>
+
+        discord.notifyAdmin(_.sendFile(file))
+        discord.notifyStreamers(_.sendFile(file))
+
+        val statsMessage = s"STATS: <https://www.ets.to/player?playerName=${playerName.split("[\\s\\+]")(0)}>"
+        discord.notifyAdmin(_.sendMessage(statsMessage))
+        discord.notifyStreamers(_.sendMessage(statsMessage))
+
+        Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+          "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+      case Left(error) => NotFound(error.getMessage)
+    }
   }
 }
