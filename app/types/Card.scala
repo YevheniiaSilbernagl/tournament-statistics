@@ -33,4 +33,14 @@ object Card {
     }
     modifiedText.replaceAll("&amp;", "&")
   }
+
+  def parseDetails(cardText: String): (Int, String, Int, Int) = {
+    val numberOfCards = cardText.substring(0, cardText.indexOf(" ")).toInt
+    val r1 = cardText.substring( cardText.indexOf(" ")).trim
+    val cardName = r1.substring(0, r1.indexOf("(")).trim
+    val r3 = r1.substring(r1.indexOf("(Set")+4, r1.indexOf(")")).split(" #")
+    val set = r3.head
+    val num = r3(1)
+    (numberOfCards, cardName, set.toInt, num.toInt)
+  }
 }

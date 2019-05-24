@@ -9,7 +9,7 @@ import org.joda.time.LocalDate
 import play.api.Configuration
 import play.api.libs.json._
 import play.api.mvc._
-import types.{Deck, Score, Score_, User}
+import types._
 
 import scala.concurrent.duration._
 import scala.language.{implicitConversions, postfixOps}
@@ -672,6 +672,33 @@ class Application @Inject()(
             case NonFatal(e) => BadRequest(e.getLocalizedMessage)
           }
         case Some(body) if (body \\ "role").isEmpty => BadRequest("Role is not defined")
+        case _ => BadRequest("Invalid request")
+      }
+  }
+
+  def ecqImage = SecureBackEnd {
+    request =>
+      request.body.asText match {
+        case Some(text) =>
+          val playersName = request.getQueryString("playerName").getOrElse("")
+          val side = request.getQueryString("side").getOrElse("left")
+          val deckName = request.getQueryString("deckName").getOrElse("")
+          val ecq = request.getQueryString("ecq").getOrElse("false").toBoolean
+          val (mainDeck, market): (List[String], List[String]) = Deck.parse(text)
+          graphics.deckImage((playersName, None), side, eternalWarcry.getDeck(mainDeck, market), Some(deckName), ecq) match {
+            case Right(file) =>
+
+              discord.notifyAdmin(_.sendFile(file))
+              discord.notifyStreamers(_.sendFile(file))
+
+              val statsMessage = s"STATS: <https://www.ets.to/player?playerName=${playersName.split("[\\s\\+]")(0)}>"
+              discord.notifyAdmin(_.sendMessage(statsMessage))
+              discord.notifyStreamers(_.sendMessage(statsMessage))
+
+              Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+                "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+            case Left(error) => NotFound(error.getMessage)
+          }
         case _ => BadRequest("Invalid request")
       }
   }

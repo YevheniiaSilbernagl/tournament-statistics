@@ -114,6 +114,12 @@ object Deck {
     )
   }
 
+  def parse(eternalFormat: String): (List[String], List[String]) = {
+    val parts: List[String]  = eternalFormat.split("--------------MARKET---------------\n").toList
+    val mainDeckText = parts.head
+    (mainDeckText.split("\n").toList, if(parts.length>1) parts(1).split("\n").toList else List())
+  }
+
   private def cardsList(nodes: List[TagNode]) = nodes.map(tag => (Card.parse(tag), tag.getAttributeByName("data-count").toInt))
 
   val empty: Deck = Deck("empty", "empty", "empty", List(), List(), List(), notTournamentDeck = false, Some("empty"))
