@@ -30,6 +30,7 @@ class Application @Inject()(
 
   private val SecureView = new SecureView(db, Results.Ok(guestView))
   private val SecureBackEnd = new SecureBackEnd(db)
+  private val ECQPlayersCacheKey = "ecq-players"
 
   def login = Action { request: Request[AnyContent] =>
     if (SecureBackEnd.getRole(request).isDefined) Redirect("/")
@@ -711,42 +712,46 @@ class Application @Inject()(
       if (playerName.isEmpty || deckName.isEmpty || deckList.isEmpty) {
         BadRequest("Invalid request")
       } else {
-        val playersCacheKey = "ecq-players"
-        val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
-        cache.put(playersCacheKey, players ++ List((playerName.get, deckName.get)), 30.days)
+        val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
+        cache.put(ECQPlayersCacheKey, players ++ List((playerName.get, deckName.get)), 30.days)
         cache.put(playerName.get, deckList.get, 30.days)
-        val newPlayers: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+        val newPlayers: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
         Ok(s"Player has been added: ${newPlayers.mkString(",")}")
       }
   }
 
   def deleteEcqPlayer(playerName: String) = SecureBackEnd {
     cache.delete(playerName)
-    val playersCacheKey = "ecq-players"
-    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
-    cache.put(playersCacheKey, players.filter(_._1 != playerName), 30.days)
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
+    cache.put(ECQPlayersCacheKey, players.filter(_._1 != playerName), 30.days)
     Ok(s"Player $playerName has been deleted")
   }
 
   def getECQScenes = Action { request =>
-    val playersCacheKey = "ecq-players"
-    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
     Ok(views.html.ecq(SecureView.getRole(request), battlefy.getCurrentTournament, players))
   }
 
   def ecqSidePanel(player1Name: String, player1Score: Int, player2Name: String, player2Score: Int, maincam: String) = SecureBackEnd {
-    NotFound("Implementation required")
+    val p1 = player1Name.split(" - ")
+    val p2 = player2Name.split(" - ")
+    val player1: (String, String, Int) = (p1.head, p1(1), player1Score)
+    val player2: (String, String, Int) = (p2.head, p2(1), player2Score)
+    val file = graphics.ecqSidePannel(player1, player2, maincam)
+    discord.notifyAdmin(_.sendFile(file))
+
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
-  def ecqPlayerManagement =  Action { request =>
-    val playersCacheKey = "ecq-players"
-    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
+
+  def ecqPlayerManagement = Action { request =>
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
     Ok(views.html.ecq_player_management(SecureView.getRole(request), battlefy.getCurrentTournament, players))
   }
 
   def ecqDeckImage(playerName: String, side: String) = SecureBackEnd {
-    val playersCacheKey = "ecq-players"
-    val players: Set[(String, String)] = cache.get[Set[(String, String)]](playersCacheKey).getOrElse(Set())
-    val deckName :String = players.filter(_._1 == playerName).map(_._2).head
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
+    val deckName: String = players.filter(_._1 == playerName).map(_._2).head
     val deckText: String = cache.get[String](playerName).getOrElse("")
     val (mainDeck, market): (List[String], List[String]) = Deck.parse(deckText)
     graphics.deckImage((playerName, None), side, eternalWarcry.getDeck(mainDeck, market), Some(deckName), ecq = true) match {
