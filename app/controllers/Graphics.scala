@@ -804,7 +804,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     val matchScore = ImageIO.read(fs.file(s"/images/ecq/smallBox.png").get)
 
     val nameFont = scala.List(adjustFontSize(g, handCam._1, maxTextWidth, 14f, 48f), adjustFontSize(g, mainCam._1, maxTextWidth, 14f, 48f)).min
-    val deckNameFont = scala.List(adjustFontSize(g, handCam._2, maxTextWidth, 14f, 48f), adjustFontSize(g, mainCam._2, maxTextWidth, 14f, 48f)).min
+    val deckNameFont = scala.List(adjustFontSize(g, handCam._2, maxTextWidth, 14f, nameFont - 10f), adjustFontSize(g, mainCam._2, maxTextWidth, 14f, 48f)).min
 
     //player2name
     FONT.foreach(f => g.setFont(f.deriveFont(nameFont)))
