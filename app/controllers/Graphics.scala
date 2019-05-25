@@ -411,7 +411,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
                ): Either[Exception, File] = {
 
     val playersName = Option(player._1.trim).map(s => if (s.contains("+")) s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#"))) else s).getOrElse(player._1)
-    fs.file(s"/images/background-$side${if(ecq) "-ecq" else ""}.png") match {
+    fs.file(s"/images/ecq/background-$side${if(ecq) "-ecq" else ""}.png") match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
