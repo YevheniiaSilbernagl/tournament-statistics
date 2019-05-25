@@ -285,6 +285,24 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
+  def topCardsEcq: Action[AnyContent] = SecureBackEnd {
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
+
+    val topCards = players.flatMap { player =>
+      val deckText: String = cache.get[String](player._1).getOrElse("")
+      val (mainDeck, market): (List[String], List[String]) = Deck.parse(deckText)
+      eternalWarcry.getDeck(mainDeck, market).cards
+    }.groupBy(_._1).map(p => p._1 -> p._2.map(_._2).sum)
+      .filterNot(_._1.isPower).map(p => p._1.name -> p._2).toList.sortBy(_._2).reverse.take(10)
+    val file = graphics.topCards(topCards, ecq = true)
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
   def customCardList(header: String, cards: List[String]): Action[AnyContent] = SecureBackEnd {
     val file = graphics.customCardList(header, cards)
 
