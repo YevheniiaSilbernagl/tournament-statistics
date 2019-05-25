@@ -771,11 +771,30 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     saveFile(g, image, "casters.png")
   }
 
-  def ecqSidePannel(player1: (String, String, Int), player2: (String, String, Int), maincam: String): File = {
+  def castersEcq(casters: scala.List[String]): File = {
+    val imageWidth = 278
+    val image = new BufferedImage(imageWidth, 220, BufferedImage.TYPE_INT_ARGB)
+    val g = graphicsSettings(image.createGraphics())
+
+    //casters
+    def center(graphics: Graphics2D, str: String) = (imageWidth - graphics.getFontMetrics.stringWidth(str)) / 2
+
+    g.setColor(defaultColor)
+    FONT.foreach(f => g.setFont(f.deriveFont(60f)))
+    val castersStr = "Casters"
+    g.drawString(castersStr, center(g, castersStr), 35)
+    FONT.foreach(f => g.setFont(f.deriveFont(45f)))
+    for (i <- casters.indices) {
+      val name: String = casters(i)
+      g.drawString(name, center(g, name), 40 + 45 * (i + 1))
+    }
+    saveFile(g, image, "casters.png")
+  }
+
+  def ecqSidePannel(mainCam: (String, String, Int), handCam: (String, String, Int)): File = {
     val imageWidth = 278
     val image = new BufferedImage(imageWidth, 910, BufferedImage.TYPE_INT_ARGB)
     val maxTextWidth = 270
-    val darkerColour = new Color(15, 26, 56)
 
     def center(graphics: Graphics2D, str: String) = (imageWidth - graphics.getFontMetrics.stringWidth(str)) / 2
 
@@ -784,35 +803,35 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
     val matchScore = ImageIO.read(fs.file(s"/images/ecq/smallBox.png").get)
 
-    val nameFont = scala.List(adjustFontSize(g, player1._1, maxTextWidth, 14f, 48f), adjustFontSize(g, player2._1, maxTextWidth, 14f, 48f)).min
-    val deckNameFont = scala.List(adjustFontSize(g, player1._2, maxTextWidth, 14f, 48f), adjustFontSize(g, player2._2, maxTextWidth, 14f, 48f)).min
+    val nameFont = scala.List(adjustFontSize(g, handCam._1, maxTextWidth, 14f, 48f), adjustFontSize(g, mainCam._1, maxTextWidth, 14f, 48f)).min
+    val deckNameFont = scala.List(adjustFontSize(g, handCam._2, maxTextWidth, 14f, 48f), adjustFontSize(g, mainCam._2, maxTextWidth, 14f, 48f)).min
 
     //player2name
     FONT.foreach(f => g.setFont(f.deriveFont(nameFont)))
-    g.drawString(player1._1, center(g, player1._1), 165)
+    g.drawString(handCam._1, center(g, handCam._1), 165)
     //player2 deckname
     FONT.foreach(f => g.setFont(f.deriveFont(deckNameFont)))
-    g.drawString(player1._2, center(g, player1._2), 210)
+    g.drawString(handCam._2, center(g, handCam._2), 210)
     //player2 score
     g.drawImage(scale(matchScore, 135, 135), 70, 270, null)
     FONT.foreach(f => g.setFont(f.deriveFont(160f)))
-    g.drawString(player1._3.toString, center(g, player1._3.toString), 380)
+    g.drawString(handCam._3.toString, center(g, handCam._3.toString), 380)
     //best of 3
     val bo3 = "Best of Three"
     val font = adjustFontSize(g, bo3, maxTextWidth, 14f, 48f)
     FONT.foreach(f => g.setFont(f.deriveFont(font)))
-    g.drawString(bo3, center(g, bo3), 460)
+    g.drawString(bo3, center(g, bo3), 465)
     //player1score
     g.drawImage(scale(matchScore, 135, 135), 70, 500, null)
     FONT.foreach(f => g.setFont(f.deriveFont(160f)))
-    g.drawString(player2._3.toString, center(g, player2._3.toString), 610)
+    g.drawString(mainCam._3.toString, center(g, mainCam._3.toString), 610)
 
     //player1name
     FONT.foreach(f => g.setFont(f.deriveFont(nameFont)))
-    g.drawString(player2._1, center(g, player2._1), 720)
+    g.drawString(mainCam._1, center(g, mainCam._1), 720)
     //player1deckname
     FONT.foreach(f => g.setFont(f.deriveFont(deckNameFont)))
-    g.drawString(player2._2, center(g, player2._2), 765)
+    g.drawString(mainCam._2, center(g, mainCam._2), 765)
 
     saveFile(g, image, "left-side-panel.png")
   }

@@ -66,7 +66,9 @@ jQuery(window).ready(function () {
     });
 
     $(document).on('keyup', "#casters-list", function (e) {
-        $('#generate-casters-list').attr("href", "/casters?list=" + encodeURIComponent($("#casters-list").val()));
+        var list = encodeURIComponent($("#casters-list").val());
+        $('#generate-casters-list').attr("href", "/casters?list=" + list);
+        $('#generate-casters-list-ecq').attr("href", "/casters/ecq?list=" + list);
     });
 
 
@@ -359,19 +361,15 @@ jQuery(window).ready(function () {
         });
     });
 
-    $(document).on('click', 'input[name=maincam-ecq]', function (e) {
+    $(document).on('change', '#playerName1', function (e) {
         update_generate_ecq_side_panel();
         update_player1_deck_link();
         update_player2_deck_link();
     });
 
-    $(document).on('change', '#playerName1', function (e) {
-        update_generate_ecq_side_panel();
-        update_player1_deck_link();
-    });
-
     $(document).on('change', '#playerName2', function (e) {
         update_generate_ecq_side_panel();
+        update_player1_deck_link();
         update_player2_deck_link();
     });
 
@@ -391,16 +389,9 @@ jQuery(window).ready(function () {
         var playerInfo = $("#playerName1").val();
         if (playerInfo) {
             var player1Name = playerInfo.split(" - ")[0];
-            var maincam = $('input[name=maincam-ecq]:checked').attr('id');
-            var side = "";
-            if (maincam === "player1") {
-                side = "left";
-            } else {
-                side = "right";
-            }
             var generatedUrl = "/generate/ecq/deck" +
                 "?playerName=" + encodeURIComponent(player1Name) +
-                "&side=" + encodeURIComponent(side);
+                "&side=left";
             $('#player1Deck').attr("href", generatedUrl);
         }
     }
@@ -409,16 +400,9 @@ jQuery(window).ready(function () {
         var playerInfo = $("#playerName2").val();
         if (playerInfo) {
             var player2Name = playerInfo.split(" - ")[0];
-            var maincam = $('input[name=maincam-ecq]:checked').attr('id');
-            var side = "";
-            if (maincam === "player2") {
-                side = "left";
-            } else {
-                side = "right";
-            }
             var generatedUrl = "/generate/ecq/deck" +
                 "?playerName=" + encodeURIComponent(player2Name) +
-                "&side=" + encodeURIComponent(side);
+                "&side=right";
             $('#player2Deck').attr("href", generatedUrl);
         }
     }
@@ -428,13 +412,11 @@ jQuery(window).ready(function () {
         var player1Score = $("#score1").val();
         var player2Name = $("#playerName2").val();
         var player2Score = $("#score2").val();
-        var maincam = $('input[name=maincam-ecq]:checked').attr('id');
         var generatedUrl = "/generate/ecq/side/panel" +
             "?player1Name=" + encodeURIComponent(player1Name) +
             "&player1Score=" + encodeURIComponent(player1Score) +
             "&player2Name=" + encodeURIComponent(player2Name) +
-            "&player2Score=" + encodeURIComponent(player2Score) +
-            "&maincam=" + encodeURIComponent(maincam);
+            "&player2Score=" + encodeURIComponent(player2Score);
         $('#generate-ecq-panel').attr("href", generatedUrl);
     }
 

@@ -493,6 +493,12 @@ class Application @Inject()(
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
 
+  def generateCastersListEcq(list: String) = SecureBackEnd {
+    val file = graphics.castersEcq(list.split("\n").toList)
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
   def checkInPage: Action[AnyContent] = Action { request =>
     val tournament = battlefy.getCurrentTournament
     val authToken = config.getString("battlefy.client.id").flatMap(battlefy.getAuthToken)
@@ -732,12 +738,12 @@ class Application @Inject()(
     Ok(views.html.ecq(SecureView.getRole(request), battlefy.getCurrentTournament, players))
   }
 
-  def ecqSidePanel(player1Name: String, player1Score: Int, player2Name: String, player2Score: Int, maincam: String) = SecureBackEnd {
+  def ecqSidePanel(player1Name: String, player1Score: Int, player2Name: String, player2Score: Int) = SecureBackEnd {
     val p1 = player1Name.split(" - ")
     val p2 = player2Name.split(" - ")
     val player1: (String, String, Int) = (p1.head, p1(1), player1Score)
     val player2: (String, String, Int) = (p2.head, p2(1), player2Score)
-    val file = graphics.ecqSidePannel(player1, player2, maincam)
+    val file = graphics.ecqSidePannel(player1, player2)
     discord.notifyAdmin(_.sendFile(file))
 
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
