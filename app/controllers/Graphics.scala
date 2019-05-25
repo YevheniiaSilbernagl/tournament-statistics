@@ -771,7 +771,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     saveFile(g, image, "casters.png")
   }
 
-  def castersEcq(casters: scala.List[String]): File = {
+  def castersEcq(casters: scala.List[(java.lang.String, Option[BufferedImage])]): File = {
     val imageWidth = 278
     val image = new BufferedImage(imageWidth, 220, BufferedImage.TYPE_INT_ARGB)
     val g = graphicsSettings(image.createGraphics())
@@ -785,8 +785,8 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     g.drawString(castersStr, center(g, castersStr), 35)
     FONT.foreach(f => g.setFont(f.deriveFont(45f)))
     for (i <- casters.indices) {
-      val name: String = casters(i)
-      g.drawString(name, center(g, name), 40 + 45 * (i + 1))
+      g.drawString(casters(i)._1, 65, 40 + 40 * (i + 1))
+      casters(i)._2.foreach(avatar => g.drawImage(scale(avatar, 37, 37), 10, 5 + 40 * (i + 1), null))
     }
     saveFile(g, image, "casters.png")
   }

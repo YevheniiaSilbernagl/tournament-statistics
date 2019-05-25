@@ -494,7 +494,7 @@ class Application @Inject()(
   }
 
   def generateCastersListEcq(list: String) = SecureBackEnd {
-    val file = graphics.castersEcq(list.split("\n").toList)
+    val file = graphics.castersEcq(list.split("\n").map(name => (name, discord.getAvatar(name))).toList)
     Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
       "content-disposition" -> s"""attachment; filename="${file.getName}"""")
   }
