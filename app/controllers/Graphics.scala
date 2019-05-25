@@ -783,7 +783,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     FONT.foreach(f => g.setFont(f.deriveFont(60f)))
     val castersStr = "Casters"
     g.drawString(castersStr, center(g, castersStr), 35)
-    FONT.foreach(f => g.setFont(f.deriveFont(45f)))
+    FONT.foreach(f => g.setFont(f.deriveFont(40f)))
     for (i <- casters.indices) {
       g.drawString(casters(i)._1, 47, 40 + 40 * (i + 1))
       casters(i)._2.foreach(avatar => g.drawImage(scale(avatar, 37, 37), 5, 5 + 40 * (i + 1), null))
