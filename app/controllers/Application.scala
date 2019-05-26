@@ -740,7 +740,7 @@ class Application @Inject()(
         cache.put(ECQPlayersCacheKey, players ++ List((playerName.get, deckName.get)), 30.days)
         cache.put(playerName.get, deckList.get, 30.days)
         val newPlayers: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
-        Ok(s"Player $playerName has been added")
+        Ok(s"Player ${playerName.getOrElse("")} has been added")
       }
   }
 
