@@ -392,13 +392,13 @@ jQuery(window).ready(function () {
     });
 
     $(document).on('keyup', "#score1", function (e) {
-        if (e.keyCode === 13) {
+        if (e.keyCode !== 13) {
             update_generate_ecq_side_panel();
         }
     });
 
     $(document).on('keyup', "#score2", function (e) {
-        if (e.keyCode === 13) {
+        if (e.keyCode !== 13) {
             update_generate_ecq_side_panel();
         }
     });
