@@ -59,6 +59,7 @@ GET         /ecq/scenes                                            controllers.A
 GET         /ecq/players                                           controllers.Application.ecqPlayerManagement
 GET         /generate/ecq/side/panel                               controllers.Application.ecqSidePanel(player1Name: String, player1Score: Int, player2Name:String, player2Score: Int)
 GET         /generate/ecq/deck                                     controllers.Application.ecqDeckImage(playerName: String, side: String)
+GET         /generate/ecq/deck/full                                controllers.Application.oneECQDeckScene(playerName: String)
 GET         /casters/ecq                                           controllers.Application.generateCastersListEcq(list: String)
 GET         /download/top/cards/ecq                                controllers.Application.topCardsEcq
 DELETE      /user/delete/:username                                 controllers.Application.deleteUser(username)

@@ -208,6 +208,27 @@ class Application @Inject()(
     }
   }
 
+  def oneECQDeckScene(playerName: String): Action[AnyContent] = SecureBackEnd {
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
+    val deckName: String = players.filter(_._1 == playerName).map(_._2).head
+    val deckText: String = cache.get[String](playerName).getOrElse("")
+    val (mainDeck, market): (List[String], List[String]) = Deck.parse(deckText)
+    graphics.oneDeckImage((playerName, None), eternalWarcry.getDeck(mainDeck, market), Some(deckName), ecq = true)  match {
+      case Right(file) =>
+
+        discord.notifyAdmin(_.sendFile(file))
+        discord.notifyStreamers(_.sendFile(file))
+
+        val statsMessage = s"STATS: <https://www.ets.to/player?playerName=${playerName.split("[\\s\\+]")(0)}>"
+        discord.notifyAdmin(_.sendMessage(statsMessage))
+        discord.notifyStreamers(_.sendMessage(statsMessage))
+
+        Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+          "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+      case Left(error) => NotFound(error.getMessage)
+    }
+  }
+
   def left(link: String, name: String, player: String): Action[AnyContent] = side("left", link, name, player)
 
   def right(link: String, name: String, player: String): Action[AnyContent] = side("right", link, name, player)

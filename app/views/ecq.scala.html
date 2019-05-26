@@ -9,6 +9,7 @@
                 <td>
                     <label>Main cam player:
                     <a id="player1Deck" class="badge badge-dark generate-right noprint" href="#" download>Deck image</a><br>
+                    <a id="player1DeckFull" class="badge badge-dark generate-right noprint" href="#" download>One scene deck image</a><br>
                         <select id="playerName1">
                         @for(opponent <- opponents) {
                             <option>@{opponent._1} - @{opponent._2}</option>
@@ -22,6 +23,7 @@
                 <td>
                     <label>Hand cam player:
                         <a id="player2Deck" class="badge badge-dark generate-right noprint" href="#" download>Deck image</a><br>
+                        <a id="player2DeckFull" class="badge badge-dark generate-right noprint" href="#" download>One scene deck image</a><br>
                         <select id="playerName2">
                         @for(opponent <- opponents) {
                             <option class="player">@{opponent._1} - @{opponent._2}</option>

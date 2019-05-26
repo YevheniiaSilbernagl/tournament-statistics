@@ -411,6 +411,7 @@ jQuery(window).ready(function () {
                 "?playerName=" + encodeURIComponent(player1Name) +
                 "&side=left";
             $('#player1Deck').attr("href", generatedUrl);
+            $('#player1DeckFull').attr("href", "/generate/ecq/deck/full?playerName=" + encodeURIComponent(player1Name));
         }
     }
 
@@ -422,6 +423,7 @@ jQuery(window).ready(function () {
                 "?playerName=" + encodeURIComponent(player2Name) +
                 "&side=right";
             $('#player2Deck').attr("href", generatedUrl);
+            $('#player2DeckFull').attr("href", "/generate/ecq/deck/full?playerName=" + encodeURIComponent(player2Name));
         }
     }
 
