@@ -213,7 +213,7 @@ class Application @Inject()(
     val deckName: String = players.filter(_._1 == playerName).map(_._2).head
     val deckText: String = cache.get[String](playerName).getOrElse("")
     val (mainDeck, market): (List[String], List[String]) = Deck.parse(deckText)
-    graphics.oneDeckImage((playerName, None), eternalWarcry.getDeck(mainDeck, market), Some(deckName), ecq = true)  match {
+    graphics.oneDeckImage((playerName, None), eternalWarcry.getDeck(mainDeck, market), Some(deckName), ecq = true) match {
       case Right(file) =>
 
         discord.notifyAdmin(_.sendFile(file))
@@ -297,7 +297,7 @@ class Application @Inject()(
     val players = battlefy.listOfPlayers(tournamentId)
     val topCards = players.map(_._2).filter(_.isDefined).flatMap(l => eternalWarcry.getDeck(l.get).cards)
       .groupBy(_._1).map(p => p._1 -> p._2.map(_._2).sum).filterNot(_._1.isPower).map(p => p._1.name -> p._2).toList.sortBy(_._2).reverse.take(10)
-    val file = graphics.topCards(topCards)
+    val file = graphics.topCards(topCards, header = "The Desk - Top 10 cards this week")
 
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))
@@ -316,7 +316,28 @@ class Application @Inject()(
     }
     val topCards = allCards.groupBy(_._1).map(p => p._1 -> p._2.map(_._2).sum)
       .filterNot(_._1.isPower).map(p => p._1.name -> p._2).toList.sortBy(_._2).reverse.take(10)
-    val file = graphics.topCards(topCards, ecq = true)
+    val file = graphics.topCards(topCards, header = "Top 10 cards",  ecq = true)
+
+    discord.notifyAdmin(_.sendFile(file))
+    discord.notifyStreamers(_.sendFile(file))
+
+    Ok(Files.readAllBytes(file.toPath)).withHeaders("Content-Type" -> "image/png",
+      "content-disposition" -> s"""attachment; filename="${file.getName}"""")
+  }
+
+  def topCardsEcqSet(set: String): Action[AnyContent] = SecureBackEnd {
+    val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
+
+    val allCards: List[(Card, Int)] = players.toList.flatMap { player =>
+      val deckText: String = cache.get[String](player._1).getOrElse("")
+      val (mainDeck, market): (List[String], List[String]) = Deck.parse(deckText)
+      eternalWarcry.getDeck(mainDeck, market).cards
+    }
+    val topCards = allCards.filter { card =>
+      set == card._1.set
+    }.groupBy(_._1).map(p => p._1 -> p._2.map(_._2).sum)
+      .filterNot(_._1.isPower).map(p => p._1.name -> p._2).toList.sortBy(_._2).reverse.take(10)
+    val file = graphics.topCards(topCards, header = "Top 10 cards " + set, ecq = true)
 
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))

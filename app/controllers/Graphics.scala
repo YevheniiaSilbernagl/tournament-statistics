@@ -316,14 +316,14 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     }
   }
 
-  def topCards(cards: scala.List[(String, Int)], ecq: Boolean = false): File = {
+  def topCards(cards: scala.List[(String, Int)], header: String, ecq: Boolean = false): File = {
     if (cards.size > 10) throw new Exception(s"Too many cards to display [max 10]")
     else fs.file(s"/images/${if (ecq) "ecq/" else ""}background${if (ecq) "-ecq" else ""}.png") match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
         FONT.foreach(f => g.setFont(f.deriveFont(110f)))
-        g.drawString(s"${if (ecq) "" else "The Desk - "}Top ${cards.size} cards this week", 220, 105)
+        g.drawString(header, 220, 105)
         val numberOfLines = if (cards.size > 6) 2 else 1
         val cardSize = (236, 350)
 

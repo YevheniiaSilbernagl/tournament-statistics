@@ -62,6 +62,7 @@ GET         /generate/ecq/deck                                     controllers.A
 GET         /generate/ecq/deck/full                                controllers.Application.oneECQDeckScene(playerName: String)
 GET         /casters/ecq                                           controllers.Application.generateCastersListEcq(list: String)
 GET         /download/top/cards/ecq                                controllers.Application.topCardsEcq
+GET         /download/top/cards/ecq/set                            controllers.Application.topCardsEcqSet(set: String)
 DELETE      /user/delete/:username                                 controllers.Application.deleteUser(username)
 
 GET         /how-to-register                                       controllers.Application.howToRegister
