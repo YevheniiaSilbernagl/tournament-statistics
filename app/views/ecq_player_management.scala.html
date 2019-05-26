@@ -1,5 +1,5 @@
 @import types.{Tournament, User}
-@(role: Option[String], tournament: Tournament, opponents: Set[(String, String)])
+@(role: Option[String], tournament: Tournament, opponents: List[(String, String)])
 
 @main(tournament, "ECQ player management", role) {
     <div class="container content">
@@ -24,13 +24,14 @@
             </thead>
             <tbody>
 
-                @for(opponent <- opponents) {
+                @for(i <- opponents.indices) {
                     <tr>
+                        <td width="20px">@{i+1}</td>
                         <td class="playername">@{
-                            opponent._1
+                            opponents(i)._1
                         }</td>
                         <td><div class="deck">@{
-                            opponent._2
+                            opponents(i)._2
                         }</div></td>
                         <td width="10px"><div class="small badge-pill badge-danger player-delete">X</div></td>
                     </tr>

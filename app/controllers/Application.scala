@@ -753,7 +753,7 @@ class Application @Inject()(
 
   def getECQScenes = Action { request =>
     val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
-    Ok(views.html.ecq(SecureView.getRole(request), battlefy.getCurrentTournament, players))
+    Ok(views.html.ecq(SecureView.getRole(request), battlefy.getCurrentTournament, players.toList.sortBy(_._1.toLowerCase)))
   }
 
   def ecqSidePanel(player1Name: String, player1Score: Int, player2Name: String, player2Score: Int) = SecureBackEnd {
@@ -770,7 +770,7 @@ class Application @Inject()(
 
   def ecqPlayerManagement = Action { request =>
     val players: Set[(String, String)] = cache.get[Set[(String, String)]](ECQPlayersCacheKey).getOrElse(Set())
-    Ok(views.html.ecq_player_management(SecureView.getRole(request), battlefy.getCurrentTournament, players))
+    Ok(views.html.ecq_player_management(SecureView.getRole(request), battlefy.getCurrentTournament, players.toList.sortBy(_._1.toLowerCase)))
   }
 
   def ecqDeckImage(playerName: String, side: String) = SecureBackEnd {

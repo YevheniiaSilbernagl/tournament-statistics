@@ -37,6 +37,24 @@ jQuery(window).ready(function () {
         globalSearch: false
     });
 
+    $("#ecqPlayersTable").fancyTable({
+        sortColumn: 0,
+        sortable: true,
+        pagination: true,
+        perPage: 65,
+        searchable: true,
+        globalSearch: false
+    });
+
+    $("#usersTable").fancyTable({
+        sortColumn: 0,
+        sortable: true,
+        pagination: true,
+        perPage: 20,
+        searchable: true,
+        globalSearch: false
+    });
+
     $(document).on('click', "#generateResources", function () {
         generate_resources();
     });
