@@ -56,7 +56,7 @@ class EternalWarcry @Inject()(ws: WSClient, cache: Cache) extends Controller {
         jsonNode.findValue("cost").asInt(),
         jsonNode.findValue("setName").asText(),
         jsonNode.findValue("eternalID").asText(),
-        jsonNode.findValue("isSigil").asBoolean()
+        jsonNode.findValue("type").asText() == "power"
       )
       val location = jsonNode.findValue("location").asText()
       val number = jsonNode.findValue("count").asInt()
