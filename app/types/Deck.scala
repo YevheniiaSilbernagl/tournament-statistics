@@ -46,7 +46,14 @@ case class Deck(
 
   def cards: List[(Card, Int)] = mainDeck ++ market ++ sideBoard
 
-  def eternalWarCryId: String = "details\\/(.+)\\/".r.findAllIn(link).matchData.toList.head.group(1)
+  def eternalWarCryId: String = {
+    val r1 = "details\\/(.+)\\/".r
+    val r2 = "\\/d\\/(.+)\\/".r
+    r1.findFirstIn(link) match {
+      case None => r2.findAllIn(link).matchData.toList.head.group(1)
+      case Some(_) => r1.findAllIn(link).matchData.toList.head.group(1)
+    }
+  }
 
   def faction: Option[String] = cards.flatMap(_._1.influences.toList).distinct.sortBy(f => f.toString.charAt(0)) match {
     case inf if inf.length == 1 => Some(inf.head.toString.toLowerCase.capitalize)
