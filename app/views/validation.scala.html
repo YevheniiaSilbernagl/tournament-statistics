@@ -10,7 +10,7 @@
            } else {
                @for(i <- players.indices){
                    <div class="row player border-top" id="player_@i">
-                       <div class="index" style="max-width:10px">@i</div>
+                       <div class="index" style="max-width:10px">@{i + 1}</div>
                        <div class="col-sm eternalName"> @{players(i)._1} </div>
                        <div class="col-6 deckLinkBlock"> <a href="@{players(i)._2}" class="deckLink" target="_blank" style="color: black">@{players(i)._2.getOrElse("--")}</a> </div>
                        <div class="col-sm discordName"> @{players(i)._3.getOrElse("--")} @{
