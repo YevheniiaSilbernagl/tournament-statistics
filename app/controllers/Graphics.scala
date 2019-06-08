@@ -31,6 +31,9 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
     font_
   }
 
+  def background(side: Option[String], ecq: Boolean): Option[File] =
+    fs.file(s"/images/${if(ecq)"ecq" else "ets" }/background${side.map(s => s"-$s").getOrElse("")}.png")
+
   def scale(image: BufferedImage, width: Int, height: Int): BufferedImage = {
     if (image == null) image
     else {
@@ -114,7 +117,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       dest
     }
 
-    fs.file(s"/images/background.png") match {
+    background(None, ecq = false) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -144,7 +147,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       dest
     }
 
-    fs.file(s"/images/background.png") match {
+    background(None, ecq = false) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -205,7 +208,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       dest
     }
 
-    fs.file(s"/images/background.png") match {
+    background(None, ecq = false) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -280,7 +283,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
       dest
     }
 
-    fs.file(s"/images/background.png") match {
+    background(None, ecq = false) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -318,7 +321,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
   def topCards(cards: scala.List[(String, Int)], header: String, ecq: Boolean = false): File = {
     if (cards.size > 10) throw new Exception(s"Too many cards to display [max 10]")
-    else fs.file(s"/images/${if (ecq) "ecq/" else ""}background${if (ecq) "-ecq" else ""}.png") match {
+    else background(None, ecq) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -331,7 +334,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
           val dest = new BufferedImage(if (cardList.size > 5) 1700 else 1430, cardSize._2 + 30, BufferedImage.TYPE_INT_ARGB)
           val renderedGraphics = graphicsSettings(dest.createGraphics())
           FONT.foreach(f => renderedGraphics.setFont(f.deriveFont(30f)))
-          val width = dest.getWidth / cardList.size
+          val width = if(cardList.isEmpty) 0 else dest.getWidth / cardList.size
           for (i <- cardList.indices) {
             val image = scale(eternalWarcry.cardFullImage(cardList(i)._1), cardSize._1, cardSize._2)
             renderedGraphics.setColor(defaultYellow)
@@ -360,7 +363,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
   def customCardList(header: String, cards: scala.List[String]): File = {
     if (cards.size > 20) throw new Exception(s"Too many cards to display [max 10]")
-    else fs.file(s"/images/background.png") match {
+    else background(None, ecq = false) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -411,7 +414,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
                ): Either[Exception, File] = {
 
     val playersName = Option(player._1.trim).map(s => if (s.contains("+")) s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#"))) else s).getOrElse(player._1)
-    fs.file(s"/images${if(ecq)"/ecq" else "" }/background-$side${if (ecq) "-ecq" else ""}.png") match {
+    background(Some(side), ecq) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -597,7 +600,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
                   ): Either[Exception, File] = {
 
     val playersName = Option(player._1.trim).map(s => if (s.contains("+")) s.substring(0, Option(s.indexOf("+")).filterNot(_ < 0).getOrElse(s.indexOf("#"))) else s).getOrElse(player._1)
-    fs.file(s"/images/${if(ecq) "ecq/" else ""}background${if(ecq) "-ecq" else ""}.png") match {
+    background(None, ecq) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -915,7 +918,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
 
 
   def trend(header: String, stats: scala.List[(DateTime, Double, Double)]): File = {
-    fs.file(s"/images/background.png") match {
+    background(None, ecq = false) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
@@ -987,7 +990,7 @@ class Graphics @Inject()(fs: FileSystem, eternalWarcry: EternalWarcry, database:
               player2: (String, scala.List[(DateTime, Double, Double)])): File = {
     implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter _)
 
-    fs.file(s"/images/background.png") match {
+    background(None, ecq = false) match {
       case Some(bg) =>
         val image = ImageIO.read(bg)
         val g = graphicsSettings(image.createGraphics())
