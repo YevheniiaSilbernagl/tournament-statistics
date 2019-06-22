@@ -316,7 +316,7 @@ class Application @Inject()(
     }
     val topCards = allCards.groupBy(_._1).map(p => p._1 -> p._2.map(_._2).sum)
       .filterNot(_._1.isPower).map(p => p._1.name -> p._2).toList.sortBy(_._2).reverse.take(10)
-    val file = graphics.topCards(topCards, header = "Top 10 cards",  ecq = true)
+    val file = graphics.topCards(topCards, header = "Top 10 cards", ecq = true)
 
     discord.notifyAdmin(_.sendFile(file))
     discord.notifyStreamers(_.sendFile(file))
@@ -567,9 +567,12 @@ class Application @Inject()(
   }
 
   def importTournament(battlefyUuid: String, season: Int, tournamentType: String) = SecureBackEnd {
+    val currentTournamentId = battlefy.getCurrentTournament.battlefy_id
     if (db.existsTournament(battlefyUuid)) Conflict(s"Tournament $battlefyUuid exists")
-    else if (battlefy.currentStageId.isEmpty) NotAcceptable(s"Tournament $battlefyUuid doesn't have stages")
-    else if (battlefy.currentRound.isDefined) NotAcceptable(s"Tournament $battlefyUuid is in progress")
+    else if (currentTournamentId == battlefyUuid && battlefy.currentStageId.isEmpty)
+      NotAcceptable(s"Tournament $battlefyUuid doesn't have stages")
+    else if (currentTournamentId == battlefyUuid && battlefy.currentRound.isDefined)
+      NotAcceptable(s"Tournament $battlefyUuid is in progress")
     else {
       val tournament_ = battlefy.getTournamentInfo(battlefyUuid)
       if (tournament_.isEmpty) {
